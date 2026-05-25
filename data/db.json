@@ -20,7 +20,7 @@
     {
       "id": "sub_dev_01",
       "company_id": "00000000-0000-4000-8000-000000000001",
-      "plan_name": "enterprise",
+      "plan_name": "starter",
       "status": "active",
       "start_date": "2026-05-25",
       "created_at": "2026-05-25T05:58:49.286Z"
@@ -221,6 +221,138 @@
       "ip_address": "127.0.0.1",
       "result": "success",
       "details": "User invoiceflow logged in successfully."
+    },
+    {
+      "id": "ip9isxe",
+      "created_at": "2026-05-25T06:28:18.600Z",
+      "updated_at": "2026-05-25T06:28:18.600Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "UPDATE_COMPANY_STATUS",
+      "module": "SaaS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Updated company INVOICEFLOW DEMO S.A.C. status to no change and plan to scale"
+    },
+    {
+      "id": "9y5n3vd",
+      "created_at": "2026-05-25T06:28:19.806Z",
+      "updated_at": "2026-05-25T06:28:19.806Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "UPDATE_COMPANY_STATUS",
+      "module": "SaaS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Updated company INVOICEFLOW DEMO S.A.C. status to no change and plan to starter"
+    },
+    {
+      "id": "1hsjdxy",
+      "created_at": "2026-05-25T06:28:20.959Z",
+      "updated_at": "2026-05-25T06:28:20.959Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "UPDATE_COMPANY_STATUS",
+      "module": "SaaS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Updated company INVOICEFLOW DEMO S.A.C. status to no change and plan to scale"
+    },
+    {
+      "id": "648ceef",
+      "created_at": "2026-05-25T06:28:22.119Z",
+      "updated_at": "2026-05-25T06:28:22.119Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "UPDATE_COMPANY_STATUS",
+      "module": "SaaS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Updated company INVOICEFLOW DEMO S.A.C. status to no change and plan to enterprise"
+    },
+    {
+      "id": "dwpcjo4",
+      "created_at": "2026-05-25T06:28:22.993Z",
+      "updated_at": "2026-05-25T06:28:22.993Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "UPDATE_COMPANY_STATUS",
+      "module": "SaaS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Updated company INVOICEFLOW DEMO S.A.C. status to no change and plan to starter"
+    },
+    {
+      "id": "b8drwhv",
+      "created_at": "2026-05-25T06:28:23.800Z",
+      "updated_at": "2026-05-25T06:28:23.800Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "UPDATE_COMPANY_STATUS",
+      "module": "SaaS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Updated company INVOICEFLOW DEMO S.A.C. status to no change and plan to scale"
+    },
+    {
+      "id": "67ee5fd",
+      "created_at": "2026-05-25T06:28:24.992Z",
+      "updated_at": "2026-05-25T06:28:24.992Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "UPDATE_COMPANY_STATUS",
+      "module": "SaaS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Updated company INVOICEFLOW DEMO S.A.C. status to no change and plan to enterprise"
+    },
+    {
+      "id": "mpua0h8",
+      "created_at": "2026-05-25T06:28:27.136Z",
+      "updated_at": "2026-05-25T06:28:27.136Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "UPDATE_COMPANY_STATUS",
+      "module": "SaaS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Updated company INVOICEFLOW DEMO S.A.C. status to no change and plan to scale"
+    },
+    {
+      "id": "0cy48k9",
+      "created_at": "2026-05-25T06:28:29.056Z",
+      "updated_at": "2026-05-25T06:28:29.056Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "UPDATE_COMPANY_STATUS",
+      "module": "SaaS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Updated company INVOICEFLOW DEMO S.A.C. status to no change and plan to starter"
+    },
+    {
+      "id": "l0pkci2",
+      "created_at": "2026-05-25T06:30:48.051Z",
+      "updated_at": "2026-05-25T06:30:48.051Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "UPDATE_COMPANY_STATUS",
+      "module": "SaaS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Updated company INVOICEFLOW DEMO S.A.C. status to no change and plan to enterprise"
+    },
+    {
+      "id": "6k3ogmv",
+      "created_at": "2026-05-25T06:30:49.120Z",
+      "updated_at": "2026-05-25T06:30:49.120Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "UPDATE_COMPANY_STATUS",
+      "module": "SaaS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Updated company INVOICEFLOW DEMO S.A.C. status to no change and plan to starter"
     }
   ]
 }

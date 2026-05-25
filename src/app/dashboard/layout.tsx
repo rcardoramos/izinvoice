@@ -59,9 +59,9 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center text-white">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
-        <span className="text-xs text-zinc-500 font-mono">Iniciando InvoiceFlow...</span>
+      <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center text-zinc-800">
+        <div className="w-8 h-8 border-4 border-[#4f46e5] border-t-transparent rounded-full animate-spin mb-4" />
+        <span className="text-xs text-zinc-500 font-sans font-semibold">Iniciando Izinvoce...</span>
       </div>
     );
   }

@@ -144,7 +144,7 @@ export default function CompaniesPage() {
     <div className="flex-1 flex flex-col overflow-y-auto">
       <PageHeader 
         title="Directorio de Empresas Clientes" 
-        subtitle="Administra los clientes de INVOICEFLOW, asigna planes, suspende servicios y visualiza credenciales."
+        subtitle="Administra los clientes de IZINVOCE, asigna planes, suspende servicios y visualiza credenciales."
       />
 
       <div className="p-8 space-y-6 max-w-7xl w-full mx-auto">

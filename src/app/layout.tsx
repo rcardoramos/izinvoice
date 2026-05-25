@@ -9,7 +9,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "INVOICEFLOW - SaaS de Facturación Electrónica Premium",
+  title: "IZINVOCE - SaaS de Facturación Electrónica Premium",
   description: "Plataforma de facturación electrónica integrada con SUNAT",
 };
 
