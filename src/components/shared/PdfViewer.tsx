@@ -24,7 +24,7 @@ export function PdfViewer({ document, companyName, companyRuc, companyAddress }:
       <div className="flex justify-between items-start gap-4 pb-6 border-b border-zinc-200">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 rounded-md bg-blue-600 flex items-center justify-center font-bold text-white text-[10px]">
+            <div className="w-6 h-6 rounded-md bg-[#4f46e5] flex items-center justify-center font-bold text-white text-[10px]">
               IF
             </div>
             <span className="font-bold text-sm tracking-tight text-zinc-900">{companyName}</span>
@@ -39,7 +39,7 @@ export function PdfViewer({ document, companyName, companyRuc, companyAddress }:
         {/* RUC and Serial Number block */}
         <div className="border border-zinc-200 rounded-lg p-4 bg-zinc-50/50 text-center min-w-[200px]">
           <p className="font-bold text-zinc-800 text-xs">R.U.C. {companyRuc}</p>
-          <p className="font-bold text-blue-600 uppercase text-[11px] tracking-wide my-1">
+          <p className="font-bold text-[#4f46e5] uppercase text-[11px] tracking-wide my-1">
             {DOC_TYPE_LABELS[document.docType]} ELECTRÓNICA
           </p>
           <p className="font-mono text-zinc-600 font-semibold">{document.serie}-{String(document.correlativo).padStart(8, '0')}</p>
@@ -71,7 +71,7 @@ export function PdfViewer({ document, companyName, companyRuc, companyAddress }:
             <p className="flex items-center gap-1.5"><FileSpreadsheet className="w-3.5 h-3.5 text-zinc-400" /> <b>Moneda:</b> {p.moneda || 'PEN'}</p>
             {p.formaPago && <p><b>Forma de Pago:</b> {p.formaPago === 'CON' ? 'Contado' : 'Crédito'}</p>}
             {p.documentoAfectado && (
-              <p className="text-blue-600 font-medium">
+              <p className="text-[#4f46e5] font-semibold">
                 <b>Documento Afectado:</b> {p.documentoAfectado.serie}-{p.documentoAfectado.correlativo}
               </p>
             )}

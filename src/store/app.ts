@@ -14,26 +14,9 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  theme: 'dark', // default theme
-  toggleTheme: () =>
-    set((state) => {
-      const newTheme = state.theme === 'dark' ? 'light' : 'dark';
-      if (typeof window !== 'undefined') {
-        const root = window.document.documentElement;
-        root.classList.remove('dark', 'light');
-        root.classList.add(newTheme);
-      }
-      return { theme: newTheme };
-    }),
-  setTheme: (theme) =>
-    set(() => {
-      if (typeof window !== 'undefined') {
-        const root = window.document.documentElement;
-        root.classList.remove('dark', 'light');
-        root.classList.add(theme);
-      }
-      return { theme };
-    }),
+  theme: 'light', // default theme
+  toggleTheme: () => {}, // disabled for exclusive light mode
+  setTheme: () => {}, // disabled for exclusive light mode
   commandPaletteOpen: false,
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
   toggleCommandPalette: () => set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),

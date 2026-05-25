@@ -95,10 +95,10 @@ export function SearchCommand() {
   const isOperator = user?.role === 'operator';
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start justify-center pt-24 select-none">
-      <div className="w-[550px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[500px]">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-start justify-center pt-24 select-none">
+      <div className="w-[550px] bg-white border border-zinc-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[500px]">
         {/* Search input header */}
-        <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center gap-3">
+        <div className="p-4 border-b border-zinc-150 flex items-center gap-3">
           <Search className="w-5 h-5 text-zinc-400" />
           <input
             ref={inputRef}
@@ -106,13 +106,13 @@ export function SearchCommand() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={isOperator ? "Busca clientes o comprobantes..." : "Busca clientes, productos, comprobantes o comandos..."}
-            className="flex-1 bg-transparent border-0 text-sm focus:ring-0 text-zinc-900 dark:text-white placeholder-zinc-400 p-0"
+            className="flex-1 bg-transparent border-0 text-sm focus:ring-0 text-zinc-900 placeholder-zinc-400 p-0 focus:outline-none"
           />
-          <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded border border-zinc-200 dark:border-zinc-700/60 font-mono text-zinc-400">ESC</span>
+          <span className="text-[10px] bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200 font-mono text-zinc-400">ESC</span>
         </div>
 
         {/* Command list content */}
-        <div className="overflow-y-auto flex-1 divide-y divide-zinc-100 dark:divide-zinc-800/50 p-2">
+        <div className="overflow-y-auto flex-1 divide-y divide-zinc-100 p-2">
           {/* Action/Comando suggestions */}
           {!query && (
             <div className="p-2 space-y-1">
@@ -121,10 +121,10 @@ export function SearchCommand() {
               {!isOperator && (
                 <button
                   onClick={() => handleNavigate('/dashboard')}
-                  className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800/80 text-left text-xs text-zinc-700 dark:text-zinc-300 transition-colors cursor-pointer"
+                  className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/70 hover:text-[#4f46e5] text-left text-xs text-zinc-700 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5">
-                    <Sparkles className="w-4 h-4 text-blue-500" />
+                    <Sparkles className="w-4 h-4 text-[#4f46e5]" />
                     <span>Ir al Dashboard</span>
                   </div>
                   <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
@@ -133,10 +133,10 @@ export function SearchCommand() {
 
               <button
                 onClick={() => handleNavigate('/dashboard/invoices/new')}
-                className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800/80 text-left text-xs text-zinc-700 dark:text-zinc-300 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/70 hover:text-[#4f46e5] text-left text-xs text-zinc-700 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
-                  <PlusCircle className="w-4 h-4 text-blue-500" />
+                  <PlusCircle className="w-4 h-4 text-[#4f46e5]" />
                   <span>Emitir Nuevo Comprobante</span>
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
@@ -144,10 +144,10 @@ export function SearchCommand() {
 
               <button
                 onClick={() => handleNavigate('/dashboard/invoices')}
-                className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800/80 text-left text-xs text-zinc-700 dark:text-zinc-300 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/70 hover:text-[#4f46e5] text-left text-xs text-zinc-700 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
-                  <FileText className="w-4 h-4 text-blue-500" />
+                  <FileText className="w-4 h-4 text-[#4f46e5]" />
                   <span>Ver Historial de Documentos</span>
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
@@ -157,10 +157,10 @@ export function SearchCommand() {
                 <>
                   <button
                     onClick={() => handleNavigate('/dashboard/daily-summaries')}
-                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800/80 text-left text-xs text-zinc-700 dark:text-zinc-300 transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/70 hover:text-[#4f46e5] text-left text-xs text-zinc-700 transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5">
-                      <Layers className="w-4 h-4 text-blue-500" />
+                      <Layers className="w-4 h-4 text-[#4f46e5]" />
                       <span>Ver Resúmenes Diarios (RC/RA)</span>
                     </div>
                     <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
@@ -168,10 +168,10 @@ export function SearchCommand() {
 
                   <button
                     onClick={() => handleNavigate('/dashboard/settings')}
-                    className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800/80 text-left text-xs text-zinc-700 dark:text-zinc-300 transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/70 hover:text-[#4f46e5] text-left text-xs text-zinc-700 transition-colors cursor-pointer"
                   >
                     <div className="flex items-center gap-2.5">
-                      <Settings className="w-4 h-4 text-blue-500" />
+                      <Settings className="w-4 h-4 text-[#4f46e5]" />
                       <span>Configuración del Sistema</span>
                     </div>
                     <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
@@ -198,12 +198,12 @@ export function SearchCommand() {
                     <button
                       key={c.id}
                       onClick={() => handleNavigate(`/dashboard/customers`)}
-                      className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800/85 text-left text-xs text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                      className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/50 hover:text-[#4f46e5] text-left text-xs text-zinc-700 cursor-pointer"
                     >
                       <div className="flex items-center gap-2">
                         <Users className="w-3.5 h-3.5 text-zinc-400" />
                         <div>
-                          <p className="font-semibold text-zinc-950 dark:text-white leading-none">{c.razon_social}</p>
+                          <p className="font-semibold text-zinc-900 leading-none">{c.razon_social}</p>
                           <p className="text-[9px] text-zinc-400 mt-1 font-mono">{c.doc_type === '6' ? 'RUC' : 'DNI'}: {c.doc_number}</p>
                         </div>
                       </div>
@@ -220,12 +220,12 @@ export function SearchCommand() {
                     <button
                       key={p.id}
                       onClick={() => handleNavigate(`/dashboard/products`)}
-                      className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800/85 text-left text-xs text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                      className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/50 hover:text-[#4f46e5] text-left text-xs text-zinc-700 cursor-pointer"
                     >
                       <div className="flex items-center gap-2">
                         <Package className="w-3.5 h-3.5 text-zinc-400" />
                         <div>
-                          <p className="font-semibold text-zinc-950 dark:text-white leading-none">{p.nombre}</p>
+                          <p className="font-semibold text-zinc-900 leading-none">{p.nombre}</p>
                           <p className="text-[9px] text-zinc-400 mt-1 font-mono">Cod: {p.codigo} · Precio: PEN {p.precio.toFixed(2)}</p>
                         </div>
                       </div>
@@ -242,12 +242,12 @@ export function SearchCommand() {
                     <button
                       key={d.id}
                       onClick={() => handleNavigate(`/dashboard/invoices`)}
-                      className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800/85 text-left text-xs text-zinc-700 dark:text-zinc-300 cursor-pointer"
+                      className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/50 hover:text-[#4f46e5] text-left text-xs text-zinc-700 cursor-pointer"
                     >
                       <div className="flex items-center gap-2">
                         <FileText className="w-3.5 h-3.5 text-zinc-400" />
                         <div>
-                          <p className="font-semibold text-zinc-950 dark:text-white leading-none">{d.serie}-{d.correlativo}</p>
+                          <p className="font-semibold text-zinc-900 leading-none">{d.serie}-{d.correlativo}</p>
                           <p className="text-[9px] text-zinc-400 mt-1 font-mono">
                             {d.payload?.cliente?.razonSocial} · PEN {d.total.toFixed(2)} · {d.status}
                           </p>
@@ -262,7 +262,7 @@ export function SearchCommand() {
         </div>
 
         {/* Command palette keyboard helper footer */}
-        <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 flex items-center justify-between text-[10px] text-zinc-400">
+        <div className="p-3 border-t border-zinc-150 bg-zinc-50/55 flex items-center justify-between text-[10px] text-zinc-400">
           <div className="flex items-center gap-4">
             <span>↑↓ para navegar</span>
             <span>↵ para seleccionar</span>

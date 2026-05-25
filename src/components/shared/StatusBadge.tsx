@@ -43,7 +43,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
       break;
     case 'voided':
       bgClass = 'bg-zinc-500/10 border-zinc-500/20';
-      textClass = 'text-zinc-500 dark:text-zinc-400';
+      textClass = 'text-zinc-500';
       icon = <Ban className="w-3.5 h-3.5" />;
       break;
     case 'observed':

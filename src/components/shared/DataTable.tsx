@@ -58,9 +58,9 @@ export function DataTable<T extends Record<string, any>>({
   return (
     <div className="space-y-4">
       {/* Controls Header */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
           <input
             type="text"
             placeholder={searchPlaceholder}
@@ -70,22 +70,22 @@ export function DataTable<T extends Record<string, any>>({
               setCurrentPage(1);
             }}
             disabled={!searchKey}
-            className="w-full pl-9 pr-4 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-xs text-zinc-900 dark:text-white placeholder-zinc-400 transition-colors disabled:opacity-50"
+            className="w-full pl-9 pr-4 py-2 rounded-xl border border-zinc-200 bg-white text-xs text-zinc-900 placeholder-zinc-400 transition-colors disabled:opacity-50 focus:ring-1 focus:ring-[#4f46e5] focus:border-[#4f46e5] focus:outline-none"
           />
         </div>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
 
       {/* Table grid */}
-      <div className="w-full overflow-hidden border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm">
+      <div className="w-full overflow-hidden border border-zinc-200 bg-white rounded-2xl shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-zinc-200 dark:border-zinc-800/80 bg-zinc-50 dark:bg-zinc-950 select-none">
+              <tr className="border-b border-zinc-200 bg-zinc-50/50 select-none">
                 {columns.map((col) => (
                   <th
                     key={col.key}
-                    className="p-3 text-[10px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider"
+                    className="py-4 px-5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider"
                   >
                     {col.label}
                   </th>
@@ -96,10 +96,10 @@ export function DataTable<T extends Record<string, any>>({
               {loading ? (
                 // Loader Skeletons
                 Array.from({ length: 4 }).map((_, rIdx) => (
-                  <tr key={rIdx} className="border-b border-zinc-100 dark:border-zinc-800/50">
+                  <tr key={rIdx} className="border-b border-zinc-100">
                     {columns.map((col) => (
-                      <td key={col.key} className="p-4">
-                        <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse w-full max-w-[120px]" />
+                      <td key={col.key} className="py-5 px-5">
+                        <div className="h-3 bg-zinc-100 rounded animate-pulse w-full max-w-[120px]" />
                       </td>
                     ))}
                   </tr>
@@ -107,9 +107,9 @@ export function DataTable<T extends Record<string, any>>({
               ) : paginatedData.length === 0 ? (
                 // Empty state
                 <tr>
-                  <td colSpan={columns.length} className="p-8 text-center">
+                  <td colSpan={columns.length} className="py-12 px-5 text-center">
                     <div className="flex flex-col items-center justify-center space-y-2">
-                      <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{emptyMessage}</p>
+                      <p className="text-xs font-semibold text-zinc-400">{emptyMessage}</p>
                     </div>
                   </td>
                 </tr>
@@ -118,10 +118,10 @@ export function DataTable<T extends Record<string, any>>({
                 paginatedData.map((row, rIdx) => (
                   <tr
                     key={row.id || rIdx}
-                    className="border-b border-zinc-100 dark:border-zinc-800/40 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors text-xs text-zinc-700 dark:text-zinc-300"
+                    className="border-b border-zinc-100 hover:bg-slate-50/50 transition-colors text-xs text-zinc-700 font-medium"
                   >
                     {columns.map((col) => (
-                      <td key={col.key} className="p-3 font-medium align-middle">
+                      <td key={col.key} className="py-4 px-5 align-middle">
                         {col.render ? col.render(row[col.key], row) : row[col.key] ?? '-'}
                       </td>
                     ))}
@@ -134,26 +134,26 @@ export function DataTable<T extends Record<string, any>>({
 
         {/* Pagination controls */}
         {!loading && filteredData.length > itemsPerPage && (
-          <div className="p-3 bg-zinc-50 dark:bg-zinc-950/60 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between text-[11px] text-zinc-500 select-none">
+          <div className="p-4 bg-zinc-50/50 border-t border-zinc-150 flex items-center justify-between text-[11px] text-zinc-500 select-none">
             <span>
               Mostrando {Math.min(filteredData.length, (currentPage - 1) * itemsPerPage + 1)} -{' '}
               {Math.min(filteredData.length, currentPage * itemsPerPage)} de {filteredData.length} registros
             </span>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-2.5 py-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 disabled:opacity-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors font-medium cursor-pointer"
+                className="px-3 py-1.5 rounded-xl border border-zinc-200 bg-white disabled:opacity-50 hover:bg-zinc-50 transition-colors font-semibold cursor-pointer text-zinc-600"
               >
                 Anterior
               </button>
-              <span className="px-2 font-mono">
+              <span className="px-3 font-mono font-semibold">
                 {currentPage} / {totalPages}
               </span>
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-2.5 py-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 disabled:opacity-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors font-medium cursor-pointer"
+                className="px-3 py-1.5 rounded-xl border border-zinc-200 bg-white disabled:opacity-50 hover:bg-zinc-50 transition-colors font-semibold cursor-pointer text-zinc-600"
               >
                 Siguiente
               </button>

@@ -37,11 +37,11 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full glassmorphism border-b h-16 flex items-center justify-between px-8 select-none">
+    <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-zinc-200 h-16 flex items-center justify-between px-8 select-none">
       {/* Title section */}
       <div>
-        <h2 className="text-sm font-semibold text-zinc-900 dark:text-white tracking-tight">{title}</h2>
-        {subtitle && <p className="text-[10px] text-zinc-500 font-medium">{subtitle}</p>}
+        <h2 className="text-sm font-bold text-zinc-900 tracking-tight">{title}</h2>
+        {subtitle && <p className="text-[10px] text-zinc-500 font-semibold">{subtitle}</p>}
       </div>
 
       {/* Utilities */}
@@ -49,11 +49,11 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
         {/* Fake search button (Ctrl+K palette trigger) */}
         <button
           onClick={toggleCommandPalette}
-          className="flex items-center gap-3 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 transition-colors text-zinc-400 dark:text-zinc-500 w-64 text-left cursor-pointer"
+          className="flex items-center gap-3 px-3.5 py-1.5 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 transition-colors text-zinc-400 w-64 text-left cursor-pointer"
         >
-          <Search className="w-3.5 h-3.5" />
+          <Search className="w-3.5 h-3.5 text-zinc-400" />
           <span className="text-xs flex-1">Buscar comandos...</span>
-          <span className="inline-flex items-center gap-0.5 text-[10px] bg-zinc-200 dark:bg-zinc-800 px-1.5 py-0.5 rounded font-mono font-medium text-zinc-500 dark:text-zinc-400">
+          <span className="inline-flex items-center gap-0.5 text-[10px] bg-zinc-200/60 px-1.5 py-0.5 rounded-md font-mono font-bold text-zinc-600">
             <Command className="w-2.5 h-2.5" /> K
           </span>
         </button>
@@ -62,30 +62,30 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors relative cursor-pointer text-zinc-600 dark:text-zinc-300"
+            className="p-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors relative cursor-pointer text-zinc-600"
           >
             <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-600 text-[9px] font-bold text-white rounded-full flex items-center justify-center animate-pulse">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#4f46e5] text-[9px] font-bold text-white rounded-full flex items-center justify-center animate-pulse">
                 {unreadCount}
               </span>
             )}
           </button>
 
           {showNotifications && (
-            <div className="absolute right-0 mt-2 w-80 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-xl overflow-hidden z-50">
-              <div className="p-3 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
-                <span className="text-xs font-semibold text-zinc-900 dark:text-white">Notificaciones</span>
+            <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-white border border-zinc-200 shadow-xl overflow-hidden z-50">
+              <div className="p-3 border-b border-zinc-150 flex items-center justify-between bg-zinc-50">
+                <span className="text-xs font-bold text-zinc-900">Notificaciones</span>
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllRead}
-                    className="text-[10px] text-blue-600 dark:text-blue-400 font-medium hover:underline cursor-pointer"
+                    className="text-[10px] text-[#4f46e5] font-semibold hover:underline cursor-pointer"
                   >
-                    Marcar todo leido
+                    Marcar todo leído
                   </button>
                 )}
               </div>
-              <div className="max-h-64 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800/60">
+              <div className="max-h-64 overflow-y-auto divide-y divide-zinc-100">
                 {notifications.length === 0 ? (
                   <div className="p-4 text-center text-xs text-zinc-400">No hay notificaciones recientes</div>
                 ) : (
@@ -93,7 +93,7 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
                     <div
                       key={notif.id}
                       className={`p-3 text-[11px] transition-colors ${
-                        notif.read ? 'bg-transparent' : 'bg-blue-500/[0.02] dark:bg-blue-500/[0.03]'
+                        notif.read ? 'bg-transparent' : 'bg-indigo-500/[0.02]'
                       }`}
                     >
                       <div className="flex items-start gap-2">
@@ -103,8 +103,8 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
                           <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
                         )}
                         <div className="flex-1">
-                          <p className="font-semibold text-zinc-900 dark:text-white">{notif.title}</p>
-                          <p className="text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">{notif.message}</p>
+                          <p className="font-semibold text-zinc-900">{notif.title}</p>
+                          <p className="text-zinc-500 mt-0.5 leading-snug">{notif.message}</p>
                           <p className="text-[9px] text-zinc-400 font-mono mt-1">
                             {new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>

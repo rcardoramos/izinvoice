@@ -19,10 +19,10 @@ export default function DashboardLayout({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Sync document theme classes on load
+    // Force light mode on load
     const root = window.document.documentElement;
-    root.classList.remove('dark', 'light');
-    root.classList.add(theme);
+    root.classList.remove('dark');
+    root.classList.add('light');
 
     if (!isAuthenticated) {
       router.push('/');
