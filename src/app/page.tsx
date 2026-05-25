@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -16,6 +16,20 @@ export default function LandingPage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [demoModalOpen, setDemoModalOpen] = useState(false);
   const [demoFormSubmitted, setDemoFormSubmitted] = useState(false);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const isNearBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 380;
+      if (window.scrollY > 400 && !isNearBottom) {
+        setShowStickyBar(true);
+      } else {
+        setShowStickyBar(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // FAQ Data
   const faqs = [
@@ -98,14 +112,14 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="bg-[#f8fafc] text-zinc-900 font-sans min-h-screen relative overflow-hidden antialiased">
+    <div className="bg-[#f8fafc] text-zinc-900 font-sans min-h-screen relative overflow-hidden antialiased pt-16">
       {/* Background radial effects */}
       <div className="absolute top-0 left-0 w-full h-[800px] bg-gradient-to-b from-indigo-500/5 to-transparent pointer-events-none -z-10" />
       <div className="absolute top-[20%] left-[-10%] w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[140px] pointer-events-none -z-10" />
       <div className="absolute bottom-[20%] right-[-10%] w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-[140px] pointer-events-none -z-10" />
 
       {/* STICKY NAVBAR */}
-      <header className="sticky top-0 z-50 bg-white/85 backdrop-blur-md border-b border-zinc-200/80 transition-all">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/85 backdrop-blur-md border-b border-zinc-200/80 transition-all">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#4f46e5] flex items-center justify-center font-bold text-white shadow-md shadow-indigo-500/20 text-xs">
@@ -1063,6 +1077,40 @@ export default function LandingPage() {
               )}
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* FLOATING ACTION DOCK */}
+      <AnimatePresence>
+        {showStickyBar && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, scale: 0.95, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, scale: 1, x: '-50%' }}
+            exit={{ opacity: 0, y: 50, scale: 0.95, x: '-50%' }}
+            transition={{ type: "spring", stiffness: 350, damping: 25 }}
+            className="fixed bottom-6 left-1/2 z-50 bg-white/90 backdrop-blur-md border border-zinc-200/80 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-6 max-w-[90%] md:max-w-md"
+          >
+            <div className="hidden sm:flex items-center gap-2 border-r border-zinc-150 pr-4">
+              <div className="w-6 h-6 rounded-md bg-[#4f46e5] flex items-center justify-center font-bold text-white text-[10px]">
+                IZ
+              </div>
+              <span className="font-extrabold text-[11px] text-zinc-900 uppercase tracking-tight">izinvoce</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link 
+                href="/login" 
+                className="px-4 py-2 bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-500/10 active:scale-[0.98] transition-all whitespace-nowrap"
+              >
+                Prueba Gratis
+              </Link>
+              <button 
+                onClick={() => setDemoModalOpen(true)}
+                className="px-4 py-2 border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-700 rounded-xl font-bold text-xs active:scale-[0.98] transition-all whitespace-nowrap"
+              >
+                Solicitar Demo
+              </button>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
