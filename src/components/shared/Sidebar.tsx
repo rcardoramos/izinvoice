@@ -62,12 +62,7 @@ export function Sidebar() {
         { name: 'Dashboard SaaS', path: '/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
         { name: 'Empresas Clientes', path: '/dashboard/companies', icon: <Building2 className="w-4 h-4" /> },
       ]
-    : rawLinks.filter((link) => {
-        if (user?.role === 'operator') {
-          return ['Nuevo Comprobante', 'Historial Docs', 'Clientes'].includes(link.name);
-        }
-        return true;
-      });
+    : rawLinks;
 
   if (!user || (!company && !isSaaSAdmin)) return null;
 

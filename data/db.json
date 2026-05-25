@@ -14,6 +14,21 @@
       "api_key": "mbak_dev00000000000000000000000001",
       "created_at": "2026-05-25T05:58:49.286Z",
       "updated_at": "2026-05-25T05:58:49.286Z"
+    },
+    {
+      "id": "comp_mgzlr0i-i9uuugz",
+      "created_at": "2026-05-25T06:39:28.638Z",
+      "updated_at": "2026-05-25T06:39:28.638Z",
+      "ruc": "98765432111",
+      "business_name": "MinddevperuSAC",
+      "trade_name": "MinddEV",
+      "address": "987DASDAS",
+      "phone": "97865421",
+      "email": "RRR@GMAIL.COM",
+      "sunat_environment": "beta",
+      "sol_username": "98765432111MODDATOS",
+      "sol_password": "MODDATOS",
+      "api_key": "mbak_live_a1dc7f7404e7bcb7dcfebe79"
     }
   ],
   "subscriptions": [
@@ -24,6 +39,15 @@
       "status": "active",
       "start_date": "2026-05-25",
       "created_at": "2026-05-25T05:58:49.286Z"
+    },
+    {
+      "id": "sub_ze8y0pe",
+      "created_at": "2026-05-25T06:39:28.639Z",
+      "updated_at": "2026-05-25T06:39:28.639Z",
+      "company_id": "comp_mgzlr0i-i9uuugz",
+      "plan_name": "starter",
+      "status": "active",
+      "start_date": "2026-05-25"
     }
   ],
   "users": [
@@ -50,15 +74,16 @@
       "created_at": "2026-05-25T05:58:49.286Z"
     },
     {
-      "id": "user_operator_id",
-      "company_id": "00000000-0000-4000-8000-000000000001",
-      "username": "operador",
-      "password_hash": "operador123",
-      "full_name": "Operador Ventas (Cliente Cajero)",
-      "email": "ventas@invoiceflow.pe",
-      "role": "operator",
-      "status": "active",
-      "created_at": "2026-05-25T05:58:49.286Z"
+      "id": "g8nycb6",
+      "created_at": "2026-05-25T06:39:28.651Z",
+      "updated_at": "2026-05-25T06:39:28.651Z",
+      "company_id": "comp_mgzlr0i-i9uuugz",
+      "username": "admin_98765432111",
+      "password_hash": "admin123",
+      "full_name": "Admin MinddevperuSAC",
+      "email": "RRR@GMAIL.COM",
+      "role": "admin",
+      "status": "active"
     }
   ],
   "api_keys": [
@@ -96,6 +121,20 @@
       "telefono": "999888777",
       "status": "active",
       "created_at": "2026-05-25T05:58:49.286Z"
+    },
+    {
+      "id": "qmfe6oq",
+      "created_at": "2026-05-25T06:44:04.056Z",
+      "updated_at": "2026-05-25T06:44:04.056Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "doc_type": "1",
+      "doc_number": "72564818",
+      "razon_social": "Ricardo Ramos Julca",
+      "nombre_comercial": null,
+      "direccion": "rqrasds",
+      "correo": "q@gmail.com",
+      "telefono": "987654321",
+      "status": "active"
     }
   ],
   "products": [
@@ -152,7 +191,7 @@
       "company_id": "00000000-0000-4000-8000-000000000001",
       "doc_type": "03",
       "serie": "B001",
-      "correlativo": 48
+      "correlativo": 49
     },
     {
       "id": "ser_03",
@@ -181,10 +220,112 @@
       "doc_type": "08",
       "serie": "BD01",
       "correlativo": 1
+    },
+    {
+      "id": "824skb5",
+      "created_at": "2026-05-25T06:39:28.640Z",
+      "updated_at": "2026-05-25T06:39:28.640Z",
+      "company_id": "comp_mgzlr0i-i9uuugz",
+      "doc_type": "01",
+      "serie": "F001",
+      "correlativo": 0
+    },
+    {
+      "id": "9snidzt",
+      "created_at": "2026-05-25T06:39:28.641Z",
+      "updated_at": "2026-05-25T06:39:28.641Z",
+      "company_id": "comp_mgzlr0i-i9uuugz",
+      "doc_type": "03",
+      "serie": "B001",
+      "correlativo": 0
+    },
+    {
+      "id": "oz775a1",
+      "created_at": "2026-05-25T06:39:28.644Z",
+      "updated_at": "2026-05-25T06:39:28.644Z",
+      "company_id": "comp_mgzlr0i-i9uuugz",
+      "doc_type": "07",
+      "serie": "FC01",
+      "correlativo": 0
+    },
+    {
+      "id": "xlvwcg3",
+      "created_at": "2026-05-25T06:39:28.645Z",
+      "updated_at": "2026-05-25T06:39:28.645Z",
+      "company_id": "comp_mgzlr0i-i9uuugz",
+      "doc_type": "07",
+      "serie": "BC01",
+      "correlativo": 0
+    },
+    {
+      "id": "x93jz16",
+      "created_at": "2026-05-25T06:39:28.646Z",
+      "updated_at": "2026-05-25T06:39:28.646Z",
+      "company_id": "comp_mgzlr0i-i9uuugz",
+      "doc_type": "08",
+      "serie": "FD01",
+      "correlativo": 0
+    },
+    {
+      "id": "0x1zx60",
+      "created_at": "2026-05-25T06:39:28.647Z",
+      "updated_at": "2026-05-25T06:39:28.647Z",
+      "company_id": "comp_mgzlr0i-i9uuugz",
+      "doc_type": "08",
+      "serie": "BD01",
+      "correlativo": 0
     }
   ],
   "daily_summaries": [],
-  "documents": [],
+  "documents": [
+    {
+      "id": "uetyqwh-h0ia320",
+      "created_at": "2026-05-25T06:44:10.749Z",
+      "updated_at": "2026-05-25T06:44:10.749Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "doc_type": "03",
+      "serie": "B001",
+      "correlativo": 49,
+      "status": "signed",
+      "issue_date": "2026-05-25",
+      "total": 24541.64,
+      "daily_summary_id": null,
+      "user_id": "user_dev_id",
+      "payload": {
+        "cliente": {
+          "tipoDoc": "1",
+          "numDoc": "72564818",
+          "razonSocial": "Ricardo Ramos Julca",
+          "direccion": "rqrasds",
+          "correo": "q@gmail.com",
+          "telefono": "987654321"
+        },
+        "moneda": "PEN",
+        "items": [
+          {
+            "codigo": "PROD-001",
+            "descripcion": "Laptop Apple MacBook Pro 16\" M3 Max",
+            "cantidad": 1,
+            "precioUnitario": 15499,
+            "igv": 2789.82
+          },
+          {
+            "codigo": "PROD-002",
+            "descripcion": "Monitor Gamer Samsung Odyssey OLED G9",
+            "cantidad": 1,
+            "precioUnitario": 5299,
+            "igv": 953.82
+          }
+        ],
+        "tipoOperacion": "0101",
+        "totals": {
+          "subtotal": 20798,
+          "igvTotal": 3743.64,
+          "total": 24541.64
+        }
+      }
+    }
+  ],
   "invoice_notes": [],
   "sunat_submissions": [],
   "notifications": [
@@ -196,6 +337,16 @@
       "type": "info",
       "read": false,
       "created_at": "2026-05-25T05:58:49.286Z"
+    },
+    {
+      "id": "4tyes0v",
+      "created_at": "2026-05-25T06:44:10.750Z",
+      "updated_at": "2026-05-25T06:44:10.750Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "title": "Comprobante Emitido",
+      "message": "Boleta B001-49 emitida. Pendiente de envío en Resumen Diario (RC).",
+      "type": "info",
+      "read": false
     }
   ],
   "audit_logs": [
@@ -353,6 +504,54 @@
       "ip_address": "127.0.0.1",
       "result": "success",
       "details": "Updated company INVOICEFLOW DEMO S.A.C. status to no change and plan to starter"
+    },
+    {
+      "id": "mexn3on",
+      "created_at": "2026-05-25T06:39:28.655Z",
+      "updated_at": "2026-05-25T06:39:28.655Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "REGISTER_COMPANY",
+      "module": "SaaS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Registered client company MinddevperuSAC (98765432111). Admin: admin_98765432111"
+    },
+    {
+      "id": "08nwg77",
+      "created_at": "2026-05-25T06:40:19.685Z",
+      "updated_at": "2026-05-25T06:40:19.685Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "LOGIN",
+      "module": "AUTH",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "User admin logged in successfully."
+    },
+    {
+      "id": "buvdd5i",
+      "created_at": "2026-05-25T06:44:04.058Z",
+      "updated_at": "2026-05-25T06:44:04.058Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "CREATE_CUSTOMER",
+      "module": "CUSTOMERS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Created customer Ricardo Ramos Julca (72564818)"
+    },
+    {
+      "id": "cmoa7oj",
+      "created_at": "2026-05-25T06:44:10.752Z",
+      "updated_at": "2026-05-25T06:44:10.752Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "EMIT_BOLETA",
+      "module": "BOLETAS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Emitted boleta B001-49 with total PEN 24541.64. Status: signed"
     }
   ]
 }

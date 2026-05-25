@@ -112,7 +112,7 @@ export default function LoginPage() {
         {/* Credentials Presets */}
         <div className="mt-8 pt-6 border-t border-zinc-150">
           <p className="text-[10px] text-zinc-400 font-bold mb-3 uppercase tracking-wider">Perfiles de Demostración</p>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => selectPreset('admin', 'admin123')}
               className="flex flex-col items-start p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-left transition-colors cursor-pointer"
@@ -121,16 +121,6 @@ export default function LoginPage() {
                 <ShieldCheck className="w-3.5 h-3.5 text-[#4f46e5] shrink-0" /> Admin
               </span>
               <span className="text-[8px] text-zinc-500 font-mono mt-1">admin123</span>
-            </button>
-
-            <button
-              onClick={() => selectPreset('operador', 'operador123')}
-              className="flex flex-col items-start p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 text-left transition-colors cursor-pointer"
-            >
-              <span className="text-[9px] font-bold text-zinc-700 flex items-center gap-1">
-                <Building2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Operario
-              </span>
-              <span className="text-[8px] text-zinc-500 font-mono mt-1">operador123</span>
             </button>
 
             <button

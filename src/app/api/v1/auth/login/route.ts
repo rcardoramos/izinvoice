@@ -31,8 +31,6 @@ export async function POST(req: NextRequest) {
     let token = 'mock-jwt-admin-token';
     if (username === 'invoiceflow') {
       token = 'mock-jwt-superadmin-token';
-    } else if (username === 'operador') {
-      token = 'mock-jwt-operator-token';
     }
 
     const responseData: LoginResponse = {

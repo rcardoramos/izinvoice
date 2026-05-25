@@ -27,19 +27,7 @@ export default function DashboardLayout({
     if (!isAuthenticated) {
       router.push('/');
     } else {
-      // Operator routing restrictions
-      if (user?.role === 'operator') {
-        const forbiddenPaths = [
-          '/dashboard',
-          '/dashboard/products',
-          '/dashboard/daily-summaries',
-          '/dashboard/settings'
-        ];
-        if (forbiddenPaths.includes(pathname)) {
-          router.push('/dashboard/invoices/new');
-          return;
-        }
-      }
+
 
       // Super Admin routing restrictions (no tenant company context)
       if (user?.role === 'super_admin') {

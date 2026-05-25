@@ -10,7 +10,7 @@ export interface UserSession {
   username: string;
   fullName: string | null;
   email: string | null;
-  role: 'super_admin' | 'admin' | 'operator';
+  role: 'super_admin' | 'admin';
 }
 
 export interface CompanySession {

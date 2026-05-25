@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { ruc, businessName, tradeName, address, email, phone, planName } = body;
+    const { ruc, businessName, tradeName, address, email, phone, planName, adminPassword } = body;
 
     if (!ruc || !businessName || !email) {
       return NextResponse.json({ message: 'Faltan campos obligatorios: ruc, businessName y email.' }, { status: 400 });
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
     const newAdminUser = FileDb.insert('users', {
       company_id: companyId,
       username: adminUsername,
-      password_hash: 'admin123', // default credentials
+      password_hash: adminPassword || 'admin123', // custom or default credentials
       full_name: `Admin ${businessName}`,
       email,
       role: 'admin',
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
       company: newCompany,
       adminUser: {
         username: adminUsername,
-        password_hash: 'admin123',
+        password_hash: adminPassword || 'admin123',
       },
     }, { status: 201 });
   } catch (error: any) {
@@ -127,7 +127,7 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { companyId, status, planName } = body;
+    const { companyId, status, planName, newPassword } = body;
 
     if (!companyId) {
       return NextResponse.json({ message: 'Se requiere companyId.' }, { status: 400 });
@@ -143,6 +143,18 @@ export async function PUT(req: NextRequest) {
       FileDb.saveTable('subscriptions', subs);
     }
 
+    // Reset password if provided
+    let passwordUpdated = false;
+    if (newPassword) {
+      const users = FileDb.getTable('users');
+      const adminUserIdx = users.findIndex((u: any) => u.company_id === companyId && u.role === 'admin');
+      if (adminUserIdx !== -1) {
+        users[adminUserIdx].password_hash = newPassword;
+        FileDb.saveTable('users', users);
+        passwordUpdated = true;
+      }
+    }
+
     // Log audit
     const company = FileDb.findById('companies', companyId);
     logAudit(
@@ -150,7 +162,7 @@ export async function PUT(req: NextRequest) {
       ctx.user.id,
       'UPDATE_COMPANY_STATUS',
       'SaaS',
-      `Updated company ${company?.business_name || companyId} status to ${status || 'no change'} and plan to ${planName || 'no change'}`
+      `Updated company ${company?.business_name || companyId}. Status: ${status || 'no change'}, Plan: ${planName || 'no change'}, Password Reset: ${passwordUpdated ? 'yes' : 'no'}`
     );
 
     return NextResponse.json({ success: true });

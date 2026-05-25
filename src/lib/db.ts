@@ -72,17 +72,6 @@ const INITIAL_DB: DbSchema = {
       role: 'admin',
       status: 'active',
       created_at: new Date().toISOString(),
-    },
-    {
-      id: 'user_operator_id',
-      company_id: '00000000-0000-4000-8000-000000000001',
-      username: 'operador',
-      password_hash: 'operador123',
-      full_name: 'Operador Ventas (Cliente Cajero)',
-      email: 'ventas@invoiceflow.pe',
-      role: 'operator',
-      status: 'active',
-      created_at: new Date().toISOString(),
     }
   ],
   api_keys: [

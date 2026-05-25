@@ -64,10 +64,9 @@ export function SearchCommand() {
 
     const triggerSearch = async () => {
       try {
-        const isOperator = user?.role === 'operator';
         const promises = [
           BillingApiClient.listCustomers(query),
-          isOperator ? Promise.resolve([]) : BillingApiClient.listProducts(query),
+          BillingApiClient.listProducts(query),
           BillingApiClient.listDocuments({ search: query }),
         ];
         
@@ -82,7 +81,7 @@ export function SearchCommand() {
 
     const delayDebounce = setTimeout(triggerSearch, 200);
     return () => clearTimeout(delayDebounce);
-  }, [query, user]);
+  }, [query]);
 
   const handleNavigate = (path: string) => {
     router.push(path);
@@ -92,7 +91,6 @@ export function SearchCommand() {
   if (!commandPaletteOpen) return null;
 
   const hasResults = results.customers.length > 0 || results.products.length > 0 || results.documents.length > 0;
-  const isOperator = user?.role === 'operator';
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-xs z-50 flex items-start justify-center pt-24 select-none">
@@ -105,7 +103,7 @@ export function SearchCommand() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={isOperator ? "Busca clientes o comprobantes..." : "Busca clientes, productos, comprobantes o comandos..."}
+            placeholder="Busca clientes, productos, comprobantes o comandos..."
             className="flex-1 bg-transparent border-0 text-sm focus:ring-0 text-zinc-900 placeholder-zinc-400 p-0 focus:outline-none"
           />
           <span className="text-[10px] bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200 font-mono text-zinc-400">ESC</span>
@@ -118,18 +116,16 @@ export function SearchCommand() {
             <div className="p-2 space-y-1">
               <p className="text-[10px] text-zinc-400 font-semibold px-2 mb-2 uppercase tracking-wider">Comandos Rápidos</p>
               
-              {!isOperator && (
-                <button
-                  onClick={() => handleNavigate('/dashboard')}
-                  className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/70 hover:text-[#4f46e5] text-left text-xs text-zinc-700 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Sparkles className="w-4 h-4 text-[#4f46e5]" />
-                    <span>Ir al Dashboard</span>
-                  </div>
-                  <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
-                </button>
-              )}
+              <button
+                onClick={() => handleNavigate('/dashboard')}
+                className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/70 hover:text-[#4f46e5] text-left text-xs text-zinc-700 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Sparkles className="w-4 h-4 text-[#4f46e5]" />
+                  <span>Ir al Dashboard</span>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
+              </button>
 
               <button
                 onClick={() => handleNavigate('/dashboard/invoices/new')}
@@ -153,31 +149,27 @@ export function SearchCommand() {
                 <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
               </button>
 
-              {!isOperator && (
-                <>
-                  <button
-                    onClick={() => handleNavigate('/dashboard/daily-summaries')}
-                    className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/70 hover:text-[#4f46e5] text-left text-xs text-zinc-700 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Layers className="w-4 h-4 text-[#4f46e5]" />
-                      <span>Ver Resúmenes Diarios (RC/RA)</span>
-                    </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
-                  </button>
+              <button
+                onClick={() => handleNavigate('/dashboard/daily-summaries')}
+                className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/70 hover:text-[#4f46e5] text-left text-xs text-zinc-700 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Layers className="w-4 h-4 text-[#4f46e5]" />
+                  <span>Ver Resúmenes Diarios (RC/RA)</span>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
+              </button>
 
-                  <button
-                    onClick={() => handleNavigate('/dashboard/settings')}
-                    className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/70 hover:text-[#4f46e5] text-left text-xs text-zinc-700 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Settings className="w-4 h-4 text-[#4f46e5]" />
-                      <span>Configuración del Sistema</span>
-                    </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
-                  </button>
-                </>
-              )}
+              <button
+                onClick={() => handleNavigate('/dashboard/settings')}
+                className="w-full flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/70 hover:text-[#4f46e5] text-left text-xs text-zinc-700 transition-colors cursor-pointer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Settings className="w-4 h-4 text-[#4f46e5]" />
+                  <span>Configuración del Sistema</span>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-zinc-400" />
+              </button>
             </div>
           )}
 

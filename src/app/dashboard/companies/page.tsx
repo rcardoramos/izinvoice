@@ -38,12 +38,49 @@ export default function CompaniesPage() {
     email: '',
     phone: '',
     planName: 'starter',
+    adminPassword: '',
   });
   
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [createdData, setCreatedData] = useState<any>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // Email simulation state
+  const [isMailModalOpen, setIsMailModalOpen] = useState(false);
+  const [mailDetails, setMailDetails] = useState<{ from: string; to: string; subject: string; body: string } | null>(null);
+
+  // Reset password states
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [resettingCompany, setResettingCompany] = useState<any>(null);
+  const [newPasswordInput, setNewPasswordInput] = useState('');
+  const [resetSuccessMessage, setResetSuccessMessage] = useState('');
+
+  const handleSendEmailSimulated = (data: { email: string; ruc: string; businessName: string; username: string; password_hash: string }) => {
+    const body = `Estimado cliente,
+
+Tus credenciales de acceso para la plataforma izInvoce han sido creadas con éxito.
+
+Empresa: ${data.businessName}
+RUC: ${data.ruc}
+
+Credenciales de Administrador:
+- Usuario: ${data.username}
+- Contraseña: ${data.password_hash}
+
+Puedes iniciar sesión ingresando a la dirección de tu panel de facturación.
+
+Atentamente,
+Soporte Técnico de izInvoce`;
+
+    setMailDetails({
+      from: 'no-reply@izinvoce.pe',
+      to: data.email,
+      subject: '¡Tus credenciales de izInvoce han sido creadas!',
+      body,
+    });
+    setIsMailModalOpen(true);
+  };
 
   const fetchCompanies = async () => {
     try {
@@ -101,6 +138,7 @@ export default function CompaniesPage() {
         email: '',
         phone: '',
         planName: 'starter',
+        adminPassword: '',
       });
       
       // Refresh
@@ -129,6 +167,37 @@ export default function CompaniesPage() {
     } catch (err) {
       console.error('Error updating company plan', err);
     }
+  };
+
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resettingCompany) return;
+    if (!newPasswordInput.trim()) {
+      return;
+    }
+    
+    try {
+      setSubmitting(true);
+      await BillingApiClient.updateSaasCompany({
+        companyId: resettingCompany.id,
+        newPassword: newPasswordInput.trim()
+      });
+      setResetSuccessMessage('¡Contraseña restablecida con éxito!');
+      await fetchCompanies();
+    } catch (err: any) {
+      setResetSuccessMessage(`Error: ${err.message || 'No se pudo restablecer la clave.'}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const generateRandomPassword = () => {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let pass = '';
+    for (let i = 0; i < 10; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setNewPasswordInput(pass);
   };
 
   const filteredCompanies = companies.filter((c) => {
@@ -163,7 +232,7 @@ export default function CompaniesPage() {
           
           <button
             onClick={() => setIsRegisterOpen(true)}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-md shadow-blue-500/10 transition-all cursor-pointer"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-md shadow-blue-700/15 transition-all cursor-pointer"
           >
             <PlusCircle className="w-4 h-4" />
             <span>Registrar Empresa</span>
@@ -261,16 +330,30 @@ export default function CompaniesPage() {
                         </div>
                       </td>
                       <td className="p-4 text-right">
-                        <button
-                          onClick={() => toggleStatus(c.id, c.status)}
-                          className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all cursor-pointer ${
-                            c.status === 'active' 
-                              ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' 
-                              : 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
-                          }`}
-                        >
-                          {c.status === 'active' ? 'Suspender' : 'Reactivar'}
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              setResettingCompany(c);
+                              setNewPasswordInput('');
+                              setResetSuccessMessage('');
+                              setIsResetPasswordOpen(true);
+                            }}
+                            className="p-1.5 rounded-lg border border-zinc-250 dark:border-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-all cursor-pointer"
+                            title="Restablecer Contraseña"
+                          >
+                            <Unlock className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => toggleStatus(c.id, c.status)}
+                            className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all cursor-pointer ${
+                              c.status === 'active' 
+                                ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' 
+                                : 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                            }`}
+                          >
+                            {c.status === 'active' ? 'Suspender' : 'Reactivar'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -392,6 +475,17 @@ export default function CompaniesPage() {
                 </div>
               </div>
 
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-bold text-zinc-400">Contraseña del Administrador (Opcional)</label>
+                <input
+                  type="text"
+                  value={form.adminPassword}
+                  onChange={(e) => setForm({ ...form, adminPassword: e.target.value })}
+                  placeholder="Dejar vacío para usar clave por defecto (admin123)"
+                  className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded-xl text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                />
+              </div>
+
               <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 text-[11px] text-blue-500 leading-relaxed">
                 <p className="font-semibold mb-1">Aprovisionamiento Automático de SUNAT y Credenciales:</p>
                 Al registrar la empresa, se crearán las series de comprobantes (F001/B001), credenciales SOL Mock para el entorno Beta, y un usuario Administrador por defecto con clave temporal.
@@ -408,7 +502,7 @@ export default function CompaniesPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-md text-xs font-semibold disabled:opacity-50"
+                  className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl shadow-md text-xs font-semibold disabled:opacity-50"
                 >
                   {submitting ? 'Registrando...' : 'Confirmar Registro'}
                 </button>
@@ -484,12 +578,224 @@ export default function CompaniesPage() {
                 </div>
               </div>
 
-              <button
-                onClick={() => setIsSuccessOpen(false)}
-                className="w-full py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 rounded-xl font-semibold text-xs shadow-md transition-colors cursor-pointer"
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleSendEmailSimulated({
+                    email: createdData.company.email,
+                    ruc: createdData.company.ruc,
+                    businessName: createdData.company.business_name,
+                    username: createdData.adminUser.username,
+                    password_hash: createdData.adminUser.password_hash
+                  })}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl font-semibold text-xs shadow-md transition-colors cursor-pointer"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Enviar por Correo</span>
+                </button>
+                <button
+                  onClick={() => setIsSuccessOpen(false)}
+                  className="flex-1 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl font-semibold text-xs border border-zinc-250 transition-colors cursor-pointer"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: SIMULATED EMAIL VIEWER */}
+      {isMailModalOpen && mailDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white border border-zinc-200 rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="p-4 bg-zinc-50 border-b border-zinc-250 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider font-mono">Buzón de Correo Simulado</span>
+              </div>
+              <button 
+                onClick={() => setIsMailModalOpen(false)} 
+                className="text-zinc-400 hover:text-zinc-700 transition-colors"
               >
-                Cerrar y Regresar
+                <X className="w-4 h-4" />
               </button>
+            </div>
+
+            {/* Email Envelope Info */}
+            <div className="p-4 border-b border-zinc-150 bg-zinc-50/50 space-y-2 text-xs">
+              <div className="grid grid-cols-[60px_1fr] items-center">
+                <span className="text-zinc-400 font-semibold">De:</span>
+                <span className="font-mono text-zinc-700">{mailDetails.from}</span>
+              </div>
+              <div className="grid grid-cols-[60px_1fr] items-center">
+                <span className="text-zinc-400 font-semibold">Para:</span>
+                <span className="font-mono text-zinc-850 font-medium">{mailDetails.to}</span>
+              </div>
+              <div className="grid grid-cols-[60px_1fr] items-center">
+                <span className="text-zinc-400 font-semibold">Asunto:</span>
+                <span className="font-semibold text-zinc-800">{mailDetails.subject}</span>
+              </div>
+            </div>
+
+            {/* Email Body */}
+            <div className="p-6 bg-white min-h-[180px] font-sans text-xs text-zinc-800 leading-relaxed whitespace-pre-line">
+              {mailDetails.body}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="p-4 bg-zinc-50 border-t border-zinc-150 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => handleCopy(mailDetails.body, 'email-content')}
+                className="px-3 py-2 border border-zinc-250 rounded-xl hover:bg-zinc-100 text-zinc-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                {copiedKey === 'email-content' ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>Copiado</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copiar Texto</span>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsMailModalOpen(false)}
+                className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-white rounded-xl text-xs font-semibold shadow-md transition-colors cursor-pointer"
+              >
+                Cerrar Buzón
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: RESET PASSWORD */}
+      {isResetPasswordOpen && resettingCompany && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white border border-zinc-200 rounded-2xl w-full max-w-md shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-6 border-b border-zinc-150 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Unlock className="w-4 h-4 text-blue-600" />
+                <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Restablecer Contraseña</h3>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsResetPasswordOpen(false)} 
+                className="text-zinc-400 hover:text-zinc-900 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <p className="text-[10px] uppercase font-bold text-zinc-400 mb-0.5">Empresa</p>
+                <p className="font-semibold text-zinc-800 text-xs">{resettingCompany.business_name}</p>
+                <p className="text-[10px] text-zinc-500 font-mono">RUC: {resettingCompany.ruc}</p>
+              </div>
+
+              {resetSuccessMessage ? (
+                <div className="space-y-4">
+                  <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 p-3 rounded-lg text-xs font-medium">
+                    {resetSuccessMessage}
+                  </div>
+                  
+                  <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-200 text-[11px] text-zinc-650 space-y-2">
+                    <p className="font-semibold text-zinc-800">Nueva credencial establecida:</p>
+                    <div className="font-mono text-xs flex justify-between items-center bg-white p-2 rounded border border-zinc-150">
+                      <div>
+                        <span className="text-[10px] text-zinc-400">Usuario:</span>
+                        <p className="font-bold text-blue-600">admin_{resettingCompany.ruc}</p>
+                      </div>
+                    </div>
+                    <div className="font-mono text-xs flex justify-between items-center bg-white p-2 rounded border border-zinc-150">
+                      <div>
+                        <span className="text-[10px] text-zinc-400">Nueva Contraseña:</span>
+                        <p className="font-bold text-zinc-800">{newPasswordInput}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(newPasswordInput, 'reset-pass-copied')}
+                        className="p-1 text-zinc-400 hover:text-zinc-900 transition-colors"
+                      >
+                        {copiedKey === 'reset-pass-copied' ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsResetPasswordOpen(false);
+                        handleSendEmailSimulated({
+                          email: resettingCompany.email,
+                          ruc: resettingCompany.ruc,
+                          businessName: resettingCompany.business_name,
+                          username: `admin_${resettingCompany.ruc}`,
+                          password_hash: newPasswordInput
+                        });
+                      }}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold text-xs shadow-md transition-colors cursor-pointer"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Enviar por Correo</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsResetPasswordOpen(false)}
+                      className="flex-1 py-2.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-700 rounded-xl font-semibold text-xs border border-zinc-250 transition-colors cursor-pointer"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400">Nueva Contraseña de Administrador</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        required
+                        value={newPasswordInput}
+                        onChange={(e) => setNewPasswordInput(e.target.value)}
+                        placeholder="Ingresa la nueva clave..."
+                        className="flex-1 border border-zinc-200 bg-zinc-50 p-2.5 rounded-xl text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={generateRandomPassword}
+                        className="px-3 border border-zinc-250 hover:bg-zinc-50 rounded-xl text-xs font-semibold text-zinc-700 transition-colors cursor-pointer shrink-0"
+                      >
+                        Generar clave
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-zinc-150 flex justify-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsResetPasswordOpen(false)}
+                      className="px-4 py-2 border border-zinc-250 rounded-xl hover:bg-zinc-50 transition-colors text-xs font-semibold"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting || !newPasswordInput.trim()}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-md text-xs font-semibold disabled:opacity-50"
+                    >
+                      {submitting ? 'Guardando...' : 'Restablecer Clave'}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         </div>

@@ -518,22 +518,22 @@ export default function NewInvoicePage() {
               {/* Client doc lookups search */}
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <Search className="absolute left-2.5 top-2.5 w-3.5 h-3.5 text-zinc-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
                   <input
                     type="text"
                     value={clientDoc}
                     onChange={(e) => setClientDoc(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && searchClient()}
                     placeholder={docType === '01' ? 'Ingrese RUC...' : 'RUC o DNI...'}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1.5 pl-8 pr-3 text-xs"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 pl-9 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
                 <button
                   onClick={searchClient}
                   disabled={clientSearching || !clientDoc}
-                  className="px-3 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-lg text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
+                  className="px-4 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl text-xs font-semibold hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center shrink-0"
                 >
-                  {clientSearching ? '...' : 'Buscar'}
+                  {clientSearching ? 'Buscando...' : 'Buscar'}
                 </button>
               </div>
 
@@ -598,7 +598,7 @@ export default function NewInvoicePage() {
               <button
                 onClick={handleEmitComprobante}
                 disabled={lines.length === 0 || !selectedClient}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-500 active:scale-[0.99] disabled:opacity-50 disabled:active:scale-100 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-500/10 transition-all cursor-pointer"
+                className="w-full py-3 bg-blue-700 hover:bg-blue-800 active:scale-[0.99] disabled:opacity-50 disabled:active:scale-100 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-700/15 transition-all cursor-pointer"
               >
                 Emitir {docType === '01' ? 'Factura' : 'Boleta'} Electrónica
               </button>
@@ -685,13 +685,13 @@ export default function NewInvoicePage() {
                 <button
                   type="button"
                   onClick={() => setShowAddClientModal(false)}
-                  className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer text-zinc-500"
+                  className="px-4 py-2 border border-zinc-250 dark:border-zinc-800 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-850 cursor-pointer text-zinc-500 font-semibold text-xs transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 cursor-pointer"
+                  className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl font-semibold text-xs cursor-pointer shadow-sm transition-colors"
                 >
                   Registrar
                 </button>
@@ -785,13 +785,13 @@ export default function NewInvoicePage() {
                 <button
                   type="button"
                   onClick={() => setShowAddProductModal(false)}
-                  className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer text-zinc-500"
+                  className="px-4 py-2 border border-zinc-250 dark:border-zinc-800 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-850 cursor-pointer text-zinc-500 font-semibold text-xs transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 cursor-pointer"
+                  className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl font-semibold text-xs cursor-pointer shadow-sm transition-colors"
                 >
                   Registrar
                 </button>

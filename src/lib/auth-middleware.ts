@@ -40,8 +40,6 @@ export function getAuthContext(req: NextRequest): AuthenticatedContext | null {
   let user: any = null;
   if (token === 'mock-jwt-admin-token') {
     user = users.find((u: any) => u.username === 'admin');
-  } else if (token === 'mock-jwt-operator-token') {
-    user = users.find((u: any) => u.username === 'operador');
   } else {
     // Default fallback to first admin user if token is simulated in demo UI
     user = users.find((u: any) => u.company_id === company.id);
