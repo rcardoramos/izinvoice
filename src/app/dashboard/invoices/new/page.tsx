@@ -23,6 +23,8 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { SearchInput } from '@/components/shared/SearchInput';
+import { AddClientModal } from './components/AddClientModal';
+import { EmissionResultModal } from './components/EmissionResultModal';
 
 export default function NewInvoicePage() {
   const router = useRouter();
@@ -42,30 +44,9 @@ export default function NewInvoicePage() {
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
 
-  // New Client Form
-  const [newClient, setNewClient] = useState({
-    docType: '6',
-    docNumber: '',
-    razonSocial: '',
-    direccion: '',
-    correo: '',
-    telefono: '',
-  });
-
-  // Product Inventory State
+  // Product Catalog State
   const [productsList, setProductsList] = useState<any[]>([]);
   const [selectedProductId, setSelectedProductId] = useState('');
-  const [showAddProductModal, setShowAddProductModal] = useState(false);
-
-  // New Product Form
-  const [newProduct, setNewProduct] = useState({
-    codigo: '',
-    nombre: '',
-    descripcion: '',
-    categoria: '',
-    precio: '',
-    igvRate: '18.00',
-  });
 
   // Invoice Lines
   const [lines, setLines] = useState<any[]>([]);
@@ -132,12 +113,6 @@ export default function NewInvoicePage() {
       if (results.length > 0) {
         setSelectedClient(results[0]);
       } else {
-        // Preset client number in new customer form
-        setNewClient((prev) => ({
-          ...prev,
-          docType: clientDoc.length === 11 ? '6' : '1',
-          docNumber: clientDoc,
-        }));
         setSelectedClient(null);
       }
     } catch (err) {
@@ -147,67 +122,18 @@ export default function NewInvoicePage() {
     }
   };
 
-  // Add client inline without leaving flow
-  const handleAddClientSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const created = await BillingApiClient.createCustomer(newClient);
-      setSelectedClient(created);
-      setClientDoc(created.doc_number);
-      setSearchPerformed(true);
-      setShowAddClientModal(false);
-      
-      // Clear client form
-      setNewClient({
-        docType: '6',
-        docNumber: '',
-        razonSocial: '',
-        direccion: '',
-        correo: '',
-        telefono: '',
-      });
-      
-      addNotification({
-        id: Math.random().toString(),
-        title: 'Cliente Registrado',
-        message: `Cliente ${created.razon_social} registrado y seleccionado para el comprobante.`,
-        type: 'success',
-        created_at: new Date().toISOString(),
-      });
-    } catch (err: any) {
-      alert(err.message || 'Error al guardar cliente');
-    }
-  };
-
-  // Add product inline
-  const handleAddProductSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const created = await BillingApiClient.createProduct(newProduct);
-      setProductsList((prev) => [...prev, created]);
-      setSelectedProductId(created.id);
-      setShowAddProductModal(false);
-      
-      // Clear product form
-      setNewProduct({
-        codigo: '',
-        nombre: '',
-        descripcion: '',
-        categoria: '',
-        precio: '',
-        igvRate: '18.00',
-      });
-      
-      addNotification({
-        id: Math.random().toString(),
-        title: 'Producto Registrado',
-        message: `Producto '${created.nombre}' agregado al catálogo de la empresa.`,
-        type: 'success',
-        created_at: new Date().toISOString(),
-      });
-    } catch (err: any) {
-      alert(err.message || 'Error al guardar producto');
-    }
+  const handleClientRegistered = (created: any) => {
+    setSelectedClient(created);
+    setClientDoc(created.doc_number);
+    setSearchPerformed(true);
+    
+    addNotification({
+      id: Math.random().toString(),
+      title: 'Cliente Registrado',
+      message: `Cliente ${created.razon_social} registrado y seleccionado para el comprobante.`,
+      type: 'success',
+      created_at: new Date().toISOString(),
+    });
   };
 
   // Add Item Line to Invoice
@@ -552,14 +478,7 @@ export default function NewInvoicePage() {
                 <div className="p-3 border border-yellow-500/10 bg-yellow-500/[0.02] rounded-xl flex items-center justify-between text-xs text-amber-600/90 font-medium">
                   <span>Cliente no registrado</span>
                   <button
-                    onClick={() => {
-                      setNewClient((prev) => ({
-                        ...prev,
-                        docType: clientDoc.length === 11 ? '6' : '1',
-                        docNumber: clientDoc,
-                      }));
-                      setShowAddClientModal(true);
-                    }}
+                    onClick={() => setShowAddClientModal(true)}
                     className="text-[10px] bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-bold hover:bg-amber-500/20 transition-colors cursor-pointer"
                   >
                     Registrar
@@ -604,244 +523,29 @@ export default function NewInvoicePage() {
         </div>
       </div>
 
-      {/* 1. Registrar Cliente Inline Modal */}
-      {showAddClientModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none">
-          <div className="w-[450px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden p-6 shadow-2xl space-y-4">
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider border-b border-zinc-100 dark:border-zinc-800 pb-2">
-              Registrar Cliente
-            </h3>
-            <form onSubmit={handleAddClientSubmit} className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Tipo Doc</label>
-                  <select
-                    value={newClient.docType}
-                    onChange={(e) => setNewClient({ ...newClient, docType: e.target.value })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                  >
-                    <option value="1">DNI (1)</option>
-                    <option value="6">RUC (6)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Nro Documento</label>
-                  <input
-                    type="text"
-                    value={newClient.docNumber}
-                    onChange={(e) => setNewClient({ ...newClient, docNumber: e.target.value })}
-                    required
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                  />
-                </div>
-              </div>
+      <AddClientModal
+        isOpen={showAddClientModal}
+        onClose={() => setShowAddClientModal(false)}
+        onSubmitSuccess={handleClientRegistered}
+        initialDocNumber={clientDoc}
+        initialDocType={clientDoc.length === 11 ? '6' : '1'}
+      />
 
-              <div>
-                <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Razón Social / Nombre Completo</label>
-                <input
-                  type="text"
-                  value={newClient.razonSocial}
-                  onChange={(e) => setNewClient({ ...newClient, razonSocial: e.target.value })}
-                  required
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Dirección Fiscal</label>
-                <input
-                  type="text"
-                  value={newClient.direccion}
-                  onChange={(e) => setNewClient({ ...newClient, direccion: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Correo Electrónico</label>
-                  <input
-                    type="email"
-                    value={newClient.correo}
-                    onChange={(e) => setNewClient({ ...newClient, correo: e.target.value })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Teléfono</label>
-                  <input
-                    type="text"
-                    value={newClient.telefono}
-                    onChange={(e) => setNewClient({ ...newClient, telefono: e.target.value })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => setShowAddClientModal(false)}
-                  className="px-4 py-2 border border-zinc-250 dark:border-zinc-800 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-850 cursor-pointer text-zinc-500 font-semibold text-xs transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl font-semibold text-xs cursor-pointer shadow-sm transition-colors"
-                >
-                  Registrar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-             {/* 3. Post-Emission Result / Receipt outcome Modal */}
-      {resultModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto select-none print:bg-white print:p-0 print:block print:static print:z-auto">
-          <div className="w-full max-w-2xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-8 print:border-none print:shadow-none print:my-0 print:max-w-none print:bg-white">
-            
-            {/* Outcome banner */}
-            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between print:hidden">
-              <div className="flex items-center gap-3">
-                {emissionLoading ? (
-                  <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
-                ) : apiError ? (
-                  <AlertCircle className="w-6 h-6 text-rose-500" />
-                ) : (
-                  <Check className="w-6 h-6 text-emerald-500" />
-                )}
-                <div>
-                  <h3 className="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider">
-                    {emissionLoading ? 'Procesando Firma y Emisión...' : apiError ? 'Error de Emisión' : 'Comprobante Emitido'}
-                  </h3>
-                  <p className="text-[10px] text-zinc-550 dark:text-zinc-500 font-mono">
-                    {emissionLoading ? 'Negociando con servidores SUNAT...' : apiError ? 'Error devuelto por la API SUNAT' : `Documento registrado con éxito.`}
-                  </p>
-                </div>
-              </div>
-              
-              {!emissionLoading && (
-                <button
-                  onClick={closeOutcomeModal}
-                  className="px-3.5 py-1.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-semibold rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-350 cursor-pointer"
-                >
-                  Cerrar
-                </button>
-              )}
-            </div>
-
-            {/* Content box */}
-            <div className="p-6 bg-zinc-50/50 dark:bg-zinc-900/50 flex-1 max-h-[90vh] overflow-y-auto space-y-6 print:p-0 print:bg-white print:max-h-none print:overflow-visible">
-              {emissionLoading ? (
-                <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                  <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">Generando UBL XML, firmando digitalmente y enviando...</p>
-                </div>
-              ) : apiError ? (
-                <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl text-xs space-y-2">
-                  <div className="flex gap-2 items-center text-rose-500 font-bold">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>Error al enviar a SUNAT</span>
-                  </div>
-                  <p className="text-rose-600 dark:text-rose-400 leading-snug">{apiError}</p>
-                  <p className="text-[10px] text-zinc-500 pt-2 font-mono">Verifique el ambiente SUNAT o consulte en los registros de bajas.</p>
-                </div>
-              ) : emittedDoc ? (
-                <div className="space-y-6">
-                  {/* Status Badges & Quick actions */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:hidden">
-                    <div className="bg-white dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800/80 space-y-2 text-xs">
-                      <p className="font-semibold text-zinc-400 uppercase text-[9px] tracking-wider">Resultado Transacción</p>
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-zinc-900 dark:text-white">{emittedDoc.serie}-{emittedDoc.correlativo}</span>
-                        <StatusBadge status={emittedDoc.status} />
-                      </div>
-                      <p className="text-[10px] text-zinc-500 dark:text-zinc-450 leading-snug">
-                        {emittedDoc.sunat?.description || emittedDoc.message || 'El comprobante ha sido registrado.'}
-                      </p>
-                    </div>
-
-                    <div className="bg-white dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800/80 space-y-2">
-                      <p className="font-semibold text-zinc-400 uppercase text-[9px] tracking-wider">Archivos Digitales</p>
-                      <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
-                        <a
-                          href={BillingApiClient.getXmlUrl(emittedDoc.id)}
-                          download
-                          className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors"
-                        >
-                          <FileCode className="w-4 h-4 text-blue-500" /> XML UBL
-                        </a>
-                        {emittedDoc.status === 'accepted' ? (
-                          <a
-                            href={BillingApiClient.getCdrUrl(emittedDoc.id)}
-                            download
-                            className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors"
-                          >
-                            <Download className="w-4 h-4 text-emerald-500" /> CDR SUNAT
-                          </a>
-                        ) : (
-                          <div className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200/55 dark:border-zinc-800/50 text-zinc-400 dark:text-zinc-650 cursor-not-allowed">
-                            <Download className="w-4 h-4" /> CDR (N/A)
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* PDF Receipt Print preview */}
-                  <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 space-y-4 print:border-none print:p-0">
-                    <p className="font-semibold text-zinc-450 dark:text-zinc-400 uppercase text-[9px] tracking-wider flex items-center justify-between print:hidden">
-                      <span>Vista Previa del Formato Impreso</span>
-                      <button
-                        onClick={() => window.print()}
-                        className="text-[10px] text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                      >
-                        <Printer className="w-3.5 h-3.5" /> Imprimir / PDF
-                      </button>
-                    </p>
-                    <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg bg-white overflow-hidden p-2 print-invoice-container print:border-none print:p-0">
-                      <PdfViewer
-                        document={{
-                          id: emittedDoc.id,
-                          docType: docType,
-                          serie,
-                          correlativo: emittedDoc.correlativo,
-                          status: emittedDoc.status,
-                          total: emittedDoc.total,
-                          issueDate: emittedDoc.issueDate || new Date().toISOString().split('T')[0] as any,
-                          dailySummaryId: null,
-                          payload: {
-                            cliente: {
-                              tipoDoc: selectedClient.doc_type,
-                              numDoc: selectedClient.doc_number,
-                              razonSocial: selectedClient.razon_social,
-                              direccion: selectedClient.direccion,
-                            },
-                            items: lines,
-                            totals: {
-                              subtotal,
-                              igvTotal,
-                              total,
-                            },
-                          },
-                          createdAt: new Date().toISOString(),
-                          updatedAt: new Date().toISOString(),
-                          sunat: null,
-                        }}
-                        companyName={company?.businessName || ''}
-                        companyRuc={company?.ruc || ''}
-                        companyAddress={company?.address || ''}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      )}
+      <EmissionResultModal
+        isOpen={resultModalOpen}
+        onClose={closeOutcomeModal}
+        emissionLoading={emissionLoading}
+        apiError={apiError}
+        emittedDoc={emittedDoc}
+        docType={docType}
+        serie={serie}
+        selectedClient={selectedClient}
+        lines={lines}
+        subtotal={subtotal}
+        igvTotal={igvTotal}
+        total={total}
+        company={company}
+      />
     </div>
   );
 }
