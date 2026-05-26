@@ -51,6 +51,8 @@ export default function DashboardPage() {
   const [recentCompanies, setRecentCompanies] = useState<any[]>([]);
 
   useEffect(() => {
+    if (!user) return;
+
     const loadDashboardData = async () => {
       try {
         setLoading(true);
@@ -183,7 +185,7 @@ export default function DashboardPage() {
     };
 
     loadDashboardData();
-  }, [company, isSaaSAdmin]);
+  }, [company, isSaaSAdmin, user]);
 
   // Render SaaS Global Dashboard
   if (isSaaSAdmin) {

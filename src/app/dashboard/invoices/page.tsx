@@ -293,7 +293,7 @@ export default function InvoicesHistoryPage() {
                 )}
 
                 {/* PDF receipt print format wrapper */}
-                <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 bg-zinc-100 dark:bg-zinc-900/40">
+                <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 bg-zinc-100 dark:bg-zinc-900/40 print-invoice-container">
                   <PdfViewer
                     document={selectedDoc}
                     companyName={company?.businessName || ''}

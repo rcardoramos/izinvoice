@@ -140,3 +140,24 @@ input:focus, select:focus, textarea:focus {
   background-image: radial-gradient(var(--border) 1px, transparent 1px);
   background-size: 16px 16px;
 }
+/* Print styles to only print the invoice receipt and hide UI elements */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-invoice-container,
+  .print-invoice-container * {
+    visibility: visible;
+  }
+  .print-invoice-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0 !important;
+    border: none !important;
+    background: white !important;
+    box-shadow: none !important;
+  }
+}

@@ -408,12 +408,6 @@ export default function NewInvoicePage() {
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">Líneas del Comprobante</h3>
-                <button
-                  onClick={() => setShowAddProductModal(true)}
-                  className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <PackagePlus className="w-3.5 h-3.5" /> Registrar Producto
-                </button>
               </div>
 
               {/* Add product to lines selector */}
@@ -525,7 +519,8 @@ export default function NewInvoicePage() {
                     onChange={(e) => setClientDoc(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && searchClient()}
                     placeholder={docType === '01' ? 'Ingrese RUC...' : 'RUC o DNI...'}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 pl-9 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    style={{ paddingLeft: '2.5rem' }}
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
                   />
                 </div>
                 <button
@@ -598,7 +593,7 @@ export default function NewInvoicePage() {
               <button
                 onClick={handleEmitComprobante}
                 disabled={lines.length === 0 || !selectedClient}
-                className="w-full py-3 bg-blue-700 hover:bg-blue-800 active:scale-[0.99] disabled:opacity-50 disabled:active:scale-100 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-700/15 transition-all cursor-pointer"
+                className="w-full py-3 bg-blue-700 enabled:hover:bg-blue-800 enabled:active:scale-[0.99] disabled:opacity-50 disabled:active:scale-100 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-700/15 transition-all disabled:cursor-not-allowed enabled:cursor-pointer"
               >
                 Emitir {docType === '01' ? 'Factura' : 'Boleta'} Electrónica
               </button>
@@ -700,114 +695,13 @@ export default function NewInvoicePage() {
           </div>
         </div>
       )}
-
-      {/* 2. Registrar Producto Inline Modal */}
-      {showAddProductModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none">
-          <div className="w-[450px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden p-6 shadow-2xl space-y-4">
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider border-b border-zinc-100 dark:border-zinc-800 pb-2">
-              Registrar Producto
-            </h3>
-            <form onSubmit={handleAddProductSubmit} className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Código de Catálogo</label>
-                  <input
-                    type="text"
-                    value={newProduct.codigo}
-                    onChange={(e) => setNewProduct({ ...newProduct, codigo: e.target.value })}
-                    required
-                    placeholder="PROD-100"
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Categoría</label>
-                  <input
-                    type="text"
-                    value={newProduct.categoria}
-                    onChange={(e) => setNewProduct({ ...newProduct, categoria: e.target.value })}
-                    placeholder="Hardware"
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Nombre Comercial</label>
-                <input
-                  type="text"
-                  value={newProduct.nombre}
-                  onChange={(e) => setNewProduct({ ...newProduct, nombre: e.target.value })}
-                  required
-                  placeholder="Laptop HP 15.6 pulgadas"
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Descripción Breve</label>
-                <textarea
-                  value={newProduct.descripcion}
-                  onChange={(e) => setNewProduct({ ...newProduct, descripcion: e.target.value })}
-                  rows={2}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Precio Unitario (S/)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={newProduct.precio}
-                    onChange={(e) => setNewProduct({ ...newProduct, precio: e.target.value })}
-                    required
-                    placeholder="2500.00"
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Tasa IGV (%)</label>
-                  <select
-                    value={newProduct.igvRate}
-                    onChange={(e) => setNewProduct({ ...newProduct, igvRate: e.target.value })}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                  >
-                    <option value="18.00">18% Gravado</option>
-                    <option value="0.00">0% Exonerado / Inafecto</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                <button
-                  type="button"
-                  onClick={() => setShowAddProductModal(false)}
-                  className="px-4 py-2 border border-zinc-250 dark:border-zinc-800 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-850 cursor-pointer text-zinc-500 font-semibold text-xs transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl font-semibold text-xs cursor-pointer shadow-sm transition-colors"
-                >
-                  Registrar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Post-Emission Result / Receipt outcome Modal */}
+             {/* 3. Post-Emission Result / Receipt outcome Modal */}
       {resultModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto select-none">
-          <div className="w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-8">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto select-none print:bg-white print:p-0 print:block print:static print:z-auto">
+          <div className="w-full max-w-2xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-8 print:border-none print:shadow-none print:my-0 print:max-w-none print:bg-white">
             
             {/* Outcome banner */}
-            <div className="p-6 border-b border-zinc-800 flex items-center justify-between">
+            <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between print:hidden">
               <div className="flex items-center gap-3">
                 {emissionLoading ? (
                   <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
@@ -817,10 +711,10 @@ export default function NewInvoicePage() {
                   <Check className="w-6 h-6 text-emerald-500" />
                 )}
                 <div>
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  <h3 className="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider">
                     {emissionLoading ? 'Procesando Firma y Emisión...' : apiError ? 'Error de Emisión' : 'Comprobante Emitido'}
                   </h3>
-                  <p className="text-[10px] text-zinc-500 font-mono">
+                  <p className="text-[10px] text-zinc-550 dark:text-zinc-500 font-mono">
                     {emissionLoading ? 'Negociando con servidores SUNAT...' : apiError ? 'Error devuelto por la API SUNAT' : `Documento registrado con éxito.`}
                   </p>
                 </div>
@@ -829,7 +723,7 @@ export default function NewInvoicePage() {
               {!emissionLoading && (
                 <button
                   onClick={closeOutcomeModal}
-                  className="px-3.5 py-1.5 bg-zinc-900 border border-zinc-800 text-xs font-semibold rounded-lg hover:bg-zinc-800 cursor-pointer"
+                  className="px-3.5 py-1.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs font-semibold rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-350 cursor-pointer"
                 >
                   Cerrar
                 </button>
@@ -837,11 +731,11 @@ export default function NewInvoicePage() {
             </div>
 
             {/* Content box */}
-            <div className="p-6 bg-zinc-900/50 flex-1 max-h-[500px] overflow-y-auto space-y-6">
+            <div className="p-6 bg-zinc-50/50 dark:bg-zinc-900/50 flex-1 max-h-[90vh] overflow-y-auto space-y-6 print:p-0 print:bg-white print:max-h-none print:overflow-visible">
               {emissionLoading ? (
                 <div className="flex flex-col items-center justify-center py-16 space-y-4">
                   <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-xs text-zinc-400 font-mono">Generando UBL XML, firmando digitalmente y enviando...</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">Generando UBL XML, firmando digitalmente y enviando...</p>
                 </div>
               ) : apiError ? (
                 <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-xl text-xs space-y-2">
@@ -849,31 +743,31 @@ export default function NewInvoicePage() {
                     <AlertCircle className="w-4 h-4" />
                     <span>Error al enviar a SUNAT</span>
                   </div>
-                  <p className="text-rose-400 leading-snug">{apiError}</p>
+                  <p className="text-rose-600 dark:text-rose-400 leading-snug">{apiError}</p>
                   <p className="text-[10px] text-zinc-500 pt-2 font-mono">Verifique el ambiente SUNAT o consulte en los registros de bajas.</p>
                 </div>
               ) : emittedDoc ? (
                 <div className="space-y-6">
                   {/* Status Badges & Quick actions */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800/80 space-y-2 text-xs">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:hidden">
+                    <div className="bg-white dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800/80 space-y-2 text-xs">
                       <p className="font-semibold text-zinc-400 uppercase text-[9px] tracking-wider">Resultado Transacción</p>
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold">{emittedDoc.serie}-{emittedDoc.correlativo}</span>
+                        <span className="font-semibold text-zinc-900 dark:text-white">{emittedDoc.serie}-{emittedDoc.correlativo}</span>
                         <StatusBadge status={emittedDoc.status} />
                       </div>
-                      <p className="text-[10px] text-zinc-500 leading-snug">
+                      <p className="text-[10px] text-zinc-500 dark:text-zinc-450 leading-snug">
                         {emittedDoc.sunat?.description || emittedDoc.message || 'El comprobante ha sido registrado.'}
                       </p>
                     </div>
 
-                    <div className="bg-zinc-950 p-4 rounded-xl border border-zinc-800/80 space-y-2">
+                    <div className="bg-white dark:bg-zinc-950 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800/80 space-y-2">
                       <p className="font-semibold text-zinc-400 uppercase text-[9px] tracking-wider">Archivos Digitales</p>
                       <div className="grid grid-cols-2 gap-2 text-xs font-semibold">
                         <a
                           href={BillingApiClient.getXmlUrl(emittedDoc.id)}
                           download
-                          className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 transition-colors"
+                          className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors"
                         >
                           <FileCode className="w-4 h-4 text-blue-500" /> XML UBL
                         </a>
@@ -881,12 +775,12 @@ export default function NewInvoicePage() {
                           <a
                             href={BillingApiClient.getCdrUrl(emittedDoc.id)}
                             download
-                            className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 transition-colors"
+                            className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 transition-colors"
                           >
                             <Download className="w-4 h-4 text-emerald-500" /> CDR SUNAT
                           </a>
                         ) : (
-                          <div className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-zinc-900/50 border border-zinc-800/50 text-zinc-600 cursor-not-allowed">
+                          <div className="flex items-center justify-center gap-1.5 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200/55 dark:border-zinc-800/50 text-zinc-400 dark:text-zinc-650 cursor-not-allowed">
                             <Download className="w-4 h-4" /> CDR (N/A)
                           </div>
                         )}
@@ -895,17 +789,17 @@ export default function NewInvoicePage() {
                   </div>
 
                   {/* PDF Receipt Print preview */}
-                  <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 space-y-4">
-                    <p className="font-semibold text-zinc-400 uppercase text-[9px] tracking-wider flex items-center justify-between">
+                  <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 space-y-4 print:border-none print:p-0">
+                    <p className="font-semibold text-zinc-450 dark:text-zinc-400 uppercase text-[9px] tracking-wider flex items-center justify-between print:hidden">
                       <span>Vista Previa del Formato Impreso</span>
                       <button
                         onClick={() => window.print()}
-                        className="text-[10px] text-blue-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                        className="text-[10px] text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         <Printer className="w-3.5 h-3.5" /> Imprimir / PDF
                       </button>
                     </p>
-                    <div className="border border-zinc-800 rounded-lg bg-white overflow-hidden p-2">
+                    <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg bg-white overflow-hidden p-2 print-invoice-container print:border-none print:p-0">
                       <PdfViewer
                         document={{
                           id: emittedDoc.id,
