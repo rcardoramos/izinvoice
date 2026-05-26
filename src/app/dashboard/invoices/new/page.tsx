@@ -475,7 +475,7 @@ export default function NewInvoicePage() {
                             />
                           </td>
                           <td className="p-3 text-right font-mono font-semibold">
-                            S/ {(line.cantidad * line.precioUnitario).toFixed(2)}
+                            S/ {(line.cantidad * line.precioUnitario).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </td>
                           <td className="p-3 text-center">
                             <button
@@ -577,15 +577,15 @@ export default function NewInvoicePage() {
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between font-medium">
                   <span className="text-zinc-400">Op. Gravada</span>
-                  <span className="font-mono">S/ {subtotal.toFixed(2)}</span>
+                  <span className="font-mono">S/ {subtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between font-medium">
                   <span className="text-zinc-400">I.G.V. (18%)</span>
-                  <span className="font-mono">S/ {igvTotal.toFixed(2)}</span>
+                  <span className="font-mono">S/ {igvTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between font-bold text-sm text-zinc-900 dark:text-white pt-2.5 border-t border-zinc-100 dark:border-zinc-800">
                   <span>Importe Total</span>
-                  <span className="font-mono text-blue-500">S/ {total.toFixed(2)}</span>
+                  <span className="font-mono text-blue-500">S/ {total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
 

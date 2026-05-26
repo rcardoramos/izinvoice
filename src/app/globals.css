@@ -142,22 +142,55 @@ input:focus, select:focus, textarea:focus {
 }
 /* Print styles to only print the invoice receipt and hide UI elements */
 @media print {
-  body * {
-    visibility: hidden;
+  /* Hide all dashboard layout elements, sidebar, page header, and form wrappers */
+  aside,
+  header,
+  .max-w-5xl,
+  .print\:hidden {
+    display: none !important;
   }
-  .print-invoice-container,
-  .print-invoice-container * {
-    visibility: visible;
-  }
-  .print-invoice-container {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0 !important;
-    border: none !important;
+
+  /* Reset main layout grid and flex behaviors */
+  body, html {
     background: white !important;
+    color: black !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Force modal overlay to be a clean static container */
+  .fixed.inset-0 {
+    position: static !important;
+    background: white !important;
+    display: block !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    z-index: auto !important;
     box-shadow: none !important;
   }
+
+  .w-full.max-w-2xl {
+    max-w: 100% !important;
+    width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    background: white !important;
+  }
+
+  /* Ensure the printed invoice takes up full width and is aligned to top-left */
+  .print-invoice-container {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
 }
+
