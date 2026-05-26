@@ -22,6 +22,7 @@ import {
   PackagePlus,
   RefreshCw
 } from 'lucide-react';
+import { SearchInput } from '@/components/shared/SearchInput';
 
 export default function NewInvoicePage() {
   const router = useRouter();
@@ -38,6 +39,7 @@ export default function NewInvoicePage() {
   const [clientDoc, setClientDoc] = useState('');
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [clientSearching, setClientSearching] = useState(false);
+  const [searchPerformed, setSearchPerformed] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
 
   // New Client Form
@@ -124,6 +126,7 @@ export default function NewInvoicePage() {
   const searchClient = async () => {
     if (!clientDoc) return;
     setClientSearching(true);
+    setSearchPerformed(true);
     try {
       const results = await BillingApiClient.findCustomerByDoc(clientDoc);
       if (results.length > 0) {
@@ -151,6 +154,7 @@ export default function NewInvoicePage() {
       const created = await BillingApiClient.createCustomer(newClient);
       setSelectedClient(created);
       setClientDoc(created.doc_number);
+      setSearchPerformed(true);
       setShowAddClientModal(false);
       
       // Clear client form
@@ -511,18 +515,16 @@ export default function NewInvoicePage() {
 
               {/* Client doc lookups search */}
               <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-400" />
-                  <input
-                    type="text"
-                    value={clientDoc}
-                    onChange={(e) => setClientDoc(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && searchClient()}
-                    placeholder={docType === '01' ? 'Ingrese RUC...' : 'RUC o DNI...'}
-                    style={{ paddingLeft: '2.5rem' }}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl py-2 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                </div>
+                <SearchInput
+                  value={clientDoc}
+                  onChange={(e) => {
+                    setClientDoc(e.target.value);
+                    setSearchPerformed(false);
+                    setSelectedClient(null);
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && searchClient()}
+                  placeholder={docType === '01' ? 'Ingrese RUC...' : 'RUC o DNI...'}
+                />
                 <button
                   onClick={searchClient}
                   disabled={clientSearching || !clientDoc}
@@ -546,7 +548,7 @@ export default function NewInvoicePage() {
                     <Check className="w-3.5 h-3.5" /> Autocompletado
                   </div>
                 </div>
-              ) : clientDoc && !clientSearching ? (
+              ) : clientDoc && searchPerformed && !clientSearching ? (
                 <div className="p-3 border border-yellow-500/10 bg-yellow-500/[0.02] rounded-xl flex items-center justify-between text-xs text-amber-600/90 font-medium">
                   <span>Cliente no registrado</span>
                   <button

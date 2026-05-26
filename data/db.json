@@ -29,6 +29,36 @@
       "sol_username": "98765432111MODDATOS",
       "sol_password": "MODDATOS",
       "api_key": "mbak_live_a1dc7f7404e7bcb7dcfebe79"
+    },
+    {
+      "id": "comp_2nyntec-02frv1q",
+      "created_at": "2026-05-25T18:21:38.758Z",
+      "updated_at": "2026-05-25T18:21:38.758Z",
+      "ruc": "20123456789",
+      "business_name": "pruebta SAC",
+      "trade_name": "RRR",
+      "address": "RR",
+      "phone": "9876541",
+      "email": "R@GAMAIL.COM",
+      "sunat_environment": "beta",
+      "sol_username": "20123456789MODDATOS",
+      "sol_password": "MODDATOS",
+      "api_key": "mbak_live_e2c9f8f9b3ea81ef67935dba"
+    },
+    {
+      "id": "comp_fh36gvj-g8dwcqr",
+      "created_at": "2026-05-25T18:23:03.955Z",
+      "updated_at": "2026-05-25T18:23:03.955Z",
+      "ruc": "20123456782",
+      "business_name": "ASDASDAS",
+      "trade_name": "DASDAS",
+      "address": "DASDASD",
+      "phone": "7887987",
+      "email": "ASDASDAS@GMAIK.COMN",
+      "sunat_environment": "beta",
+      "sol_username": "20123456782MODDATOS",
+      "sol_password": "MODDATOS",
+      "api_key": "mbak_live_2b44845d5a31637302fa7763"
     }
   ],
   "subscriptions": [
@@ -45,6 +75,24 @@
       "created_at": "2026-05-25T06:39:28.639Z",
       "updated_at": "2026-05-25T06:39:28.639Z",
       "company_id": "comp_mgzlr0i-i9uuugz",
+      "plan_name": "starter",
+      "status": "active",
+      "start_date": "2026-05-25"
+    },
+    {
+      "id": "sub_z8kzwfs",
+      "created_at": "2026-05-25T18:21:38.761Z",
+      "updated_at": "2026-05-25T18:21:38.761Z",
+      "company_id": "comp_2nyntec-02frv1q",
+      "plan_name": "starter",
+      "status": "active",
+      "start_date": "2026-05-25"
+    },
+    {
+      "id": "sub_zjj49bd",
+      "created_at": "2026-05-25T18:23:03.956Z",
+      "updated_at": "2026-05-25T18:23:03.956Z",
+      "company_id": "comp_fh36gvj-g8dwcqr",
       "plan_name": "starter",
       "status": "active",
       "start_date": "2026-05-25"
@@ -82,6 +130,30 @@
       "password_hash": "admin123",
       "full_name": "Admin MinddevperuSAC",
       "email": "RRR@GMAIL.COM",
+      "role": "admin",
+      "status": "active"
+    },
+    {
+      "id": "ychv3pm",
+      "created_at": "2026-05-25T18:21:38.770Z",
+      "updated_at": "2026-05-25T18:21:38.770Z",
+      "company_id": "comp_2nyntec-02frv1q",
+      "username": "admin_20123456789",
+      "password_hash": "admin123",
+      "full_name": "Admin pruebta SAC",
+      "email": "R@GAMAIL.COM",
+      "role": "admin",
+      "status": "active"
+    },
+    {
+      "id": "k5mmcmj",
+      "created_at": "2026-05-25T18:23:03.967Z",
+      "updated_at": "2026-05-25T18:23:03.968Z",
+      "company_id": "comp_fh36gvj-g8dwcqr",
+      "username": "admin_20123456782",
+      "password_hash": "admin123",
+      "full_name": "Admin ASDASDAS",
+      "email": "ASDASDAS@GMAIK.COMN",
       "role": "admin",
       "status": "active"
     }
@@ -135,6 +207,34 @@
       "correo": "q@gmail.com",
       "telefono": "987654321",
       "status": "active"
+    },
+    {
+      "id": "nhnmbni",
+      "created_at": "2026-05-25T18:11:15.546Z",
+      "updated_at": "2026-05-25T18:11:15.546Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "doc_type": "1",
+      "doc_number": "12345678",
+      "razon_social": "testtt ramos",
+      "nombre_comercial": null,
+      "direccion": "asdasdasd",
+      "correo": "r@gmail.com",
+      "telefono": "87544444",
+      "status": "active"
+    },
+    {
+      "id": "6jg3t9k",
+      "created_at": "2026-05-25T18:12:18.607Z",
+      "updated_at": "2026-05-25T18:12:18.607Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "doc_type": "6",
+      "doc_number": "10725648180",
+      "razon_social": "KEVIN SALAZAR TEST",
+      "nombre_comercial": null,
+      "direccion": "LINCE",
+      "correo": "KEVIN@GMAIL.COM",
+      "telefono": "987654321",
+      "status": "active"
     }
   ],
   "products": [
@@ -184,14 +284,14 @@
       "company_id": "00000000-0000-4000-8000-000000000001",
       "doc_type": "01",
       "serie": "F001",
-      "correlativo": 24
+      "correlativo": 25
     },
     {
       "id": "ser_02",
       "company_id": "00000000-0000-4000-8000-000000000001",
       "doc_type": "03",
       "serie": "B001",
-      "correlativo": 49
+      "correlativo": 55
     },
     {
       "id": "ser_03",
@@ -274,9 +374,136 @@
       "doc_type": "08",
       "serie": "BD01",
       "correlativo": 0
+    },
+    {
+      "id": "pa85oor",
+      "created_at": "2026-05-25T18:21:38.762Z",
+      "updated_at": "2026-05-25T18:21:38.762Z",
+      "company_id": "comp_2nyntec-02frv1q",
+      "doc_type": "01",
+      "serie": "F001",
+      "correlativo": 0
+    },
+    {
+      "id": "h6dry4a",
+      "created_at": "2026-05-25T18:21:38.764Z",
+      "updated_at": "2026-05-25T18:21:38.764Z",
+      "company_id": "comp_2nyntec-02frv1q",
+      "doc_type": "03",
+      "serie": "B001",
+      "correlativo": 0
+    },
+    {
+      "id": "lfaz3o8",
+      "created_at": "2026-05-25T18:21:38.765Z",
+      "updated_at": "2026-05-25T18:21:38.765Z",
+      "company_id": "comp_2nyntec-02frv1q",
+      "doc_type": "07",
+      "serie": "FC01",
+      "correlativo": 0
+    },
+    {
+      "id": "em9kk8g",
+      "created_at": "2026-05-25T18:21:38.767Z",
+      "updated_at": "2026-05-25T18:21:38.767Z",
+      "company_id": "comp_2nyntec-02frv1q",
+      "doc_type": "07",
+      "serie": "BC01",
+      "correlativo": 0
+    },
+    {
+      "id": "14o9nbs",
+      "created_at": "2026-05-25T18:21:38.768Z",
+      "updated_at": "2026-05-25T18:21:38.768Z",
+      "company_id": "comp_2nyntec-02frv1q",
+      "doc_type": "08",
+      "serie": "FD01",
+      "correlativo": 0
+    },
+    {
+      "id": "kvh01m4",
+      "created_at": "2026-05-25T18:21:38.769Z",
+      "updated_at": "2026-05-25T18:21:38.769Z",
+      "company_id": "comp_2nyntec-02frv1q",
+      "doc_type": "08",
+      "serie": "BD01",
+      "correlativo": 0
+    },
+    {
+      "id": "hdlw0j2",
+      "created_at": "2026-05-25T18:23:03.958Z",
+      "updated_at": "2026-05-25T18:23:03.958Z",
+      "company_id": "comp_fh36gvj-g8dwcqr",
+      "doc_type": "01",
+      "serie": "F001",
+      "correlativo": 0
+    },
+    {
+      "id": "owip3yt",
+      "created_at": "2026-05-25T18:23:03.959Z",
+      "updated_at": "2026-05-25T18:23:03.959Z",
+      "company_id": "comp_fh36gvj-g8dwcqr",
+      "doc_type": "03",
+      "serie": "B001",
+      "correlativo": 0
+    },
+    {
+      "id": "7z7ttmt",
+      "created_at": "2026-05-25T18:23:03.960Z",
+      "updated_at": "2026-05-25T18:23:03.960Z",
+      "company_id": "comp_fh36gvj-g8dwcqr",
+      "doc_type": "07",
+      "serie": "FC01",
+      "correlativo": 0
+    },
+    {
+      "id": "pzx0w8p",
+      "created_at": "2026-05-25T18:23:03.963Z",
+      "updated_at": "2026-05-25T18:23:03.963Z",
+      "company_id": "comp_fh36gvj-g8dwcqr",
+      "doc_type": "07",
+      "serie": "BC01",
+      "correlativo": 0
+    },
+    {
+      "id": "9hir5vl",
+      "created_at": "2026-05-25T18:23:03.965Z",
+      "updated_at": "2026-05-25T18:23:03.965Z",
+      "company_id": "comp_fh36gvj-g8dwcqr",
+      "doc_type": "08",
+      "serie": "FD01",
+      "correlativo": 0
+    },
+    {
+      "id": "ntsb45k",
+      "created_at": "2026-05-25T18:23:03.966Z",
+      "updated_at": "2026-05-25T18:23:03.966Z",
+      "company_id": "comp_fh36gvj-g8dwcqr",
+      "doc_type": "08",
+      "serie": "BD01",
+      "correlativo": 0
     }
   ],
-  "daily_summaries": [],
+  "daily_summaries": [
+    {
+      "id": "sum_zps0o1z-mhdc94z",
+      "created_at": "2026-05-25T18:19:40.194Z",
+      "updated_at": "2026-05-25T18:19:59.247Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "summary_type": "RC",
+      "summary_code": "RC-20260525-1",
+      "reference_date": "2026-05-25",
+      "issue_date": "2026-05-25",
+      "correlativo": 1,
+      "ticket": "TKT-QIAXDAT",
+      "status": "processing",
+      "status_code": "98",
+      "error_message": null,
+      "xml_content": "<!-- Summary XML mock for RC-20260525-1 with 2 items -->",
+      "cdr_xml": null,
+      "poll_attempts": 1
+    }
+  ],
   "documents": [
     {
       "id": "uetyqwh-h0ia320",
@@ -289,7 +516,7 @@
       "status": "signed",
       "issue_date": "2026-05-25",
       "total": 24541.64,
-      "daily_summary_id": null,
+      "daily_summary_id": "sum_zps0o1z-mhdc94z",
       "user_id": "user_dev_id",
       "payload": {
         "cliente": {
@@ -324,10 +551,314 @@
           "total": 24541.64
         }
       }
+    },
+    {
+      "id": "9z8ziey-ashvl3r",
+      "created_at": "2026-05-25T18:12:20.189Z",
+      "updated_at": "2026-05-25T18:12:20.189Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "doc_type": "01",
+      "serie": "F001",
+      "correlativo": 25,
+      "status": "accepted",
+      "issue_date": "2026-05-25",
+      "total": 18288.82,
+      "daily_summary_id": null,
+      "user_id": "user_dev_id",
+      "payload": {
+        "cliente": {
+          "tipoDoc": "6",
+          "numDoc": "10725648180",
+          "razonSocial": "KEVIN SALAZAR TEST",
+          "direccion": "LINCE",
+          "correo": "KEVIN@GMAIL.COM",
+          "telefono": "987654321"
+        },
+        "moneda": "PEN",
+        "items": [
+          {
+            "codigo": "PROD-001",
+            "descripcion": "Laptop Apple MacBook Pro 16\" M3 Max",
+            "cantidad": 1,
+            "precioUnitario": 15499,
+            "igv": 2789.82
+          }
+        ],
+        "tipoOperacion": "0101",
+        "totals": {
+          "subtotal": 15499,
+          "igvTotal": 2789.82,
+          "total": 18288.82
+        }
+      }
+    },
+    {
+      "id": "y6l0hck-bkt2xcu",
+      "created_at": "2026-05-25T18:18:38.819Z",
+      "updated_at": "2026-05-25T18:18:38.819Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "doc_type": "03",
+      "serie": "B001",
+      "correlativo": 50,
+      "status": "signed",
+      "issue_date": "2026-05-25",
+      "total": 24836.64,
+      "daily_summary_id": "sum_zps0o1z-mhdc94z",
+      "user_id": "user_dev_id",
+      "payload": {
+        "cliente": {
+          "tipoDoc": "6",
+          "numDoc": "10725648180",
+          "razonSocial": "KEVIN SALAZAR TEST",
+          "direccion": "LINCE",
+          "correo": "KEVIN@GMAIL.COM",
+          "telefono": "987654321"
+        },
+        "moneda": "PEN",
+        "items": [
+          {
+            "codigo": "PROD-001",
+            "descripcion": "Laptop Apple MacBook Pro 16\" M3 Max",
+            "cantidad": 1,
+            "precioUnitario": 15499,
+            "igv": 2789.82
+          },
+          {
+            "codigo": "PROD-002",
+            "descripcion": "Monitor Gamer Samsung Odyssey OLED G9",
+            "cantidad": 1,
+            "precioUnitario": 5299,
+            "igv": 953.82
+          },
+          {
+            "codigo": "SERV-001",
+            "descripcion": "Consultoría Especializada en Arquitectura Fintech",
+            "cantidad": 1,
+            "precioUnitario": 250,
+            "igv": 45
+          }
+        ],
+        "tipoOperacion": "0101",
+        "totals": {
+          "subtotal": 21048,
+          "igvTotal": 3788.64,
+          "total": 24836.64
+        }
+      }
+    },
+    {
+      "id": "ssf4smz-k7fzchr",
+      "created_at": "2026-05-26T23:11:52.100Z",
+      "updated_at": "2026-05-26T23:11:52.100Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "doc_type": "03",
+      "serie": "B001",
+      "correlativo": 51,
+      "status": "signed",
+      "issue_date": "2026-05-26",
+      "total": 6252.82,
+      "daily_summary_id": null,
+      "user_id": "user_dev_id",
+      "payload": {
+        "cliente": {
+          "tipoDoc": "1",
+          "numDoc": "72564818",
+          "razonSocial": "Ricardo Ramos Julca",
+          "direccion": "rqrasds",
+          "correo": "q@gmail.com",
+          "telefono": "987654321"
+        },
+        "moneda": "PEN",
+        "items": [
+          {
+            "codigo": "PROD-002",
+            "descripcion": "Monitor Gamer Samsung Odyssey OLED G9",
+            "cantidad": 1,
+            "precioUnitario": 5299,
+            "igv": 953.82
+          }
+        ],
+        "tipoOperacion": "0101",
+        "totals": {
+          "subtotal": 5299,
+          "igvTotal": 953.82,
+          "total": 6252.82
+        }
+      }
+    },
+    {
+      "id": "ovhtenv-80l29zq",
+      "created_at": "2026-05-26T23:18:14.283Z",
+      "updated_at": "2026-05-26T23:18:14.283Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "doc_type": "03",
+      "serie": "B001",
+      "correlativo": 52,
+      "status": "signed",
+      "issue_date": "2026-05-26",
+      "total": 6252.82,
+      "daily_summary_id": null,
+      "user_id": "user_dev_id",
+      "payload": {
+        "cliente": {
+          "tipoDoc": "1",
+          "numDoc": "72564818",
+          "razonSocial": "Ricardo Ramos Julca",
+          "direccion": "rqrasds",
+          "correo": "q@gmail.com",
+          "telefono": "987654321"
+        },
+        "moneda": "PEN",
+        "items": [
+          {
+            "codigo": "PROD-002",
+            "descripcion": "Monitor Gamer Samsung Odyssey OLED G9",
+            "cantidad": 1,
+            "precioUnitario": 5299,
+            "igv": 953.82
+          }
+        ],
+        "tipoOperacion": "0101",
+        "totals": {
+          "subtotal": 5299,
+          "igvTotal": 953.82,
+          "total": 6252.82
+        }
+      }
+    },
+    {
+      "id": "7gax989-nfsae2d",
+      "created_at": "2026-05-26T23:25:14.060Z",
+      "updated_at": "2026-05-26T23:25:14.060Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "doc_type": "03",
+      "serie": "B001",
+      "correlativo": 53,
+      "status": "signed",
+      "issue_date": "2026-05-26",
+      "total": 18288.82,
+      "daily_summary_id": null,
+      "user_id": "user_dev_id",
+      "payload": {
+        "cliente": {
+          "tipoDoc": "1",
+          "numDoc": "72564818",
+          "razonSocial": "Ricardo Ramos Julca",
+          "direccion": "rqrasds",
+          "correo": "q@gmail.com",
+          "telefono": "987654321"
+        },
+        "moneda": "PEN",
+        "items": [
+          {
+            "codigo": "PROD-001",
+            "descripcion": "Laptop Apple MacBook Pro 16\" M3 Max",
+            "cantidad": 1,
+            "precioUnitario": 15499,
+            "igv": 2789.82
+          }
+        ],
+        "tipoOperacion": "0101",
+        "totals": {
+          "subtotal": 15499,
+          "igvTotal": 2789.82,
+          "total": 18288.82
+        }
+      }
+    },
+    {
+      "id": "n3umpjh-w59ny09",
+      "created_at": "2026-05-26T23:28:37.079Z",
+      "updated_at": "2026-05-26T23:28:37.079Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "doc_type": "03",
+      "serie": "B001",
+      "correlativo": 54,
+      "status": "signed",
+      "issue_date": "2026-05-26",
+      "total": 18288.82,
+      "daily_summary_id": null,
+      "user_id": "user_dev_id",
+      "payload": {
+        "cliente": {
+          "tipoDoc": "1",
+          "numDoc": "72564818",
+          "razonSocial": "Ricardo Ramos Julca",
+          "direccion": "rqrasds",
+          "correo": "q@gmail.com",
+          "telefono": "987654321"
+        },
+        "moneda": "PEN",
+        "items": [
+          {
+            "codigo": "PROD-001",
+            "descripcion": "Laptop Apple MacBook Pro 16\" M3 Max",
+            "cantidad": 1,
+            "precioUnitario": 15499,
+            "igv": 2789.82
+          }
+        ],
+        "tipoOperacion": "0101",
+        "totals": {
+          "subtotal": 15499,
+          "igvTotal": 2789.82,
+          "total": 18288.82
+        }
+      }
+    },
+    {
+      "id": "ia2p3v9-rzbsbi5",
+      "created_at": "2026-05-26T23:32:15.521Z",
+      "updated_at": "2026-05-26T23:32:15.521Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "doc_type": "03",
+      "serie": "B001",
+      "correlativo": 55,
+      "status": "signed",
+      "issue_date": "2026-05-26",
+      "total": 18288.82,
+      "daily_summary_id": null,
+      "user_id": "user_dev_id",
+      "payload": {
+        "cliente": {
+          "tipoDoc": "1",
+          "numDoc": "72564818",
+          "razonSocial": "Ricardo Ramos Julca",
+          "direccion": "rqrasds",
+          "correo": "q@gmail.com",
+          "telefono": "987654321"
+        },
+        "moneda": "PEN",
+        "items": [
+          {
+            "codigo": "PROD-001",
+            "descripcion": "Laptop Apple MacBook Pro 16\" M3 Max",
+            "cantidad": 1,
+            "precioUnitario": 15499,
+            "igv": 2789.82
+          }
+        ],
+        "tipoOperacion": "0101",
+        "totals": {
+          "subtotal": 15499,
+          "igvTotal": 2789.82,
+          "total": 18288.82
+        }
+      }
     }
   ],
   "invoice_notes": [],
-  "sunat_submissions": [],
+  "sunat_submissions": [
+    {
+      "id": "sub_73x2xf3",
+      "created_at": "2026-05-25T18:12:20.191Z",
+      "updated_at": "2026-05-25T18:12:20.191Z",
+      "document_id": "9z8ziey-ashvl3r",
+      "method": "sendBill",
+      "status_code": "0",
+      "error_message": null
+    }
+  ],
   "notifications": [
     {
       "id": "notif_01",
@@ -345,6 +876,86 @@
       "company_id": "00000000-0000-4000-8000-000000000001",
       "title": "Comprobante Emitido",
       "message": "Boleta B001-49 emitida. Pendiente de envío en Resumen Diario (RC).",
+      "type": "info",
+      "read": false
+    },
+    {
+      "id": "inkn94y",
+      "created_at": "2026-05-25T18:12:20.194Z",
+      "updated_at": "2026-05-25T18:12:20.194Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "title": "Comprobante Aceptado",
+      "message": "Factura F001-25 aceptada con éxito por SUNAT.",
+      "type": "success",
+      "read": false
+    },
+    {
+      "id": "vcx8og5",
+      "created_at": "2026-05-25T18:18:38.821Z",
+      "updated_at": "2026-05-25T18:18:38.821Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "title": "Comprobante Emitido",
+      "message": "Boleta B001-50 emitida. Pendiente de envío en Resumen Diario (RC).",
+      "type": "info",
+      "read": false
+    },
+    {
+      "id": "93g89rl",
+      "created_at": "2026-05-25T18:19:40.196Z",
+      "updated_at": "2026-05-25T18:19:40.196Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "title": "Resumen Enviado",
+      "message": "Resumen de altas RC-20260525-1 enviado a SUNAT. Ticket generado: TKT-QIAXDAT.",
+      "type": "info",
+      "read": false
+    },
+    {
+      "id": "haqnbjt",
+      "created_at": "2026-05-26T23:11:52.102Z",
+      "updated_at": "2026-05-26T23:11:52.102Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "title": "Comprobante Emitido",
+      "message": "Boleta B001-51 emitida. Pendiente de envío en Resumen Diario (RC).",
+      "type": "info",
+      "read": false
+    },
+    {
+      "id": "law6ex3",
+      "created_at": "2026-05-26T23:18:14.285Z",
+      "updated_at": "2026-05-26T23:18:14.285Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "title": "Comprobante Emitido",
+      "message": "Boleta B001-52 emitida. Pendiente de envío en Resumen Diario (RC).",
+      "type": "info",
+      "read": false
+    },
+    {
+      "id": "fuu0kwx",
+      "created_at": "2026-05-26T23:25:14.061Z",
+      "updated_at": "2026-05-26T23:25:14.061Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "title": "Comprobante Emitido",
+      "message": "Boleta B001-53 emitida. Pendiente de envío en Resumen Diario (RC).",
+      "type": "info",
+      "read": false
+    },
+    {
+      "id": "9yceluw",
+      "created_at": "2026-05-26T23:28:37.081Z",
+      "updated_at": "2026-05-26T23:28:37.081Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "title": "Comprobante Emitido",
+      "message": "Boleta B001-54 emitida. Pendiente de envío en Resumen Diario (RC).",
+      "type": "info",
+      "read": false
+    },
+    {
+      "id": "0bnshyx",
+      "created_at": "2026-05-26T23:32:15.522Z",
+      "updated_at": "2026-05-26T23:32:15.522Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "title": "Comprobante Emitido",
+      "message": "Boleta B001-55 emitida. Pendiente de envío en Resumen Diario (RC).",
       "type": "info",
       "read": false
     }
@@ -552,6 +1163,258 @@
       "ip_address": "127.0.0.1",
       "result": "success",
       "details": "Emitted boleta B001-49 with total PEN 24541.64. Status: signed"
+    },
+    {
+      "id": "sf0c9li",
+      "created_at": "2026-05-25T18:11:15.547Z",
+      "updated_at": "2026-05-25T18:11:15.547Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "CREATE_CUSTOMER",
+      "module": "CUSTOMERS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Created customer testtt ramos (12345678)"
+    },
+    {
+      "id": "ivliv4j",
+      "created_at": "2026-05-25T18:12:18.609Z",
+      "updated_at": "2026-05-25T18:12:18.609Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "CREATE_CUSTOMER",
+      "module": "CUSTOMERS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Created customer KEVIN SALAZAR TEST (10725648180)"
+    },
+    {
+      "id": "ycchusg",
+      "created_at": "2026-05-25T18:12:20.195Z",
+      "updated_at": "2026-05-25T18:12:20.195Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "EMIT_INVOICE",
+      "module": "INVOICES",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Emitted invoice F001-25 with total PEN 18288.82. SUNAT Status: accepted"
+    },
+    {
+      "id": "av7hshw",
+      "created_at": "2026-05-25T18:18:38.823Z",
+      "updated_at": "2026-05-25T18:18:38.823Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "EMIT_BOLETA",
+      "module": "BOLETAS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Emitted boleta B001-50 with total PEN 24836.64. Status: signed"
+    },
+    {
+      "id": "s3dqzgd",
+      "created_at": "2026-05-25T18:19:40.197Z",
+      "updated_at": "2026-05-25T18:19:40.197Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "SEND_RC_SUMMARY",
+      "module": "SUMMARIES",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Sent daily summary RC RC-20260525-1 with 2 documents. Ticket: TKT-QIAXDAT"
+    },
+    {
+      "id": "f9orvnf",
+      "created_at": "2026-05-25T18:21:06.644Z",
+      "updated_at": "2026-05-25T18:21:06.644Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "LOGIN",
+      "module": "AUTH",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "User invoiceflow logged in successfully."
+    },
+    {
+      "id": "19tq9m7",
+      "created_at": "2026-05-25T18:21:38.771Z",
+      "updated_at": "2026-05-25T18:21:38.771Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "REGISTER_COMPANY",
+      "module": "SaaS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Registered client company pruebta SAC (20123456789). Admin: admin_20123456789"
+    },
+    {
+      "id": "14sc7lz",
+      "created_at": "2026-05-25T18:22:20.842Z",
+      "updated_at": "2026-05-25T18:22:20.842Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "LOGIN",
+      "module": "AUTH",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "User admin logged in successfully."
+    },
+    {
+      "id": "old3p5z",
+      "created_at": "2026-05-25T18:22:43.970Z",
+      "updated_at": "2026-05-25T18:22:43.970Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "LOGIN",
+      "module": "AUTH",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "User invoiceflow logged in successfully."
+    },
+    {
+      "id": "doodtdv",
+      "created_at": "2026-05-25T18:23:03.969Z",
+      "updated_at": "2026-05-25T18:23:03.969Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "REGISTER_COMPANY",
+      "module": "SaaS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Registered client company ASDASDAS (20123456782). Admin: admin_20123456782"
+    },
+    {
+      "id": "j02qtda",
+      "created_at": "2026-05-25T18:23:52.473Z",
+      "updated_at": "2026-05-25T18:23:52.473Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "LOGIN",
+      "module": "AUTH",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "User admin logged in successfully."
+    },
+    {
+      "id": "2rs0n2e",
+      "created_at": "2026-05-25T18:25:53.466Z",
+      "updated_at": "2026-05-25T18:25:53.466Z",
+      "company_id": null,
+      "user_id": "invoiceflow_superadmin",
+      "action": "LOGIN",
+      "module": "AUTH",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "User invoiceflow logged in successfully."
+    },
+    {
+      "id": "hfx6fkn",
+      "created_at": "2026-05-25T18:28:24.862Z",
+      "updated_at": "2026-05-25T18:28:24.862Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "LOGIN",
+      "module": "AUTH",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "User admin logged in successfully."
+    },
+    {
+      "id": "w22y65k",
+      "created_at": "2026-05-26T22:56:14.824Z",
+      "updated_at": "2026-05-26T22:56:14.824Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "LOGIN",
+      "module": "AUTH",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "User admin logged in successfully."
+    },
+    {
+      "id": "dczeijg",
+      "created_at": "2026-05-26T23:06:16.281Z",
+      "updated_at": "2026-05-26T23:06:16.281Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "LOGIN",
+      "module": "AUTH",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "User admin logged in successfully."
+    },
+    {
+      "id": "gs0ung0",
+      "created_at": "2026-05-26T23:07:53.294Z",
+      "updated_at": "2026-05-26T23:07:53.294Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "LOGIN",
+      "module": "AUTH",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "User admin logged in successfully."
+    },
+    {
+      "id": "b284fya",
+      "created_at": "2026-05-26T23:11:52.105Z",
+      "updated_at": "2026-05-26T23:11:52.105Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "EMIT_BOLETA",
+      "module": "BOLETAS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Emitted boleta B001-51 with total PEN 6252.82. Status: signed"
+    },
+    {
+      "id": "dxofvmw",
+      "created_at": "2026-05-26T23:18:14.287Z",
+      "updated_at": "2026-05-26T23:18:14.287Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "EMIT_BOLETA",
+      "module": "BOLETAS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Emitted boleta B001-52 with total PEN 6252.82. Status: signed"
+    },
+    {
+      "id": "7qse37x",
+      "created_at": "2026-05-26T23:25:14.063Z",
+      "updated_at": "2026-05-26T23:25:14.063Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "EMIT_BOLETA",
+      "module": "BOLETAS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Emitted boleta B001-53 with total PEN 18288.82. Status: signed"
+    },
+    {
+      "id": "4iaqjd0",
+      "created_at": "2026-05-26T23:28:37.082Z",
+      "updated_at": "2026-05-26T23:28:37.082Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "EMIT_BOLETA",
+      "module": "BOLETAS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Emitted boleta B001-54 with total PEN 18288.82. Status: signed"
+    },
+    {
+      "id": "wwedpek",
+      "created_at": "2026-05-26T23:32:15.523Z",
+      "updated_at": "2026-05-26T23:32:15.523Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "EMIT_BOLETA",
+      "module": "BOLETAS",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Emitted boleta B001-55 with total PEN 18288.82. Status: signed"
     }
   ]
 }

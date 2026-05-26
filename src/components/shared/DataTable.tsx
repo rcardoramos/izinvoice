@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { SearchInput } from './SearchInput';
 
 interface Column<T> {
   key: string;
@@ -59,10 +59,8 @@ export function DataTable<T extends Record<string, any>>({
     <div className="space-y-4">
       {/* Controls Header */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
-          <input
-            type="text"
+        <div className="w-full max-w-xs">
+          <SearchInput
             placeholder={searchPlaceholder}
             value={searchQuery}
             onChange={(e) => {
@@ -70,7 +68,6 @@ export function DataTable<T extends Record<string, any>>({
               setCurrentPage(1);
             }}
             disabled={!searchKey}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-zinc-200 bg-white text-xs text-zinc-900 placeholder-zinc-400 transition-colors disabled:opacity-50 focus:ring-1 focus:ring-[#4f46e5] focus:border-[#4f46e5] focus:outline-none"
           />
         </div>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
