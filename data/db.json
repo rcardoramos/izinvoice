@@ -298,7 +298,7 @@
       "company_id": "00000000-0000-4000-8000-000000000001",
       "doc_type": "07",
       "serie": "FC01",
-      "correlativo": 3
+      "correlativo": 4
     },
     {
       "id": "ser_04",
@@ -845,15 +845,82 @@
           "total": 18288.82
         }
       }
+    },
+    {
+      "id": "m7e3iqv-qx8ogz6",
+      "created_at": "2026-05-26T23:59:52.456Z",
+      "updated_at": "2026-05-26T23:59:52.456Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "doc_type": "07",
+      "serie": "FC01",
+      "correlativo": 4,
+      "status": "accepted",
+      "issue_date": "2026-05-26",
+      "total": 18288.82,
+      "daily_summary_id": null,
+      "user_id": "user_dev_id",
+      "payload": {
+        "cliente": {
+          "tipoDoc": "6",
+          "numDoc": "10725648180",
+          "razonSocial": "KEVIN SALAZAR TEST",
+          "direccion": "LINCE",
+          "correo": "KEVIN@GMAIL.COM",
+          "telefono": "987654321"
+        },
+        "moneda": "PEN",
+        "items": [
+          {
+            "codigo": "PROD-001",
+            "descripcion": "Laptop Apple MacBook Pro 16\" M3 Max",
+            "cantidad": 1,
+            "precioUnitario": 15499,
+            "igv": 2789.82
+          }
+        ],
+        "documentoAfectadoId": "9z8ziey-ashvl3r",
+        "documentoAfectado": {
+          "docType": "01",
+          "serie": "F001",
+          "correlativo": 25
+        },
+        "motivoCodigo": "01",
+        "motivoDescripcion": "ANULACION DE LA VENTA",
+        "totals": {
+          "subtotal": 15499,
+          "igvTotal": 2789.82,
+          "total": 18288.82
+        }
+      }
     }
   ],
-  "invoice_notes": [],
+  "invoice_notes": [
+    {
+      "id": "snxz7c6",
+      "created_at": "2026-05-26T23:59:52.453Z",
+      "updated_at": "2026-05-26T23:59:52.453Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "note_id": "m7e3iqv-qx8ogz6",
+      "affected_document_id": "9z8ziey-ashvl3r",
+      "motivo_codigo": "01",
+      "motivo_descripcion": "ANULACION DE LA VENTA"
+    }
+  ],
   "sunat_submissions": [
     {
       "id": "sub_73x2xf3",
       "created_at": "2026-05-25T18:12:20.191Z",
       "updated_at": "2026-05-25T18:12:20.191Z",
       "document_id": "9z8ziey-ashvl3r",
+      "method": "sendBill",
+      "status_code": "0",
+      "error_message": null
+    },
+    {
+      "id": "sub_k02xcxd",
+      "created_at": "2026-05-26T23:59:52.459Z",
+      "updated_at": "2026-05-26T23:59:52.459Z",
+      "document_id": "m7e3iqv-qx8ogz6",
       "method": "sendBill",
       "status_code": "0",
       "error_message": null
@@ -866,7 +933,7 @@
       "title": "Sistema Iniciado",
       "message": "La base de datos local de INVOICEFLOW se ha inicializado con éxito.",
       "type": "info",
-      "read": false,
+      "read": true,
       "created_at": "2026-05-25T05:58:49.286Z"
     },
     {
@@ -877,7 +944,7 @@
       "title": "Comprobante Emitido",
       "message": "Boleta B001-49 emitida. Pendiente de envío en Resumen Diario (RC).",
       "type": "info",
-      "read": false
+      "read": true
     },
     {
       "id": "inkn94y",
@@ -887,7 +954,7 @@
       "title": "Comprobante Aceptado",
       "message": "Factura F001-25 aceptada con éxito por SUNAT.",
       "type": "success",
-      "read": false
+      "read": true
     },
     {
       "id": "vcx8og5",
@@ -897,7 +964,7 @@
       "title": "Comprobante Emitido",
       "message": "Boleta B001-50 emitida. Pendiente de envío en Resumen Diario (RC).",
       "type": "info",
-      "read": false
+      "read": true
     },
     {
       "id": "93g89rl",
@@ -907,7 +974,7 @@
       "title": "Resumen Enviado",
       "message": "Resumen de altas RC-20260525-1 enviado a SUNAT. Ticket generado: TKT-QIAXDAT.",
       "type": "info",
-      "read": false
+      "read": true
     },
     {
       "id": "haqnbjt",
@@ -917,7 +984,7 @@
       "title": "Comprobante Emitido",
       "message": "Boleta B001-51 emitida. Pendiente de envío en Resumen Diario (RC).",
       "type": "info",
-      "read": false
+      "read": true
     },
     {
       "id": "law6ex3",
@@ -927,7 +994,7 @@
       "title": "Comprobante Emitido",
       "message": "Boleta B001-52 emitida. Pendiente de envío en Resumen Diario (RC).",
       "type": "info",
-      "read": false
+      "read": true
     },
     {
       "id": "fuu0kwx",
@@ -937,7 +1004,7 @@
       "title": "Comprobante Emitido",
       "message": "Boleta B001-53 emitida. Pendiente de envío en Resumen Diario (RC).",
       "type": "info",
-      "read": false
+      "read": true
     },
     {
       "id": "9yceluw",
@@ -947,7 +1014,7 @@
       "title": "Comprobante Emitido",
       "message": "Boleta B001-54 emitida. Pendiente de envío en Resumen Diario (RC).",
       "type": "info",
-      "read": false
+      "read": true
     },
     {
       "id": "0bnshyx",
@@ -957,7 +1024,17 @@
       "title": "Comprobante Emitido",
       "message": "Boleta B001-55 emitida. Pendiente de envío en Resumen Diario (RC).",
       "type": "info",
-      "read": false
+      "read": true
+    },
+    {
+      "id": "mrcgu8q",
+      "created_at": "2026-05-26T23:59:52.461Z",
+      "updated_at": "2026-05-26T23:59:52.461Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "title": "Nota Aceptada",
+      "message": "Nota de Crédito FC01-4 aceptada con éxito por SUNAT.",
+      "type": "success",
+      "read": true
     }
   ],
   "audit_logs": [
@@ -1415,6 +1492,18 @@
       "ip_address": "127.0.0.1",
       "result": "success",
       "details": "Emitted boleta B001-55 with total PEN 18288.82. Status: signed"
+    },
+    {
+      "id": "z2ani1y",
+      "created_at": "2026-05-26T23:59:52.463Z",
+      "updated_at": "2026-05-26T23:59:52.463Z",
+      "company_id": "00000000-0000-4000-8000-000000000001",
+      "user_id": "user_dev_id",
+      "action": "EMIT_CREDIT_NOTE",
+      "module": "CREDIT_NOTES",
+      "ip_address": "127.0.0.1",
+      "result": "success",
+      "details": "Emitted NC FC01-4 (sync sendBill) affecting Factura F001-25. Status: accepted"
     }
   ]
 }
