@@ -17,7 +17,8 @@ import {
   ShieldCheck, 
   AlertTriangle,
   ExternalLink,
-  Unlock
+  Unlock,
+  Settings
 } from 'lucide-react';
 
 export default function CompaniesPage() {
@@ -55,6 +56,21 @@ export default function CompaniesPage() {
   const [resettingCompany, setResettingCompany] = useState<any>(null);
   const [newPasswordInput, setNewPasswordInput] = useState('');
   const [resetSuccessMessage, setResetSuccessMessage] = useState('');
+
+  // Config settings states
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [selectedConfigCompany, setSelectedConfigCompany] = useState<any>(null);
+  const [configForm, setConfigForm] = useState({
+    tradeName: '',
+    address: '',
+    phone: '',
+    email: '',
+    sunatEnvironment: 'beta',
+    solUsername: '',
+    solPassword: '',
+  });
+  const [configSuccess, setConfigSuccess] = useState('');
+  const [configError, setConfigError] = useState('');
 
   const handleSendEmailSimulated = (data: { email: string; ruc: string; businessName: string; username: string; password_hash: string }) => {
     const body = `Estimado cliente,
@@ -186,6 +202,37 @@ Soporte Técnico de izInvoce`;
       await fetchCompanies();
     } catch (err: any) {
       setResetSuccessMessage(`Error: ${err.message || 'No se pudo restablecer la clave.'}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleConfigSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setConfigError('');
+    setConfigSuccess('');
+    if (!selectedConfigCompany) return;
+
+    try {
+      setSubmitting(true);
+      await BillingApiClient.updateSaasCompany({
+        companyId: selectedConfigCompany.id,
+        tradeName: configForm.tradeName,
+        address: configForm.address,
+        phone: configForm.phone,
+        email: configForm.email,
+        sunatEnvironment: configForm.sunatEnvironment,
+        solUsername: configForm.solUsername,
+        solPassword: configForm.solPassword,
+      });
+      setConfigSuccess('¡Configuración actualizada con éxito!');
+      await fetchCompanies();
+      setTimeout(() => {
+        setIsConfigOpen(false);
+        setConfigSuccess('');
+      }, 1500);
+    } catch (err: any) {
+      setConfigError(err.message || 'Error al guardar la configuración.');
     } finally {
       setSubmitting(false);
     }
@@ -331,6 +378,26 @@ Soporte Técnico de izInvoce`;
                       </td>
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-2">
+                           <button
+                            onClick={() => {
+                              setSelectedConfigCompany(c);
+                              setConfigForm({
+                                tradeName: c.trade_name || '',
+                                address: c.address || '',
+                                phone: c.phone || '',
+                                email: c.email || '',
+                                sunatEnvironment: c.sunat_environment || 'beta',
+                                solUsername: c.sol_username || '',
+                                solPassword: c.sol_password || '',
+                              });
+                              setIsConfigOpen(false);
+                              setIsConfigOpen(true);
+                            }}
+                            className="p-1.5 rounded-lg border border-zinc-250 dark:border-zinc-800 text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-all cursor-pointer"
+                            title="Configurar SUNAT y Datos"
+                          >
+                            <Settings className="w-3.5 h-3.5" />
+                          </button>
                           <button
                             onClick={() => {
                               setResettingCompany(c);
@@ -797,6 +864,161 @@ Soporte Técnico de izInvoce`;
                 </form>
               )}
             </div>
+          </div>
+        </div>
+      )}
+      {/* MODAL 5: CONFIG COMPANY SETTINGS */}
+      {isConfigOpen && selectedConfigCompany && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div className="p-6 border-b border-zinc-150 dark:border-zinc-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Settings className="w-4 h-4 text-blue-500" />
+                <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">Configuración de Empresa</h3>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsConfigOpen(false)} 
+                className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfigSubmit} className="p-6 space-y-4 text-xs">
+              {configError && (
+                <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-lg text-[11px] flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>{configError}</span>
+                </div>
+              )}
+
+              {configSuccess && (
+                <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 p-3 rounded-lg text-[11px] flex items-center gap-2">
+                  <Check className="w-4 h-4 shrink-0 text-emerald-500" />
+                  <span>{configSuccess}</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-zinc-400 mb-0.5">Razón Social</p>
+                  <p className="font-semibold text-zinc-800 dark:text-zinc-200">{selectedConfigCompany.business_name}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-zinc-400 mb-0.5">RUC</p>
+                  <p className="font-mono text-zinc-500 font-bold">{selectedConfigCompany.ruc}</p>
+                </div>
+              </div>
+
+              <div className="border-t border-zinc-150 dark:border-zinc-800 pt-3 space-y-3">
+                <h4 className="font-bold text-zinc-800 dark:text-zinc-200 uppercase text-[10px] tracking-wide">Datos Generales</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400">Nombre Comercial</label>
+                    <input
+                      type="text"
+                      value={configForm.tradeName}
+                      onChange={(e) => setConfigForm({ ...configForm, tradeName: e.target.value })}
+                      className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2 rounded-lg"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400">Dirección Fiscal</label>
+                    <input
+                      type="text"
+                      value={configForm.address}
+                      onChange={(e) => setConfigForm({ ...configForm, address: e.target.value })}
+                      className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2 rounded-lg"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400">Correo de Contacto</label>
+                    <input
+                      type="email"
+                      required
+                      value={configForm.email}
+                      onChange={(e) => setConfigForm({ ...configForm, email: e.target.value })}
+                      className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2 rounded-lg"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400">Teléfono</label>
+                    <input
+                      type="text"
+                      value={configForm.phone}
+                      onChange={(e) => setConfigForm({ ...configForm, phone: e.target.value })}
+                      className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2 rounded-lg"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-zinc-150 dark:border-zinc-800 pt-3 space-y-3">
+                <h4 className="font-bold text-zinc-800 dark:text-zinc-200 uppercase text-[10px] tracking-wide">Configuración SUNAT / SOL</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400">Entorno de Emisión</label>
+                    <select
+                      value={configForm.sunatEnvironment}
+                      onChange={(e) => setConfigForm({ ...configForm, sunatEnvironment: e.target.value })}
+                      className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2 rounded-lg text-zinc-800 dark:text-zinc-200 font-semibold"
+                    >
+                      <option value="beta">Beta (Pruebas SUNAT)</option>
+                      <option value="production">Production (Emisión Real)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400">Usuario SOL</label>
+                    <input
+                      type="text"
+                      required
+                      value={configForm.solUsername}
+                      onChange={(e) => setConfigForm({ ...configForm, solUsername: e.target.value })}
+                      className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2 rounded-lg font-mono font-bold"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400">Clave SOL</label>
+                    <input
+                      type="password"
+                      required
+                      value={configForm.solPassword}
+                      onChange={(e) => setConfigForm({ ...configForm, solPassword: e.target.value })}
+                      className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2 rounded-lg font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-zinc-150 dark:border-zinc-800 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsConfigOpen(false)}
+                  className="px-4 py-2 border border-zinc-250 dark:border-zinc-800 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-850 transition-colors text-xs font-semibold"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl shadow-md text-xs font-semibold disabled:opacity-50"
+                >
+                  {submitting ? 'Guardando...' : 'Guardar Configuración'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

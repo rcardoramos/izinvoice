@@ -127,10 +127,36 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { companyId, status, planName, newPassword } = body;
+    const { 
+      companyId, 
+      status, 
+      planName, 
+      newPassword,
+      tradeName,
+      address,
+      phone,
+      email,
+      sunatEnvironment,
+      solUsername,
+      solPassword
+    } = body;
 
     if (!companyId) {
       return NextResponse.json({ message: 'Se requiere companyId.' }, { status: 400 });
+    }
+
+    // Find and update company table
+    const companies = FileDb.getTable('companies');
+    const compIdx = companies.findIndex((c: any) => c.id === companyId);
+    if (compIdx !== -1) {
+      if (tradeName !== undefined) companies[compIdx].trade_name = tradeName;
+      if (address !== undefined) companies[compIdx].address = address;
+      if (phone !== undefined) companies[compIdx].phone = phone;
+      if (email !== undefined) companies[compIdx].email = email;
+      if (sunatEnvironment !== undefined) companies[compIdx].sunat_environment = sunatEnvironment;
+      if (solUsername !== undefined) companies[compIdx].sol_username = solUsername;
+      if (solPassword !== undefined) companies[compIdx].sol_password = solPassword;
+      FileDb.saveTable('companies', companies);
     }
 
     // Find and update subscription
@@ -170,3 +196,4 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ message: 'Error updating company settings', error: error.message }, { status: 500 });
   }
 }
+// Force SWC cache reload
