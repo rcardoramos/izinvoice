@@ -214,9 +214,6 @@ export default function NewInvoicePage() {
         tipoDoc: selectedClient.docType ?? selectedClient.doc_type,
         numDoc: selectedClient.docNumber ?? selectedClient.doc_number,
         razonSocial: selectedClient.legalName ?? selectedClient.razon_social,
-        direccion: selectedClient.address ?? selectedClient.direccion,
-        correo: selectedClient.email ?? selectedClient.correo,
-        telefono: selectedClient.phone ?? selectedClient.telefono,
       };
 
       const itemsPayload = lines.map((l) => ({

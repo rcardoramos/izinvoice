@@ -19,8 +19,6 @@ export default function ProductsCrudPage() {
     id: '',
     codigo: '',
     nombre: '',
-    descripcion: '',
-    categoria: '',
     unidadMedida: 'NIU',
     precio: '',
     igvRate: '18.00',
@@ -49,8 +47,6 @@ export default function ProductsCrudPage() {
       id: '',
       codigo: '',
       nombre: '',
-      descripcion: '',
-      categoria: '',
       unidadMedida: 'NIU',
       precio: '',
       igvRate: '18.00',
@@ -62,8 +58,6 @@ export default function ProductsCrudPage() {
     setModalMode('edit');
     const codigoVal = p.code ?? p.codigo ?? '';
     const nombreVal = p.description ?? p.name ?? p.nombre ?? '';
-    const descVal = (p.name || p.nombre) ? (p.description ?? p.descripcion ?? '') : (p.descripcion ?? '');
-    const catVal = p.category ?? p.categoria ?? '';
     const umVal = p.unitMeasure ?? p.unidadMedida ?? p.unidad_medida ?? 'NIU';
     const priceVal = (p.unitPrice ?? p.precio ?? 0).toString();
     const igvVal = (p.igvRate ?? p.igv_rate ?? '18.00').toString();
@@ -72,8 +66,6 @@ export default function ProductsCrudPage() {
       id: p.id,
       codigo: codigoVal,
       nombre: nombreVal,
-      descripcion: descVal,
-      categoria: catVal,
       unidadMedida: umVal,
       precio: priceVal,
       igvRate: igvVal,
@@ -145,21 +137,10 @@ export default function ProductsCrudPage() {
       label: 'Nombre / Detalle',
       render: (val: any, row: any) => {
         const name = row.description ?? row.name ?? row.nombre ?? val ?? '-';
-        const desc = (row.name || row.nombre) ? row.description : row.descripcion;
-        const hasDesc = desc && desc !== name;
-        return (
-          <div>
-            <p className="font-semibold text-zinc-900 dark:text-white">{name}</p>
-            {hasDesc && <p className="text-[10px] text-zinc-500 truncate max-w-[250px]">{desc}</p>}
-          </div>
-        );
+        return <p className="font-semibold text-zinc-900 dark:text-white">{name}</p>;
       },
     },
-    {
-      key: 'categoria',
-      label: 'Categoría',
-      render: (val: any, row: any) => row.category ?? row.categoria ?? val ?? '-',
-    },
+
     {
       key: 'unidad_medida',
       label: 'Medida',
@@ -243,29 +224,17 @@ export default function ProductsCrudPage() {
             </h3>
             
             <form onSubmit={handleFormSubmit} className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Código de Catálogo</label>
-                  <input
-                    type="text"
-                    value={formProduct.codigo}
-                    onChange={(e) => setFormProduct({ ...formProduct, codigo: e.target.value })}
-                    required
-                    placeholder="PROD-100"
-                    disabled={modalMode === 'edit'}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 disabled:opacity-50 font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Categoría</label>
-                  <input
-                    type="text"
-                    value={formProduct.categoria}
-                    onChange={(e) => setFormProduct({ ...formProduct, categoria: e.target.value })}
-                    placeholder="Hardware"
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                  />
-                </div>
+              <div>
+                <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Código de Catálogo</label>
+                <input
+                  type="text"
+                  value={formProduct.codigo}
+                  onChange={(e) => setFormProduct({ ...formProduct, codigo: e.target.value })}
+                  required
+                  placeholder="PROD-100"
+                  disabled={modalMode === 'edit'}
+                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 disabled:opacity-50 font-mono"
+                />
               </div>
 
               <div>
@@ -280,15 +249,7 @@ export default function ProductsCrudPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Descripción Breve</label>
-                <textarea
-                  value={formProduct.descripcion}
-                  onChange={(e) => setFormProduct({ ...formProduct, descripcion: e.target.value })}
-                  rows={2}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                />
-              </div>
+
 
               <div className="grid grid-cols-3 gap-3">
                 <div className="col-span-2">

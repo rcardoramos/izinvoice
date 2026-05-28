@@ -79,6 +79,29 @@ export default function InvoicesHistoryPage() {
   const [cancelModal, setCancelModal] = useState(false);
   const [docToCancel, setDocToCancel] = useState<any>(null);
 
+  // Cache customers mapping for telephone/email fallback
+  const [customersMap, setCustomersMap] = useState<Record<string, any>>({});
+
+  useEffect(() => {
+    const loadCustomers = async () => {
+      try {
+        const res = await BillingApiClient.listCustomers({ limit: 100 });
+        const customersData = Array.isArray(res) ? res : (res?.data ?? []);
+        const map: Record<string, any> = {};
+        customersData.forEach((c: any) => {
+          const num = String(c.docNumber ?? c.doc_number ?? '').trim();
+          if (num) {
+            map[num] = c;
+          }
+        });
+        setCustomersMap(map);
+      } catch (err) {
+        console.warn('Failed to load customers map', err);
+      }
+    };
+    loadCustomers();
+  }, []);
+
   // Load documents
   const loadDocuments = async () => {
     try {
@@ -252,7 +275,42 @@ export default function InvoicesHistoryPage() {
     {
       key: 'docType',
       label: 'Tipo',
-      render: (val: any) => DOC_TYPE_LABELS[val as '01'] || val,
+      render: (val: any) => {
+        const label = DOC_TYPE_LABELS[val as '01'] || val;
+        if (val === '01') {
+          return (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-blue-150 dark:border-blue-900/50 uppercase tracking-wider">
+              {label}
+            </span>
+          );
+        }
+        if (val === '03') {
+          return (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-150 dark:border-emerald-900/50 uppercase tracking-wider">
+              {label}
+            </span>
+          );
+        }
+        if (val === '07') {
+          return (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-150 dark:border-amber-900/50 uppercase tracking-wider">
+              {label}
+            </span>
+          );
+        }
+        if (val === '08') {
+          return (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-150 dark:border-rose-900/50 uppercase tracking-wider">
+              {label}
+            </span>
+          );
+        }
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-zinc-50 dark:bg-zinc-950 text-zinc-600 dark:text-zinc-450 border border-zinc-200 dark:border-zinc-800 uppercase tracking-wider">
+            {label}
+          </span>
+        );
+      },
     },
     {
       key: 'cliente',
@@ -292,14 +350,26 @@ export default function InvoicesHistoryPage() {
       label: 'Acciones',
       render: (_: any, row: any) => {
         const cliente = row.cliente ?? row.payload?.cliente;
-        const phone = (cliente?.telefono || cliente?.phone || '').replace(/\D/g, '');
+        const clientDocNum = String(cliente?.numDoc ?? cliente?.num_doc ?? cliente?.docNumber ?? cliente?.doc_number ?? '').trim();
+        const matchingCustomer = clientDocNum ? customersMap[clientDocNum] : null;
+        
+        const phone = (
+          cliente?.telefono || 
+          cliente?.phone || 
+          matchingCustomer?.phone || 
+          matchingCustomer?.telefono || 
+          ''
+        ).replace(/\D/g, '');
+
+        const email = cliente?.correo || cliente?.email || matchingCustomer?.email || matchingCustomer?.correo || '';
+
         const whatsappUrl = phone 
           ? `https://wa.me/${phone.startsWith('51') ? phone : '51' + phone}?text=${encodeURIComponent(
               `Estimado cliente, le adjuntamos su comprobante electrónico ${row.serie}-${row.correlativo} por un monto de S/ ${parseFloat(row.total || '0').toFixed(2)}. ¡Muchas gracias!`
             )}`
           : null;
         
-        const mailUrl = `mailto:${cliente?.correo || cliente?.email || ''}?subject=${encodeURIComponent(
+        const mailUrl = `mailto:${email}?subject=${encodeURIComponent(
           `Comprobante de Pago Electrónico ${row.serie}-${row.correlativo}`
         )}&body=${encodeURIComponent(
           `Estimado cliente,\n\nLe hacemos llegar su comprobante electrónico ${row.serie}-${row.correlativo} por un monto de S/ ${parseFloat(row.total || '0').toFixed(2)}.\n\nAtentamente,\n${company?.businessName || ''}`
