@@ -40,8 +40,8 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
     <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-zinc-200 h-16 flex items-center justify-between px-8 select-none">
       {/* Title section */}
       <div>
-        <h2 className="text-sm font-bold text-zinc-900 tracking-tight">{title}</h2>
-        {subtitle && <p className="text-[10px] text-zinc-500 font-semibold">{subtitle}</p>}
+        <h2 className="text-lg font-bold text-zinc-900 dark:text-white tracking-tight">{title}</h2>
+        {subtitle && <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">{subtitle}</p>}
       </div>
 
       {/* Utilities */}

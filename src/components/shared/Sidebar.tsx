@@ -76,7 +76,7 @@ export function Sidebar() {
         </div>
         <div>
           <h1 className="font-semibold text-zinc-900 tracking-tight text-sm">IZINVOCE</h1>
-          <p className="text-[10px] text-zinc-400 font-sans font-semibold">SaaS FE PREMIUM</p>
+          <p className="text-[10px] text-zinc-400 font-sans font-semibold">MindDev</p>
         </div>
       </div>
 
