@@ -87,10 +87,10 @@ export default function CustomersCrudPage() {
     setModalMode('edit');
     setFormCustomer({
       id: customer.id,
-      docType: customer.docType ?? customer.doc_type,
-      docNumber: customer.docNumber ?? customer.doc_number,
-      razonSocial: customer.razonSocial ?? customer.razon_social,
-      nombreComercial: customer.nombreComercial ?? customer.nombre_comercial ?? '',
+      docType: customer.docType ?? customer.doc_type ?? '6',
+      docNumber: customer.docNumber ?? customer.doc_number ?? '',
+      razonSocial: customer.razonSocial ?? customer.razon_social ?? customer.legalName ?? '',
+      nombreComercial: customer.nombreComercial ?? customer.nombre_comercial ?? customer.commercialName ?? '',
       direccion: customer.direccion ?? customer.address ?? '',
       correo: customer.correo ?? customer.email ?? '',
       telefono: customer.telefono ?? customer.phone ?? '',

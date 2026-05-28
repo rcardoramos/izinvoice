@@ -77,6 +77,7 @@ export default function InvoicesHistoryPage() {
 
   // Cancel boleta modal state
   const [cancelModal, setCancelModal] = useState(false);
+  const [docToCancel, setDocToCancel] = useState<any>(null);
 
   // Load documents
   const loadDocuments = async () => {
@@ -224,10 +225,13 @@ export default function InvoicesHistoryPage() {
 
   // Action: cancel signed boleta (pre-RC, local only)
   const handleCancelBoleta = async (reason: string) => {
-    if (!selectedDoc) return;
-    await BillingApiClient.cancelDocuments([selectedDoc.id], reason || undefined);
+    if (!docToCancel) return;
+    await BillingApiClient.cancelDocuments([docToCancel.id], reason || undefined);
     setCancelModal(false);
-    setSelectedDocId(null);
+    setDocToCancel(null);
+    if (selectedDocId === docToCancel.id) {
+      setSelectedDocId(null);
+    }
     loadDocuments();
   };
 
@@ -311,7 +315,7 @@ export default function InvoicesHistoryPage() {
 
         const handleCancelIconClick = (e: React.MouseEvent) => {
           e.stopPropagation();
-          setSelectedDoc(row);
+          setDocToCancel(row);
           setCancelModal(true);
         };
 
@@ -608,11 +612,14 @@ export default function InvoicesHistoryPage() {
       )}
 
       {/* Cancel Boleta Modal */}
-      {cancelModal && selectedDoc && (
+      {cancelModal && docToCancel && (
         <CancelBoletaModal
-          doc={selectedDoc}
+          doc={docToCancel}
           onCancel={handleCancelBoleta}
-          onClose={() => setCancelModal(false)}
+          onClose={() => {
+            setCancelModal(false);
+            setDocToCancel(null);
+          }}
         />
       )}
 
