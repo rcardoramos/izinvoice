@@ -40,7 +40,8 @@ export default function DailySummariesPage() {
       const data = Array.isArray(res) ? res : (res as any)?.data ?? [];
       setSummaries(data);
     } catch (e) {
-      console.error(e);
+      console.warn('Failed to load daily summaries from server:', e);
+      setSummaries([]);
     } finally {
       setLoading(false);
     }
