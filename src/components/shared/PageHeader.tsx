@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAppStore } from '@/store/app';
 import { BillingApiClient } from '@/services/api-client';
-import { Bell, Search, Command, Check, AlertCircle } from 'lucide-react';
+import { Bell, Search, Command, Check, AlertCircle, Menu } from 'lucide-react';
 
 interface PageHeaderProps {
   title: string;
@@ -12,7 +12,7 @@ interface PageHeaderProps {
 }
 
 export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
-  const { toggleCommandPalette, notifications, setNotifications, unreadCount } = useAppStore();
+  const { toggleCommandPalette, notifications, setNotifications, unreadCount, toggleMobileSidebar } = useAppStore();
   const [showNotifications, setShowNotifications] = useState(false);
 
   // Fetch notifications periodically
@@ -37,11 +37,20 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-zinc-200 h-16 flex items-center justify-between px-8 select-none">
+    <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-zinc-200 h-16 flex items-center justify-between px-4 sm:px-8 select-none">
       {/* Title section */}
-      <div>
-        <h2 className="text-lg font-bold text-zinc-900 dark:text-white tracking-tight">{title}</h2>
-        {subtitle && <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">{subtitle}</p>}
+      <div className="flex items-center gap-3">
+        {/* Hamburger Menu Toggle */}
+        <button
+          onClick={toggleMobileSidebar}
+          className="lg:hidden p-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 text-zinc-600 cursor-pointer"
+        >
+          <Menu className="w-4 h-4" />
+        </button>
+        <div>
+          <h2 className="text-sm sm:text-base md:text-lg font-bold text-zinc-900 dark:text-white tracking-tight">{title}</h2>
+          {subtitle && <p className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400 font-medium mt-0.5">{subtitle}</p>}
+        </div>
       </div>
 
       {/* Utilities */}
@@ -49,11 +58,11 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
         {/* Fake search button (Ctrl+K palette trigger) */}
         <button
           onClick={toggleCommandPalette}
-          className="flex items-center gap-3 px-3.5 py-1.5 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 transition-colors text-zinc-400 w-64 text-left cursor-pointer"
+          className="flex items-center justify-center sm:justify-start gap-3 p-2 sm:px-3.5 sm:py-1.5 rounded-xl border border-zinc-200 bg-zinc-50 hover:bg-zinc-100 transition-all text-zinc-400 w-10 h-10 sm:w-64 text-left cursor-pointer"
         >
-          <Search className="w-3.5 h-3.5 text-zinc-400" />
-          <span className="text-xs flex-1">Buscar comandos...</span>
-          <span className="inline-flex items-center gap-0.5 text-[10px] bg-zinc-200/60 px-1.5 py-0.5 rounded-md font-mono font-bold text-zinc-600">
+          <Search className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+          <span className="text-xs flex-1 hidden sm:inline">Buscar comandos...</span>
+          <span className="hidden sm:inline-flex items-center gap-0.5 text-[10px] bg-zinc-200/60 px-1.5 py-0.5 rounded-md font-mono font-bold text-zinc-600">
             <Command className="w-2.5 h-2.5" /> K
           </span>
         </button>

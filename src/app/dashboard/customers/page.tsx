@@ -257,7 +257,13 @@ export default function CustomersCrudPage() {
 
       {/* Flyout Drawer panel for Client Profile */}
       {selectedCustomerId && (
-        <div className="w-[500px] border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex flex-col h-screen shrink-0 relative z-30 shadow-2xl select-none">
+        <>
+          {/* Drawer backdrop for mobile/tablet */}
+          <div 
+            onClick={() => setSelectedCustomerId(null)}
+            className="fixed inset-0 bg-black/45 backdrop-blur-xs z-40 lg:hidden"
+          />
+          <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[500px] border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 flex flex-col h-screen lg:relative lg:z-30 shadow-2xl lg:shadow-none select-none">
           <div className="p-4 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
             <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">Perfil del Cliente</h3>
             <button
@@ -361,7 +367,8 @@ export default function CustomersCrudPage() {
             ) : null}
           </div>
         </div>
-      )}
+      </>
+    )}
 
       {/* CRUD dialog */}
       {showModal && (

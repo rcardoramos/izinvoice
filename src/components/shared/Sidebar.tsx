@@ -20,14 +20,19 @@ import {
   ShieldCheck,
   Building2,
   Terminal,
-  Receipt
+  Receipt,
+  X
 } from 'lucide-react';
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, company, clearSession, updateCompanyEnv } = useAuthStore();
-  const { theme, toggleTheme } = useAppStore();
+  const { theme, toggleTheme, mobileSidebarOpen, setMobileSidebarOpen } = useAppStore();
+
+  React.useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [pathname, setMobileSidebarOpen]);
 
   const handleLogout = () => {
     clearSession();
@@ -68,17 +73,35 @@ export function Sidebar() {
   if (!user || (!company && !isSaaSAdmin)) return null;
 
   return (
-    <aside className="w-64 bg-white text-zinc-700 flex flex-col border-r border-zinc-200 shrink-0 h-screen sticky top-0">
-      {/* Brand Logo */}
-      <div className="p-6 border-b border-zinc-100 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-[#4f46e5] flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
-          IZ
+    <>
+      {/* Mobile Backdrop overlay */}
+      {mobileSidebarOpen && (
+        <div 
+          onClick={() => setMobileSidebarOpen(false)}
+          className="fixed inset-0 bg-black/45 backdrop-blur-xs z-40 lg:hidden"
+        />
+      )}
+
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white text-zinc-700 flex flex-col border-r border-zinc-200 shrink-0 h-screen transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        {/* Brand Logo */}
+        <div className="p-6 border-b border-zinc-100 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#4f46e5] flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
+              IZ
+            </div>
+            <div>
+              <h1 className="font-semibold text-zinc-900 tracking-tight text-sm">IZINVOCE</h1>
+              <p className="text-[10px] text-zinc-400 font-sans font-semibold">MindDev</p>
+            </div>
+          </div>
+          {/* Mobile close button */}
+          <button
+            onClick={() => setMobileSidebarOpen(false)}
+            className="lg:hidden p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-500 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
-        <div>
-          <h1 className="font-semibold text-zinc-900 tracking-tight text-sm">IZINVOCE</h1>
-          <p className="text-[10px] text-zinc-400 font-sans font-semibold">MindDev</p>
-        </div>
-      </div>
 
       {/* Profile Info (Tenant / SaaS Admin) */}
       {isSaaSAdmin ? (
@@ -160,6 +183,7 @@ export function Sidebar() {
           </button>
         </div>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

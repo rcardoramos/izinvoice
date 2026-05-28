@@ -352,11 +352,11 @@ export default function NewBoletaPage() {
               </div>
 
               {/* Add product to lines selector */}
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <select
                   value={selectedProductId}
                   onChange={(e) => setSelectedProductId(e.target.value)}
-                  className="flex-1 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1.5 px-2.5 text-xs text-zinc-900 dark:text-zinc-300"
+                  className="flex-1 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1.5 px-2.5 text-xs text-zinc-900 dark:text-zinc-300 min-w-0"
                   disabled={loadingConfig}
                 >
                   <option value="">
@@ -371,15 +371,15 @@ export default function NewBoletaPage() {
                 <button
                   onClick={handleAddItemLine}
                   disabled={!selectedProductId}
-                  className="px-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 rounded-lg text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-1 cursor-pointer"
+                  className="px-4 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 rounded-lg text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shrink-0 w-full sm:w-auto h-[44px]"
                 >
                   <Plus className="w-4 h-4" /> Agregar
                 </button>
               </div>
 
               {/* Lines Table representation */}
-              <div className="border border-zinc-200 dark:border-zinc-800/80 rounded-xl overflow-hidden">
-                <table className="w-full text-left text-xs text-zinc-700 dark:text-zinc-300">
+              <div className="border border-zinc-200 dark:border-zinc-800/80 rounded-xl overflow-x-auto">
+                <table className="w-full min-w-[650px] text-left text-xs text-zinc-700 dark:text-zinc-300">
                   <thead>
                     <tr className="bg-zinc-50 dark:bg-zinc-950/60 border-b border-zinc-200 dark:border-zinc-800/80 text-[10px] text-zinc-500 font-semibold uppercase">
                       <th className="p-3 w-16">Código</th>
