@@ -137,7 +137,7 @@ export default function DashboardPage() {
           // Unwrap paginated responses from real API
           const docs: any[] = Array.isArray(docsRes) ? docsRes : (docsRes?.data ?? []);
           const customersTotal: number = docsRes?.meta?.total ?? (Array.isArray(customersRes) ? customersRes.length : (customersRes?.meta?.total ?? 0));
-          const audits: any[] = Array.isArray(auditsRes) ? auditsRes : (auditsRes?.data ?? []);
+          const audits: any[] = Array.isArray(auditsRes) ? auditsRes : ((auditsRes as any)?.data ?? []);
 
           const todayStr = new Date().toISOString().split('T')[0];
           const currentMonthStr = todayStr.substring(0, 7); // YYYY-MM

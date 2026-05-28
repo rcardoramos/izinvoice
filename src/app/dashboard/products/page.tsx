@@ -61,8 +61,8 @@ export default function ProductsCrudPage() {
   const handleOpenEdit = (p: any) => {
     setModalMode('edit');
     const codigoVal = p.code ?? p.codigo ?? '';
-    const nombreVal = p.name ?? p.nombre ?? '';
-    const descVal = p.description ?? p.descripcion ?? '';
+    const nombreVal = p.description ?? p.name ?? p.nombre ?? '';
+    const descVal = (p.name || p.nombre) ? (p.description ?? p.descripcion ?? '') : (p.descripcion ?? '');
     const catVal = p.category ?? p.categoria ?? '';
     const umVal = p.unitMeasure ?? p.unidadMedida ?? p.unidad_medida ?? 'NIU';
     const priceVal = (p.unitPrice ?? p.precio ?? 0).toString();
@@ -144,12 +144,13 @@ export default function ProductsCrudPage() {
       key: 'nombre',
       label: 'Nombre / Detalle',
       render: (val: any, row: any) => {
-        const name = row.name ?? row.nombre ?? val ?? '-';
-        const desc = row.description ?? row.descripcion;
+        const name = row.description ?? row.name ?? row.nombre ?? val ?? '-';
+        const desc = (row.name || row.nombre) ? row.description : row.descripcion;
+        const hasDesc = desc && desc !== name;
         return (
           <div>
             <p className="font-semibold text-zinc-900 dark:text-white">{name}</p>
-            {desc && <p className="text-[10px] text-zinc-500 truncate max-w-[250px]">{desc}</p>}
+            {hasDesc && <p className="text-[10px] text-zinc-500 truncate max-w-[250px]">{desc}</p>}
           </div>
         );
       },

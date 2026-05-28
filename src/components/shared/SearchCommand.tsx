@@ -65,8 +65,8 @@ export function SearchCommand() {
     const triggerSearch = async () => {
       try {
         const promises = [
-          BillingApiClient.listCustomers(query),
-          BillingApiClient.listProducts(query),
+          BillingApiClient.listCustomers({ q: query }),
+          BillingApiClient.listProducts({ q: query }),
           BillingApiClient.listDocuments({ search: query }),
         ];
         
@@ -198,8 +198,12 @@ export function SearchCommand() {
                       <div className="flex items-center gap-2">
                         <Users className="w-3.5 h-3.5 text-zinc-400" />
                         <div>
-                          <p className="font-semibold text-zinc-900 leading-none">{c.razon_social}</p>
-                          <p className="text-[9px] text-zinc-400 mt-1 font-mono">{c.doc_type === '6' ? 'RUC' : 'DNI'}: {c.doc_number}</p>
+                          <p className="font-semibold text-zinc-900 leading-none">
+                            {c.legalName ?? c.razonSocial ?? c.razon_social}
+                          </p>
+                          <p className="text-[9px] text-zinc-400 mt-1 font-mono">
+                            {(c.docType ?? c.doc_type) === '6' ? 'RUC' : 'DNI'}: {c.docNumber ?? c.doc_number}
+                          </p>
                         </div>
                       </div>
                     </button>
@@ -220,8 +224,10 @@ export function SearchCommand() {
                       <div className="flex items-center gap-2">
                         <Package className="w-3.5 h-3.5 text-zinc-400" />
                         <div>
-                          <p className="font-semibold text-zinc-900 leading-none">{p.nombre}</p>
-                          <p className="text-[9px] text-zinc-400 mt-1 font-mono">Cod: {p.codigo} · Precio: PEN {p.precio.toFixed(2)}</p>
+                          <p className="font-semibold text-zinc-900 leading-none">{p.description ?? p.name ?? p.nombre}</p>
+                          <p className="text-[9px] text-zinc-400 mt-1 font-mono">
+                            Cod: {p.code ?? p.codigo} · Precio: PEN {(p.unitPrice ?? p.precio ?? 0).toFixed(2)}
+                          </p>
                         </div>
                       </div>
                     </button>
@@ -244,7 +250,7 @@ export function SearchCommand() {
                         <div>
                           <p className="font-semibold text-zinc-900 leading-none">{d.serie}-{d.correlativo}</p>
                           <p className="text-[9px] text-zinc-400 mt-1 font-mono">
-                            {d.payload?.cliente?.razonSocial} · PEN {d.total.toFixed(2)} · {d.status}
+                            {d.payload?.cliente?.razonSocial ?? d.payload?.cliente?.razon_social ?? d.payload?.cliente?.legalName} · PEN {(d.total ?? 0).toFixed(2)} · {d.status}
                           </p>
                         </div>
                       </div>

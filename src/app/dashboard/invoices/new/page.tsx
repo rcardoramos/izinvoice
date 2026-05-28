@@ -98,7 +98,7 @@ export default function NewInvoicePage() {
   useEffect(() => {
     setSerie(docType === '01' ? 'F001' : 'B001');
     // For Boletas (03), clear RUC check defaults
-    if (docType === '03' && selectedClient?.doc_type === '6') {
+    if (docType === '03' && (selectedClient?.docType ?? selectedClient?.doc_type) === '6') {
       setSelectedClient(null);
       setClientDoc('');
     }
@@ -125,13 +125,13 @@ export default function NewInvoicePage() {
 
   const handleClientRegistered = (created: any) => {
     setSelectedClient(created);
-    setClientDoc(created.doc_number);
+    setClientDoc(created.docNumber ?? created.doc_number);
     setSearchPerformed(true);
     
     addNotification({
       id: Math.random().toString(),
       title: 'Cliente Registrado',
-      message: `Cliente ${created.razon_social} registrado y seleccionado para el comprobante.`,
+      message: `Cliente ${created.legalName ?? created.razon_social} registrado y seleccionado para el comprobante.`,
       type: 'success',
       created_at: new Date().toISOString(),
     });
@@ -153,10 +153,10 @@ export default function NewInvoicePage() {
       ...prev,
       {
         id: prod.id,
-        codigo: prod.codigo,
-        descripcion: prod.nombre,
+        codigo: prod.code ?? prod.codigo,
+        descripcion: prod.description ?? prod.nombre,
         cantidad: 1,
-        precioUnitario: prod.precio,
+        precioUnitario: prod.unitPrice ?? prod.precio ?? 0,
       },
     ]);
     setSelectedProductId('');
@@ -195,7 +195,7 @@ export default function NewInvoicePage() {
       return;
     }
 
-    if (docType === '01' && selectedClient.doc_type !== '6') {
+    if (docType === '01' && (selectedClient.docType ?? selectedClient.doc_type) !== '6') {
       alert('Las Facturas requieren un cliente con RUC válido.');
       return;
     }
@@ -211,12 +211,12 @@ export default function NewInvoicePage() {
 
     try {
       const clientPayload = {
-        tipoDoc: selectedClient.doc_type,
-        numDoc: selectedClient.doc_number,
-        razonSocial: selectedClient.razon_social,
-        direccion: selectedClient.direccion,
-        correo: selectedClient.correo,
-        telefono: selectedClient.telefono,
+        tipoDoc: selectedClient.docType ?? selectedClient.doc_type,
+        numDoc: selectedClient.docNumber ?? selectedClient.doc_number,
+        razonSocial: selectedClient.legalName ?? selectedClient.razon_social,
+        direccion: selectedClient.address ?? selectedClient.direccion,
+        correo: selectedClient.email ?? selectedClient.correo,
+        telefono: selectedClient.phone ?? selectedClient.telefono,
       };
 
       const itemsPayload = lines.map((l) => ({
@@ -351,7 +351,7 @@ export default function NewInvoicePage() {
                   <option value="">-- Seleccionar producto del catálogo --</option>
                   {productsList.map((p) => (
                     <option key={p.id} value={p.id}>
-                      [{p.codigo}] {p.nombre} - S/ {p.precio.toFixed(2)}
+                      [{p.code ?? p.codigo}] {p.description ?? p.nombre} - S/ {(p.unitPrice ?? p.precio ?? 0).toFixed(2)}
                     </option>
                   ))}
                 </select>
@@ -464,12 +464,14 @@ export default function NewInvoicePage() {
               {/* Autofilled client details card */}
               {selectedClient ? (
                 <div className="p-3 bg-blue-500/[0.02] border border-blue-500/10 rounded-xl space-y-1.5 text-xs text-zinc-700 dark:text-zinc-300">
-                  <p className="font-bold text-zinc-900 dark:text-white">{selectedClient.razon_social}</p>
-                  <p className="font-mono text-[10px] text-zinc-400">
-                    {selectedClient.doc_type === '6' ? 'RUC' : 'DNI'}: {selectedClient.doc_number}
+                  <p className="font-bold text-zinc-900 dark:text-white">
+                    {selectedClient.legalName ?? selectedClient.razon_social}
                   </p>
-                  {selectedClient.direccion && (
-                    <p className="text-[10px] text-zinc-400 truncate">{selectedClient.direccion}</p>
+                  <p className="font-mono text-[10px] text-zinc-400">
+                    {(selectedClient.docType ?? selectedClient.doc_type) === '6' ? 'RUC' : 'DNI'}: {selectedClient.docNumber ?? selectedClient.doc_number}
+                  </p>
+                  {(selectedClient.address ?? selectedClient.direccion) && (
+                    <p className="text-[10px] text-zinc-400 truncate">{selectedClient.address ?? selectedClient.direccion}</p>
                   )}
                   <div className="flex items-center gap-1.5 text-[10px] text-emerald-500 font-medium">
                     <Check className="w-3.5 h-3.5" /> Autocompletado

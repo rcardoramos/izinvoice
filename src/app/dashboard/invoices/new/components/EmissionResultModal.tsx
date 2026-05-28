@@ -162,10 +162,10 @@ export function EmissionResultModal({
                       dailySummaryId: null,
                       payload: {
                         cliente: {
-                          tipoDoc: selectedClient?.doc_type,
-                          numDoc: selectedClient?.doc_number,
-                          razonSocial: selectedClient?.razon_social,
-                          direccion: selectedClient?.direccion,
+                          tipoDoc: selectedClient?.docType ?? selectedClient?.doc_type,
+                          numDoc: selectedClient?.docNumber ?? selectedClient?.doc_number,
+                          razonSocial: selectedClient?.legalName ?? selectedClient?.razon_social,
+                          direccion: selectedClient?.address ?? selectedClient?.direccion,
                         },
                         items: lines,
                         totals: {
