@@ -1,6 +1,7 @@
 import { SunatEnvironment } from './enums';
 
 export interface LoginRequest {
+  ruc?: string;
   username: string;
   password: string;
 }

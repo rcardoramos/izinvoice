@@ -35,7 +35,9 @@ export default function DailySummariesPage() {
   const loadSummaries = async () => {
     try {
       setLoading(true);
-      const data = await BillingApiClient.listDailySummaries(activeTab);
+      const res = await BillingApiClient.listDailySummaries(activeTab);
+      // External API returns paginated { data: [], meta: {} } or plain array
+      const data = Array.isArray(res) ? res : (res as any)?.data ?? [];
       setSummaries(data);
     } catch (e) {
       console.error(e);
@@ -189,16 +191,16 @@ export default function DailySummariesPage() {
 
                     return (
                       <tr key={sum.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
-                        <td className="p-4 font-mono font-bold">{sum.summary_code}</td>
-                        <td className="p-4">{sum.reference_date}</td>
-                        <td className="p-4">{sum.issue_date}</td>
+                        <td className="p-4 font-mono font-bold">{sum.summaryCode ?? sum.summary_code}</td>
+                        <td className="p-4">{sum.referenceDate ?? sum.reference_date}</td>
+                        <td className="p-4">{sum.issueDate ?? sum.issue_date}</td>
                         <td className="p-4 font-mono text-zinc-500">{sum.ticket || 'N/A'}</td>
-                        <td className="p-4 text-center font-semibold font-mono">{sum.documentCount}</td>
+                        <td className="p-4 text-center font-semibold font-mono">{sum.documentCount ?? sum.document_count ?? '—'}</td>
                         <td className="p-4"><StatusBadge status={sum.status} /></td>
                         <td className="p-4 text-right">
                           {canPoll ? (
                             <button
-                              onClick={() => handleCheckStatus(sum.id, sum.summary_code)}
+                              onClick={() => handleCheckStatus(sum.id, sum.summaryCode ?? sum.summary_code)}
                               disabled={isChecking}
                               className="inline-flex items-center gap-1 py-1 px-2.5 rounded border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-[11px] font-semibold text-blue-600 dark:text-blue-400 transition-colors disabled:opacity-50 cursor-pointer"
                             >

@@ -4,38 +4,29 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { BillingApiClient } from '@/services/api-client';
-import { StatusBadge } from '@/components/shared/StatusBadge';
-import { PdfViewer } from '@/components/shared/PdfViewer';
 import { useAuthStore } from '@/store/auth';
 import { useAppStore } from '@/store/app';
 import { 
   Plus, 
   Trash2, 
-  Search, 
   Check, 
   AlertCircle, 
-  ArrowLeft, 
-  Download, 
-  FileCode, 
-  Printer, 
-  UserPlus, 
-  PackagePlus,
-  RefreshCw
+  UserPlus,
+  Loader2
 } from 'lucide-react';
 import { SearchInput } from '@/components/shared/SearchInput';
-import { AddClientModal } from './components/AddClientModal';
-import { EmissionResultModal } from './components/EmissionResultModal';
+import { AddClientModal } from '@/app/dashboard/invoices/new/components/AddClientModal';
+import { EmissionResultModal } from '@/app/dashboard/invoices/new/components/EmissionResultModal';
 
-export default function NewInvoicePage() {
+export default function NewBoletaPage() {
   const router = useRouter();
   const { company } = useAuthStore();
   const { addNotification } = useAppStore();
 
-  // Form State
-  const [docType, setDocType] = useState<'01' | '03'>('01'); // 01 Factura, 03 Boleta
-  const [serie, setSerie] = useState('');
+  const [docType, setDocType] = useState<'01' | '03'>('03');
+  const [serie, setSerie] = useState('B001');
   const [moneda, setMoneda] = useState('PEN');
-  const [formaPago, setFormaPago] = useState('CON'); // CON Contado, CRE Credito
+  const [formaPago, setFormaPago] = useState('CON');
 
   // Client Selection State
   const [clientDoc, setClientDoc] = useState('');
@@ -44,14 +35,14 @@ export default function NewInvoicePage() {
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
 
-  // Product Catalog State
+  // Product Catalog State — loaded from real API
   const [productsList, setProductsList] = useState<any[]>([]);
   const [selectedProductId, setSelectedProductId] = useState('');
 
   // Invoice Lines
   const [lines, setLines] = useState<any[]>([]);
 
-  // Page Load Series Configuration
+  // Series from real API
   const [availableSeries, setAvailableSeries] = useState<any[]>([]);
   const [loadingConfig, setLoadingConfig] = useState(true);
 
@@ -61,32 +52,41 @@ export default function NewInvoicePage() {
   const [emittedDoc, setEmittedDoc] = useState<any>(null);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // Load config on mount
+  // Load series & products on mount from real API
   useEffect(() => {
     const loadConfig = async () => {
       try {
         setLoadingConfig(true);
-        // Load registered series & products
-        const [series, products] = await Promise.all([
-          fetch('/api/v1/daily-summaries').then(() => {
-            // Read series from FileDb simulation via direct call
-            return BillingApiClient.listProducts(); // temporary read products
-          }),
-          BillingApiClient.listProducts(),
+        const [seriesRes, productsRes] = await Promise.all([
+          BillingApiClient.listSeries({ isActive: true }),  // load all doc types
+          BillingApiClient.listProducts({ limit: 100, isActive: true }),
         ]);
-        
-        const productsData = Array.isArray(products) ? products : (products?.data ?? []);
-        setProductsList(productsData);
 
-        // Standard seed series mapping
-        const seriesData = [
-          { docType: '01', serie: 'F001' },
-          { docType: '03', serie: 'B001' },
-        ];
-        setAvailableSeries(seriesData);
-        setSerie('F001');
+        // Series
+        const seriesData: any[] = Array.isArray(seriesRes)
+          ? seriesRes
+          : (seriesRes?.data ?? []);
+        if (seriesData.length > 0) {
+          setAvailableSeries(seriesData);
+          // Default to first B001 series
+          const boletaSerie = seriesData.find((s: any) => s.docType === '03') ?? seriesData[0];
+          setSerie(boletaSerie.serie);
+        } else {
+          setAvailableSeries([
+            { docType: '01', serie: 'F001', correlativo: 1 },
+            { docType: '03', serie: 'B001', correlativo: 1 },
+          ]);
+          setSerie('B001');
+        }
+
+        // Products — external API: { code, description, unitPrice }
+        const productsData: any[] = Array.isArray(productsRes)
+          ? productsRes
+          : (productsRes?.data ?? []);
+        setProductsList(productsData);
       } catch (err) {
         console.error('Error loading config', err);
+        setAvailableSeries([{ serie: 'B001', correlativo: 1 }]);
       } finally {
         setLoadingConfig(false);
       }
@@ -94,22 +94,29 @@ export default function NewInvoicePage() {
     loadConfig();
   }, []);
 
-  // Update default series prefix when docType changes
+  // Auto-switch serie when docType changes
   useEffect(() => {
-    setSerie(docType === '01' ? 'F001' : 'B001');
-    // For Boletas (03), clear RUC check defaults
-    if (docType === '03' && selectedClient?.doc_type === '6') {
-      setSelectedClient(null);
-      setClientDoc('');
+    const match = availableSeries.find((s: any) => s.docType === docType);
+    if (match) setSerie(match.serie);
+    else setSerie(docType === '01' ? 'F001' : 'B001');
+    // If switching to Factura, clear non-RUC clients
+    if (docType === '01' && selectedClient) {
+      const tipo = selectedClient.docType ?? selectedClient.doc_type;
+      if (tipo !== '6') {
+        setSelectedClient(null);
+        setClientDoc('');
+        setSearchPerformed(false);
+      }
     }
-  }, [docType]);
+  }, [docType, availableSeries]);
 
-  // Client DNI/RUC Autocomplete Search
+  // Client search by RUC/DNI via real API
   const searchClient = async () => {
     if (!clientDoc) return;
     setClientSearching(true);
     setSearchPerformed(true);
     try {
+      // findCustomerByDoc already normalizes paginated response → array
       const results = await BillingApiClient.findCustomerByDoc(clientDoc);
       if (results.length > 0) {
         setSelectedClient(results[0]);
@@ -118,32 +125,33 @@ export default function NewInvoicePage() {
       }
     } catch (err) {
       console.error(err);
+      setSelectedClient(null);
     } finally {
       setClientSearching(false);
     }
   };
 
   const handleClientRegistered = (created: any) => {
+    // Normalize: AddClientModal may return the raw external API format
     setSelectedClient(created);
-    setClientDoc(created.doc_number);
+    setClientDoc(created.docNumber || created.doc_number || clientDoc);
     setSearchPerformed(true);
-    
+
     addNotification({
       id: Math.random().toString(),
       title: 'Cliente Registrado',
-      message: `Cliente ${created.razon_social} registrado y seleccionado para el comprobante.`,
+      message: `Cliente ${created.legalName || created.razon_social} registrado y seleccionado para la boleta.`,
       type: 'success',
       created_at: new Date().toISOString(),
     });
   };
 
-  // Add Item Line to Invoice
+  // Add Item Line — maps external API fields (code, description, unitPrice)
   const handleAddItemLine = () => {
     if (!selectedProductId) return;
     const prod = productsList.find((p) => p.id === selectedProductId);
     if (!prod) return;
 
-    // Check duplicate
     if (lines.some((l) => l.id === prod.id)) {
       alert('El producto ya se encuentra en las líneas del comprobante.');
       return;
@@ -153,16 +161,15 @@ export default function NewInvoicePage() {
       ...prev,
       {
         id: prod.id,
-        codigo: prod.codigo,
-        descripcion: prod.nombre,
+        codigo: prod.code ?? prod.codigo,
+        descripcion: prod.description ?? prod.nombre,
         cantidad: 1,
-        precioUnitario: prod.precio,
+        precioUnitario: prod.unitPrice ?? prod.precio ?? 0,
       },
     ]);
     setSelectedProductId('');
   };
 
-  // Modify line quantity
   const updateLineQty = (id: string, qty: number) => {
     if (qty < 0.01) return;
     setLines((prev) =>
@@ -170,7 +177,6 @@ export default function NewInvoicePage() {
     );
   };
 
-  // Modify line unit price
   const updateLinePrice = (id: string, price: number) => {
     if (price < 0) return;
     setLines((prev) =>
@@ -178,28 +184,28 @@ export default function NewInvoicePage() {
     );
   };
 
-  // Remove line item
   const removeLine = (id: string) => {
     setLines((prev) => prev.filter((l) => l.id !== id));
   };
 
-  // Calculate Totals
+  // Totals
   const subtotal = lines.reduce((sum, line) => sum + line.cantidad * line.precioUnitario, 0);
   const igvTotal = subtotal * 0.18;
   const total = subtotal + igvTotal;
 
-  // Submit invoice to SUNAT API
-  const handleEmitComprobante = async () => {
+  // Submit boleta to real API
+  const handleEmitBoleta = async () => {
     if (!selectedClient) {
       alert('Debe seleccionar o registrar un cliente antes de emitir.');
       return;
     }
-
-    if (docType === '01' && selectedClient.doc_type !== '6') {
-      alert('Las Facturas requieren un cliente con RUC válido.');
-      return;
+    if (docType === '01') {
+      const tipo = selectedClient.docType ?? selectedClient.doc_type;
+      if (tipo !== '6') {
+        alert('Las Facturas requieren un cliente con RUC válido (tipo doc 6).');
+        return;
+      }
     }
-
     if (lines.length === 0) {
       alert('Debe agregar al menos un producto a las líneas del comprobante.');
       return;
@@ -210,13 +216,11 @@ export default function NewInvoicePage() {
     setResultModalOpen(true);
 
     try {
+      // External API expects: tipoDoc, numDoc, razonSocial
       const clientPayload = {
-        tipoDoc: selectedClient.doc_type,
-        numDoc: selectedClient.doc_number,
-        razonSocial: selectedClient.razon_social,
-        direccion: selectedClient.direccion,
-        correo: selectedClient.correo,
-        telefono: selectedClient.telefono,
+        tipoDoc: selectedClient.docType ?? selectedClient.doc_type,
+        numDoc: selectedClient.docNumber ?? selectedClient.doc_number,
+        razonSocial: selectedClient.legalName ?? selectedClient.razon_social,
       };
 
       const itemsPayload = lines.map((l) => ({
@@ -226,30 +230,29 @@ export default function NewInvoicePage() {
         precioUnitario: l.precioUnitario,
       }));
 
-      let res: any = null;
-
+      let res: any;
       if (docType === '01') {
         res = await BillingApiClient.createInvoice({
           serie,
           tipoOperacion: '0101',
           moneda,
+          formaPago,
           cliente: clientPayload,
           items: itemsPayload,
-          formaPago,
         });
       } else {
         res = await BillingApiClient.createBoleta({
           serie,
           moneda,
+          formaPago,
           cliente: clientPayload,
           items: itemsPayload,
-          formaPago,
         });
       }
 
       setEmittedDoc(res);
     } catch (err: any) {
-      setApiError(err.message || 'Ocurrió un error al procesar el comprobante electrónico.');
+      setApiError(err.message || 'Ocurrió un error al procesar la boleta electrónica.');
     } finally {
       setEmissionLoading(false);
     }
@@ -259,17 +262,17 @@ export default function NewInvoicePage() {
     setResultModalOpen(false);
     setEmittedDoc(null);
     setApiError(null);
-    // Reset wizard
     setLines([]);
     setClientDoc('');
     setSelectedClient(null);
+    setSearchPerformed(false);
   };
 
   return (
     <div className="flex-1 flex flex-col overflow-y-auto">
       <PageHeader 
         title="Nuevo Comprobante Electrónico" 
-        subtitle="Emisión autorizada de Facturas, Boletas y Notas SUNAT"
+        subtitle="Emisión de facturas y boletas electrónicas SUNAT"
       />
 
       <div className="p-8 space-y-6 max-w-5xl w-full mx-auto pb-16">
@@ -286,7 +289,7 @@ export default function NewInvoicePage() {
                   <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1 tracking-wide">Tipo de Doc</label>
                   <select
                     value={docType}
-                    onChange={(e: any) => setDocType(e.target.value)}
+                    onChange={(e) => setDocType(e.target.value as '01' | '03')}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1.5 px-2.5 text-xs text-zinc-900 dark:text-zinc-300"
                   >
                     <option value="01">Factura</option>
@@ -296,24 +299,31 @@ export default function NewInvoicePage() {
 
                 <div>
                   <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1 tracking-wide">Serie</label>
-                  <select
-                    value={serie}
-                    onChange={(e: any) => setSerie(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1.5 px-2.5 text-xs text-zinc-900 dark:text-zinc-300"
-                  >
-                    {availableSeries
-                      .filter((s) => s.docType === docType)
-                      .map((s) => (
-                        <option key={s.serie} value={s.serie}>{s.serie}</option>
-                      ))}
-                  </select>
+                  {loadingConfig ? (
+                    <div className="flex items-center gap-1.5 py-1.5 px-2.5 h-[30px]">
+                      <Loader2 className="w-3 h-3 animate-spin text-zinc-400" />
+                      <span className="text-xs text-zinc-400">Cargando...</span>
+                    </div>
+                  ) : (
+                    <select
+                      value={serie}
+                      onChange={(e) => setSerie(e.target.value)}
+                      className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1.5 px-2.5 text-xs text-zinc-900 dark:text-zinc-300"
+                    >
+                      {availableSeries
+                        .filter((s: any) => s.docType === docType)
+                        .map((s: any) => (
+                          <option key={s.serie} value={s.serie}>{s.serie}</option>
+                        ))}
+                    </select>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1 tracking-wide">Moneda</label>
                   <select
                     value={moneda}
-                    onChange={(e: any) => setMoneda(e.target.value)}
+                    onChange={(e) => setMoneda(e.target.value)}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1.5 px-2.5 text-xs text-zinc-900 dark:text-zinc-300"
                   >
                     <option value="PEN">Soles (PEN)</option>
@@ -325,7 +335,7 @@ export default function NewInvoicePage() {
                   <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1 tracking-wide">Pago</label>
                   <select
                     value={formaPago}
-                    onChange={(e: any) => setFormaPago(e.target.value)}
+                    onChange={(e) => setFormaPago(e.target.value)}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1.5 px-2.5 text-xs text-zinc-900 dark:text-zinc-300"
                   >
                     <option value="CON">Contado</option>
@@ -347,11 +357,14 @@ export default function NewInvoicePage() {
                   value={selectedProductId}
                   onChange={(e) => setSelectedProductId(e.target.value)}
                   className="flex-1 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1.5 px-2.5 text-xs text-zinc-900 dark:text-zinc-300"
+                  disabled={loadingConfig}
                 >
-                  <option value="">-- Seleccionar producto del catálogo --</option>
+                  <option value="">
+                    {loadingConfig ? 'Cargando productos...' : '-- Seleccionar producto del catálogo --'}
+                  </option>
                   {productsList.map((p) => (
                     <option key={p.id} value={p.id}>
-                      [{p.codigo}] {p.nombre} - S/ {p.precio.toFixed(2)}
+                      [{p.code ?? p.codigo}] {p.description ?? p.nombre} - S/ {(p.unitPrice ?? p.precio ?? 0).toFixed(2)}
                     </option>
                   ))}
                 </select>
@@ -440,7 +453,7 @@ export default function NewInvoicePage() {
                 </button>
               </div>
 
-              {/* Client doc lookups search */}
+              {/* Client doc search */}
               <div className="flex gap-2">
                 <SearchInput
                   value={clientDoc}
@@ -450,7 +463,7 @@ export default function NewInvoicePage() {
                     setSelectedClient(null);
                   }}
                   onKeyDown={(e) => e.key === 'Enter' && searchClient()}
-                  placeholder={docType === '01' ? 'Ingrese RUC...' : 'RUC o DNI...'}
+                  placeholder="RUC o DNI..."
                 />
                 <button
                   onClick={searchClient}
@@ -464,12 +477,14 @@ export default function NewInvoicePage() {
               {/* Autofilled client details card */}
               {selectedClient ? (
                 <div className="p-3 bg-blue-500/[0.02] border border-blue-500/10 rounded-xl space-y-1.5 text-xs text-zinc-700 dark:text-zinc-300">
-                  <p className="font-bold text-zinc-900 dark:text-white">{selectedClient.razon_social}</p>
-                  <p className="font-mono text-[10px] text-zinc-400">
-                    {selectedClient.doc_type === '6' ? 'RUC' : 'DNI'}: {selectedClient.doc_number}
+                  <p className="font-bold text-zinc-900 dark:text-white">
+                    {selectedClient.legalName ?? selectedClient.razon_social}
                   </p>
-                  {selectedClient.direccion && (
-                    <p className="text-[10px] text-zinc-400 truncate">{selectedClient.direccion}</p>
+                  <p className="font-mono text-[10px] text-zinc-400">
+                    {(selectedClient.docType ?? selectedClient.doc_type) === '6' ? 'RUC' : 'DNI'}: {selectedClient.docNumber ?? selectedClient.doc_number}
+                  </p>
+                  {(selectedClient.address ?? selectedClient.direccion) && (
+                    <p className="text-[10px] text-zinc-400 truncate">{selectedClient.address ?? selectedClient.direccion}</p>
                   )}
                   <div className="flex items-center gap-1.5 text-[10px] text-emerald-500 font-medium">
                     <Check className="w-3.5 h-3.5" /> Autocompletado
@@ -513,7 +528,7 @@ export default function NewInvoicePage() {
 
               {/* Emission action trigger */}
               <button
-                onClick={handleEmitComprobante}
+                onClick={handleEmitBoleta}
                 disabled={lines.length === 0 || !selectedClient}
                 className="w-full py-3 bg-blue-700 enabled:hover:bg-blue-800 enabled:active:scale-[0.99] disabled:opacity-50 disabled:active:scale-100 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-700/15 transition-all disabled:cursor-not-allowed enabled:cursor-pointer"
               >

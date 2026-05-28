@@ -19,7 +19,8 @@ import {
   Sun,
   ShieldCheck,
   Building2,
-  Terminal
+  Terminal,
+  Receipt
 } from 'lucide-react';
 
 export function Sidebar() {
@@ -47,7 +48,7 @@ export function Sidebar() {
 
   const rawLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-    { name: 'Nuevo Comprobante', path: '/dashboard/invoices/new', icon: <PlusCircle className="w-4 h-4" /> },
+    { name: 'Nueva Boleta', path: '/dashboard/boletas/new', icon: <Receipt className="w-4 h-4" /> },
     { name: 'Historial Docs', path: '/dashboard/invoices', icon: <FileText className="w-4 h-4" /> },
     { name: 'Clientes', path: '/dashboard/customers', icon: <Users className="w-4 h-4" /> },
     { name: 'Productos', path: '/dashboard/products', icon: <Package className="w-4 h-4" /> },
@@ -145,8 +146,8 @@ export function Sidebar() {
               {user.username.slice(0, 2)}
             </div>
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold text-zinc-900 truncate leading-tight">{user.fullName}</p>
-              <p className="text-[9px] text-zinc-500 capitalize leading-none mt-1">{user.role.replace('_', ' ')}</p>
+              <p className="text-[11px] font-semibold text-zinc-900 truncate leading-tight">{user.fullName ?? user.username}</p>
+              <p className="text-[9px] text-zinc-500 capitalize leading-none mt-1">{user.role?.replace('_', ' ') ?? 'usuario'}</p>
             </div>
           </div>
 

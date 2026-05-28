@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PdfViewer } from '@/components/shared/PdfViewer';
+import { CancelBoletaModal } from '@/components/shared/CancelBoletaModal';
 import { BillingApiClient } from '@/services/api-client';
 import { DOC_TYPE_LABELS } from '@/types/enums';
 import { useAuthStore } from '@/store/auth';
@@ -20,14 +21,46 @@ import {
   DollarSign,
   Mail,
   MessageSquare,
-  Printer
+  Printer,
+  Filter,
+  RefreshCw,
+  Search,
+  Ban
 } from 'lucide-react';
+
+const WhatsAppIcon = ({ className = "w-3.5 h-3.5" }: { className?: string }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    className={className} 
+    fill="currentColor"
+  >
+    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.457L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.725 1.45 5.436 0 9.86-4.426 9.864-9.864.002-2.63-1.023-5.102-2.887-6.968C16.48 1.908 14.021.879 12.002.879c-5.45 0-9.878 4.432-9.882 9.886-.001 1.626.436 3.21 1.266 4.616l-.971 3.548 3.642-.955zm11.378-5.918c-.31-.154-1.834-.905-2.119-1.01-.285-.104-.493-.154-.7.154-.207.31-.801.983-.983 1.189-.181.208-.362.231-.672.077-.31-.154-1.31-.483-2.497-1.542-.924-.824-1.548-1.841-1.73-2.149-.181-.31-.02-.477.135-.631.14-.139.31-.362.466-.543.156-.181.208-.31.31-.517.104-.208.052-.389-.026-.543-.078-.154-.7-1.687-.959-2.31-.252-.61-.51-.527-.7-.537-.181-.01-.389-.01-.596-.01-.207 0-.544.078-.83.389-.285.31-1.088 1.062-1.088 2.589 0 1.528 1.11 3.003 1.266 3.21.156.208 2.186 3.338 5.295 4.68.74.32 1.317.51 1.768.653.743.236 1.419.203 1.953.123.595-.089 1.834-.75 2.093-1.47.259-.721.259-1.34.181-1.47-.078-.13-.285-.208-.595-.363z" />
+  </svg>
+);
 
 export default function InvoicesHistoryPage() {
   const { company } = useAuthStore();
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Advanced filters & pagination states
+  const [filters, setFilters] = useState({
+    docType: '',
+    status: '',
+    search: '',
+    serie: '',
+    from: '',
+    to: '',
+    pendingRc: false,
+  });
+  
+  const [page, setPage] = useState(1);
+  const [limit] = useState(8); // match DataTable itemsPerPage default
+  const [meta, setMeta] = useState({
+    total: 0,
+    totalPages: 1,
+  });
+
   // Drawer state
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
@@ -42,12 +75,41 @@ export default function InvoicesHistoryPage() {
   });
   const [noteEmitting, setNoteEmitting] = useState(false);
 
+  // Cancel boleta modal state
+  const [cancelModal, setCancelModal] = useState(false);
+
   // Load documents
   const loadDocuments = async () => {
     try {
       setLoading(true);
-      const docs = await BillingApiClient.listDocuments();
-      setDocuments(docs);
+      const queryParams = {
+        page,
+        limit,
+        docType: filters.docType || undefined,
+        status: filters.status || undefined,
+        search: filters.search || undefined,
+        serie: filters.serie || undefined,
+        from: filters.from || undefined,
+        to: filters.to || undefined,
+        pendingRc: filters.pendingRc ? true : undefined,
+      };
+
+      const res = await BillingApiClient.listDocuments(queryParams);
+      if (res && Array.isArray(res.data)) {
+        setDocuments(res.data);
+        if (res.meta) {
+          setMeta({
+            total: res.meta.total || 0,
+            totalPages: res.meta.totalPages || 1,
+          });
+        }
+      } else if (Array.isArray(res)) {
+        setDocuments(res);
+        setMeta({
+          total: res.length,
+          totalPages: 1,
+        });
+      }
     } catch (e) {
       console.error('Error loading documents list', e);
     } finally {
@@ -57,7 +119,28 @@ export default function InvoicesHistoryPage() {
 
   useEffect(() => {
     loadDocuments();
-  }, []);
+  }, [page, limit, filters]);
+
+  const handleFilterChange = (key: string, value: any) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+    setPage(1); // Reset page on filter change
+  };
+
+  const handleResetFilters = () => {
+    setFilters({
+      docType: '',
+      status: '',
+      search: '',
+      serie: '',
+      from: '',
+      to: '',
+      pendingRc: false,
+    });
+    setPage(1);
+  };
 
   // Fetch document details for the drawer
   useEffect(() => {
@@ -139,6 +222,15 @@ export default function InvoicesHistoryPage() {
     }
   };
 
+  // Action: cancel signed boleta (pre-RC, local only)
+  const handleCancelBoleta = async (reason: string) => {
+    if (!selectedDoc) return;
+    await BillingApiClient.cancelDocuments([selectedDoc.id], reason || undefined);
+    setCancelModal(false);
+    setSelectedDocId(null);
+    loadDocuments();
+  };
+
   // Table columns definition
   const columns = [
     {
@@ -154,22 +246,26 @@ export default function InvoicesHistoryPage() {
       ),
     },
     {
-      key: 'doc_type',
+      key: 'docType',
       label: 'Tipo',
       render: (val: any) => DOC_TYPE_LABELS[val as '01'] || val,
     },
     {
       key: 'cliente',
       label: 'Cliente',
-      render: (_: any, row: any) => (
-        <div className="max-w-[200px] truncate">
-          <p className="font-semibold truncate">{row.payload?.cliente?.razonSocial}</p>
-          <p className="text-[9px] text-zinc-400 font-mono">{row.payload?.cliente?.numDoc}</p>
-        </div>
-      ),
+      render: (_: any, row: any) => {
+        // External API returns cliente at root level in list, or nested in payload for detail
+        const cliente = row.cliente ?? row.payload?.cliente;
+        return (
+          <div className="max-w-[200px] truncate">
+            <p className="font-semibold truncate">{cliente?.razonSocial ?? '-'}</p>
+            <p className="text-[9px] text-zinc-400 font-mono">{cliente?.numDoc ?? ''}</p>
+          </div>
+        );
+      },
     },
     {
-      key: 'issue_date',
+      key: 'issueDate',
       label: 'Fecha',
       render: (val: any) => val,
     },
@@ -178,7 +274,7 @@ export default function InvoicesHistoryPage() {
       label: 'Total',
       render: (val: any) => (
         <span className="font-mono font-bold">
-          S/ {parseFloat(val).toFixed(2)}
+          S/ {parseFloat(val || '0').toFixed(2)}
         </span>
       ),
     },
@@ -187,6 +283,118 @@ export default function InvoicesHistoryPage() {
       label: 'Estado SUNAT',
       render: (val: any) => <StatusBadge status={val} />,
     },
+    {
+      key: 'actions',
+      label: 'Acciones',
+      render: (_: any, row: any) => {
+        const cliente = row.cliente ?? row.payload?.cliente;
+        const phone = (cliente?.telefono || cliente?.phone || '').replace(/\D/g, '');
+        const whatsappUrl = phone 
+          ? `https://wa.me/${phone.startsWith('51') ? phone : '51' + phone}?text=${encodeURIComponent(
+              `Estimado cliente, le adjuntamos su comprobante electrónico ${row.serie}-${row.correlativo} por un monto de S/ ${parseFloat(row.total || '0').toFixed(2)}. ¡Muchas gracias!`
+            )}`
+          : null;
+        
+        const mailUrl = `mailto:${cliente?.correo || cliente?.email || ''}?subject=${encodeURIComponent(
+          `Comprobante de Pago Electrónico ${row.serie}-${row.correlativo}`
+        )}&body=${encodeURIComponent(
+          `Estimado cliente,\n\nLe hacemos llegar su comprobante electrónico ${row.serie}-${row.correlativo} por un monto de S/ ${parseFloat(row.total || '0').toFixed(2)}.\n\nAtentamente,\n${company?.businessName || ''}`
+        )}`;
+
+        const handlePrint = (e: React.MouseEvent) => {
+          e.stopPropagation();
+          setSelectedDocId(row.id);
+          setTimeout(() => {
+            window.print();
+          }, 300);
+        };
+
+        const handleCancelIconClick = (e: React.MouseEvent) => {
+          e.stopPropagation();
+          setSelectedDoc(row);
+          setCancelModal(true);
+        };
+
+        const handleVoidIconClick = async (e: React.MouseEvent) => {
+          e.stopPropagation();
+          if (!confirm(`¿Está seguro de que desea dar de baja la Factura ${row.serie}-${row.correlativo}?`)) return;
+          try {
+            setLoading(true);
+            await BillingApiClient.voidedDocuments({
+              documentIds: [row.id],
+              motivoBaja: 'ERROR EN FACTURACION',
+            });
+            alert('Comunicación de baja (RA) enviada a SUNAT. Consulte su estado en el menú de resúmenes.');
+            loadDocuments();
+          } catch (err: any) {
+            alert(err.message || 'Error al procesar la baja.');
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        return (
+          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            {/* WhatsApp */}
+            {whatsappUrl ? (
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="p-1 rounded hover:bg-emerald-500/10 text-emerald-500 cursor-pointer"
+                title="WhatsApp"
+              >
+                <WhatsAppIcon className="w-3.5 h-3.5" />
+              </a>
+            ) : (
+              <span className="p-1 text-zinc-300 dark:text-zinc-700 cursor-not-allowed text-zinc-400" title="Sin teléfono">
+                <WhatsAppIcon className="w-3.5 h-3.5" />
+              </span>
+            )}
+
+            {/* Email */}
+            <a
+              href={mailUrl}
+              className="p-1 rounded hover:bg-blue-500/10 text-blue-500 cursor-pointer"
+              title="Correo"
+            >
+              <Mail className="w-3.5 h-3.5" />
+            </a>
+
+            {/* Print */}
+            <button
+              onClick={handlePrint}
+              className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 cursor-pointer"
+              title="Imprimir / PDF"
+            >
+              <Printer className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Cancel (Signed Boleta) */}
+            {row.status === 'signed' && (row.docType === '03' || row.doc_type === '03') && (
+              <button
+                onClick={handleCancelIconClick}
+                className="p-1 rounded hover:bg-rose-500/10 text-rose-500 cursor-pointer"
+                title="Cancelar Boleta"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {/* Void (Accepted Factura) */}
+            {row.status === 'accepted' && (row.docType === '01' || row.doc_type === '01') && (
+              <button
+                onClick={handleVoidIconClick}
+                className="p-1 rounded hover:bg-rose-500/10 text-rose-500 cursor-pointer"
+                title="Anular Factura"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        );
+      }
+    }
   ];
 
   return (
@@ -198,14 +406,117 @@ export default function InvoicesHistoryPage() {
           subtitle="Catálogo histórico de comprobantes y resúmenes SUNAT"
         />
 
-        <div className="p-8 max-w-7xl w-full mx-auto pb-16">
+        <div className="p-8 max-w-7xl w-full mx-auto pb-16 space-y-6">
+          
+          {/* Filters Panel Card */}
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-zinc-500" />
+                <h4 className="text-xs font-bold text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">Filtros de Búsqueda</h4>
+              </div>
+              <button
+                onClick={handleResetFilters}
+                className="text-[10px] font-bold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <RefreshCw className="w-3 h-3" /> Limpiar Filtros
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {/* Type Filter */}
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Tipo Documento</label>
+                <select
+                  value={filters.docType}
+                  onChange={(e) => handleFilterChange('docType', e.target.value)}
+                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-2.5 text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Todos</option>
+                  <option value="01">Factura</option>
+                  <option value="03">Boleta</option>
+                  <option value="07">Nota de Crédito</option>
+                  <option value="08">Nota de Débito</option>
+                </select>
+              </div>
+
+              {/* Status Filter */}
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Estado SUNAT</label>
+                <select
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-2.5 text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  <option value="">Todos</option>
+                  <option value="signed">Firmado (Local)</option>
+                  <option value="accepted">Aceptado</option>
+                  <option value="rejected">Rechazado</option>
+                  <option value="voided">De Baja</option>
+                </select>
+              </div>
+
+              {/* Serie Filter */}
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Serie</label>
+                <input
+                  type="text"
+                  value={filters.serie}
+                  onChange={(e) => handleFilterChange('serie', e.target.value.toUpperCase())}
+                  placeholder="F001 o B001"
+                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-2.5 text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                />
+              </div>
+
+              {/* Date From Filter */}
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Desde</label>
+                <input
+                  type="date"
+                  value={filters.from}
+                  onChange={(e) => handleFilterChange('from', e.target.value)}
+                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-2.5 text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              {/* Date To Filter */}
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Hasta</label>
+                <input
+                  type="date"
+                  value={filters.to}
+                  onChange={(e) => handleFilterChange('to', e.target.value)}
+                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-2.5 text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+              <label className="flex items-center gap-2 text-xs font-semibold text-zinc-600 dark:text-zinc-305 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={filters.pendingRc}
+                  onChange={(e) => handleFilterChange('pendingRc', e.target.checked)}
+                  className="rounded border-zinc-300 text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer"
+                />
+                Boletas pendientes de Resumen Diario
+              </label>
+            </div>
+          </div>
+
           <DataTable
             columns={columns}
             data={documents}
-            searchPlaceholder="Buscar por nro, cliente..."
-            searchKey="serie"
+            searchPlaceholder="Buscar por cliente..."
             loading={loading}
-            emptyMessage="No se encontraron comprobantes registrados en esta empresa."
+            emptyMessage="No se encontraron comprobantes con los filtros seleccionados."
+            serverSide={true}
+            totalItems={meta.total}
+            totalPages={meta.totalPages}
+            currentPage={page}
+            onPageChange={(p) => setPage(p)}
+            searchValue={filters.search}
+            onSearchChange={(q) => handleFilterChange('search', q)}
           />
         </div>
       </div>
@@ -263,16 +574,18 @@ export default function InvoicesHistoryPage() {
                 </div>
 
                 {/* Specific actions based on status - compact inline row */}
-                {selectedDoc.status === 'accepted' && (
+                {(selectedDoc.status === 'accepted' || (selectedDoc.status === 'signed' && selectedDoc.docType === '03')) && (
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setShowNoteDialog(true)}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 rounded-lg text-[10px] font-bold text-zinc-700 dark:text-zinc-350 transition-colors cursor-pointer"
-                    >
-                      <PlusCircle className="w-3.5 h-3.5 text-blue-500" /> Emitir Nota de Crédito
-                    </button>
+                    {selectedDoc.status === 'accepted' && (
+                      <button
+                        onClick={() => setShowNoteDialog(true)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 rounded-lg text-[10px] font-bold text-zinc-700 dark:text-zinc-350 transition-colors cursor-pointer"
+                      >
+                        <PlusCircle className="w-3.5 h-3.5 text-blue-500" /> Emitir Nota de Crédito
+                      </button>
+                    )}
                     
-                    {selectedDoc.docType === '01' && (
+                    {selectedDoc.status === 'accepted' && selectedDoc.docType === '01' && (
                       <button
                         onClick={handleVoidFactura}
                         className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-455 transition-colors cursor-pointer"
@@ -280,13 +593,24 @@ export default function InvoicesHistoryPage() {
                         <Trash2 className="w-3.5 h-3.5" /> Anular Factura
                       </button>
                     )}
+
+                    {selectedDoc.status === 'signed' && selectedDoc.docType === '03' && (
+                      <div className="w-full flex justify-center py-0.5">
+                        <button
+                          onClick={() => setCancelModal(true)}
+                          className="flex items-center gap-1.5 py-1.5 px-4 border border-rose-200 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:border-rose-900/40 text-[10px] font-bold text-rose-600 dark:text-rose-400 rounded-lg transition-colors cursor-pointer w-fit"
+                        >
+                          <Ban className="w-3.5 h-3.5 text-rose-500" /> Cancelar Boleta
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {selectedDoc.status === 'signed' && selectedDoc.docType === '03' && (
-                  <div className="p-4 bg-amber-500/[0.03] border border-amber-500/10 rounded-xl flex items-start gap-2.5 text-xs text-amber-600 dark:text-amber-500/90 leading-snug">
-                    <Info className="w-4 h-4 mt-0.5 shrink-0" />
-                    <p>Esta boleta está firmada localmente pero no ha sido enviada a SUNAT. Inclúyala en un <b>Resumen Diario</b> para procesarla.</p>
+                  <div className="p-2.5 bg-amber-500/5 border border-amber-500/10 rounded-xl flex items-center gap-2 text-[10px] text-amber-700 dark:text-amber-400 font-medium">
+                    <Info className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                    <span>Boleta firmada localmente. Pendiente de comunicación SUNAT (Resumen Diario RC).</span>
                   </div>
                 )}
 
@@ -318,7 +642,7 @@ export default function InvoicesHistoryPage() {
                     rel="noreferrer"
                     className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 rounded-lg text-[10px] font-bold text-zinc-700 dark:text-zinc-350 transition-colors cursor-pointer text-center"
                   >
-                    <MessageSquare className="w-3.5 h-3.5 text-emerald-500" /> WhatsApp
+                    <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-500" /> WhatsApp
                   </a>
                 </div>
 
@@ -335,6 +659,15 @@ export default function InvoicesHistoryPage() {
             ) : null}
           </div>
         </div>
+      )}
+
+      {/* Cancel Boleta Modal */}
+      {cancelModal && selectedDoc && (
+        <CancelBoletaModal
+          doc={selectedDoc}
+          onCancel={handleCancelBoleta}
+          onClose={() => setCancelModal(false)}
+        />
       )}
 
       {/* Credit Note prompt Dialog */}

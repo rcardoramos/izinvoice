@@ -47,7 +47,16 @@ export function AddClientModal({
     e.preventDefault();
     setLoading(true);
     try {
-      const created = await BillingApiClient.createCustomer(formData);
+      const apiPayload: any = {
+        docType: formData.docType,
+        docNumber: formData.docNumber,
+        legalName: formData.razonSocial,
+      };
+      if (formData.direccion) apiPayload.address = formData.direccion;
+      if (formData.correo) apiPayload.email = formData.correo;
+      if (formData.telefono) apiPayload.phone = formData.telefono;
+
+      const created = await BillingApiClient.createCustomer(apiPayload);
       onSubmitSuccess(created);
       onClose();
     } catch (err: any) {

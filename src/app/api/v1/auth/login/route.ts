@@ -5,7 +5,7 @@ import { LoginRequest, LoginResponse } from '@/types/auth.types';
 export async function POST(req: NextRequest) {
   try {
     const body: LoginRequest = await req.json();
-    const { username, password } = body;
+    const { username, password, ruc } = body;
 
     const users = FileDb.getTable('users');
     const user = users.find((u: any) => u.username === username && u.password_hash === password);
@@ -23,6 +23,20 @@ export async function POST(req: NextRequest) {
       if (!company) {
         return NextResponse.json(
           { statusCode: 400, message: 'Empresa no encontrada.' },
+          { status: 400 }
+        );
+      }
+
+      if (!ruc) {
+        return NextResponse.json(
+          { statusCode: 400, message: 'El número de RUC es requerido para este usuario.' },
+          { status: 400 }
+        );
+      }
+
+      if (company.ruc !== ruc) {
+        return NextResponse.json(
+          { statusCode: 400, message: 'El RUC ingresado no coincide con el de la empresa registrada.' },
           { status: 400 }
         );
       }

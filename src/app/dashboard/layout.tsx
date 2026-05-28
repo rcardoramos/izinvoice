@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { useAppStore } from '@/store/app';
+import { BillingApiClient } from '@/services/api-client';
 import { Sidebar } from '@/components/shared/Sidebar';
 import { SearchCommand } from '@/components/shared/SearchCommand';
 
@@ -14,7 +15,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, user, company } = useAuthStore();
+  const { isAuthenticated, user, company, setSession, accessToken } = useAuthStore();
   const { theme } = useAppStore();
   const [loading, setLoading] = useState(true);
 
@@ -26,24 +27,42 @@ export default function DashboardLayout({
 
     if (!isAuthenticated) {
       router.push('/');
-    } else {
+      return;
+    }
 
+    // Refresh user/company data from the real API on every dashboard load
+    const refreshSession = async () => {
+      try {
+        const me = await BillingApiClient.me();
+        if (me?.user) {
+          const normalizedUser = {
+            id: me.user?.id || user?.id || '',
+            username: me.user?.username || user?.username || '',
+            fullName: me.user?.fullName || me.user?.username || user?.fullName || '',
+            email: me.user?.email || user?.email || null,
+            role: (me.user?.role as 'super_admin' | 'admin') || user?.role || 'admin',
+          };
+          // Only update if something actually changed
+          setSession(accessToken!, normalizedUser, me.company ?? company!);
+        }
+      } catch {
+        // Silently ignore — keep existing cached session
+      }
 
       // Super Admin routing restrictions (no tenant company context)
       if (user?.role === 'super_admin') {
-        const allowedPaths = [
-          '/dashboard',
-          '/dashboard/companies',
-        ];
+        const allowedPaths = ['/dashboard', '/dashboard/companies'];
         if (!allowedPaths.includes(pathname)) {
           router.push('/dashboard');
           return;
         }
       }
-      
+
       setLoading(false);
-    }
-  }, [isAuthenticated, router, theme, user, pathname]);
+    };
+
+    refreshSession();
+  }, [isAuthenticated, router]);
 
   if (loading) {
     return (

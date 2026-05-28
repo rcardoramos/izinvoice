@@ -29,8 +29,9 @@ export default function ProductsCrudPage() {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const data = await BillingApiClient.listProducts();
-      setProducts(data);
+      const res = await BillingApiClient.listProducts({ limit: 100 });
+      const productsData = Array.isArray(res) ? res : (res?.data ?? []);
+      setProducts(productsData);
     } catch (e) {
       console.error(e);
     } finally {
@@ -59,15 +60,23 @@ export default function ProductsCrudPage() {
 
   const handleOpenEdit = (p: any) => {
     setModalMode('edit');
+    const codigoVal = p.code ?? p.codigo ?? '';
+    const nombreVal = p.name ?? p.nombre ?? '';
+    const descVal = p.description ?? p.descripcion ?? '';
+    const catVal = p.category ?? p.categoria ?? '';
+    const umVal = p.unitMeasure ?? p.unidadMedida ?? p.unidad_medida ?? 'NIU';
+    const priceVal = (p.unitPrice ?? p.precio ?? 0).toString();
+    const igvVal = (p.igvRate ?? p.igv_rate ?? '18.00').toString();
+
     setFormProduct({
       id: p.id,
-      codigo: p.codigo,
-      nombre: p.nombre,
-      descripcion: p.descripcion || '',
-      categoria: p.categoria || '',
-      unidadMedida: p.unidad_medida,
-      precio: p.precio.toString(),
-      igvRate: p.igv_rate.toString(),
+      codigo: codigoVal,
+      nombre: nombreVal,
+      descripcion: descVal,
+      categoria: catVal,
+      unidadMedida: umVal,
+      precio: priceVal,
+      igvRate: igvVal,
     });
     setShowModal(true);
   };
@@ -75,8 +84,14 @@ export default function ProductsCrudPage() {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const apiPayload = {
+        code: formProduct.codigo,
+        description: formProduct.nombre, // formProduct.nombre is the main name/description
+        unitPrice: parseFloat(formProduct.precio),
+      };
+
       if (modalMode === 'create') {
-        const created = await BillingApiClient.createProduct(formProduct);
+        const created = await BillingApiClient.createProduct(apiPayload);
         setProducts((prev) => [...prev, created]);
         addNotification({
           id: Math.random().toString(),
@@ -86,7 +101,7 @@ export default function ProductsCrudPage() {
           created_at: new Date().toISOString(),
         });
       } else {
-        const updated = await BillingApiClient.updateProduct(formProduct.id, formProduct);
+        const updated = await BillingApiClient.updateProduct(formProduct.id, apiPayload);
         setProducts((prev) => prev.map((p) => (p.id === formProduct.id ? updated : p)));
         addNotification({
           id: Math.random().toString(),
@@ -123,37 +138,50 @@ export default function ProductsCrudPage() {
     {
       key: 'codigo',
       label: 'Código',
-      render: (val: any) => <span className="font-mono font-semibold">{val}</span>,
+      render: (val: any, row: any) => <span className="font-mono font-semibold">{row.code ?? row.codigo ?? val}</span>,
     },
     {
       key: 'nombre',
       label: 'Nombre / Detalle',
-      render: (val: any, row: any) => (
-        <div>
-          <p className="font-semibold text-zinc-900 dark:text-white">{val}</p>
-          {row.descripcion && <p className="text-[10px] text-zinc-500 truncate max-w-[250px]">{row.descripcion}</p>}
-        </div>
-      ),
+      render: (val: any, row: any) => {
+        const name = row.name ?? row.nombre ?? val ?? '-';
+        const desc = row.description ?? row.descripcion;
+        return (
+          <div>
+            <p className="font-semibold text-zinc-900 dark:text-white">{name}</p>
+            {desc && <p className="text-[10px] text-zinc-500 truncate max-w-[250px]">{desc}</p>}
+          </div>
+        );
+      },
     },
     {
       key: 'categoria',
       label: 'Categoría',
-      render: (val: any) => val || '-',
+      render: (val: any, row: any) => row.category ?? row.categoria ?? val ?? '-',
     },
     {
       key: 'unidad_medida',
       label: 'Medida',
-      render: (val: any) => <span className="font-mono text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">{val}</span>,
+      render: (val: any, row: any) => {
+        const measure = row.unitMeasure ?? row.unidadMedida ?? row.unidad_medida ?? val ?? 'NIU';
+        return <span className="font-mono text-[10px] bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">{measure}</span>;
+      },
     },
     {
       key: 'precio',
       label: 'Precio',
-      render: (val: any) => <span className="font-mono font-bold">S/ {parseFloat(val).toFixed(2)}</span>,
+      render: (val: any, row: any) => {
+        const price = row.unitPrice ?? row.precio ?? val ?? 0;
+        return <span className="font-mono font-bold">S/ {parseFloat(price).toFixed(2)}</span>;
+      },
     },
     {
       key: 'igv_rate',
       label: 'Tasa IGV',
-      render: (val: any) => <span className="text-[10px] text-zinc-500 font-mono">{parseFloat(val)}%</span>,
+      render: (val: any, row: any) => {
+        const igv = row.igvRate ?? row.igv_rate ?? val ?? 18;
+        return <span className="text-[10px] text-zinc-500 font-mono">{parseFloat(igv)}%</span>;
+      },
     },
     {
       key: 'actions',
@@ -168,7 +196,7 @@ export default function ProductsCrudPage() {
             <Edit2 className="w-3.5 h-3.5" />
           </button>
           <button
-            onClick={() => handleDeleteProduct(row.id, row.nombre)}
+            onClick={() => handleDeleteProduct(row.id, row.name ?? row.nombre)}
             className="p-1 rounded hover:bg-rose-500/10 text-rose-500 cursor-pointer"
             title="Eliminar"
           >

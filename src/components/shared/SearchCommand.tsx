@@ -70,11 +70,14 @@ export function SearchCommand() {
           BillingApiClient.listDocuments({ search: query }),
         ];
         
-        const [c, p, d] = await Promise.all(promises);
+        const [cRes, pRes, dRes] = await Promise.all(promises);
+        const customers = Array.isArray(cRes) ? cRes : (cRes?.data ?? []);
+        const products = Array.isArray(pRes) ? pRes : (pRes?.data ?? []);
+        const documents = Array.isArray(dRes) ? dRes : (dRes?.data ?? []);
         setResults({
-          customers: c.slice(0, 3),
-          products: p.slice(0, 3),
-          documents: d.slice(0, 3),
+          customers: customers.slice(0, 3),
+          products: products.slice(0, 3),
+          documents: documents.slice(0, 3),
         });
       } catch (err) {}
     };

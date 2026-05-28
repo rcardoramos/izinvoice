@@ -19,27 +19,47 @@ import {
   DocumentDetail
 } from '@/types/document.types';
 
-const BASE = '/api/v1';
+const BASE = process.env.NEXT_PUBLIC_API_URL || 'https://mind-billing-api.onrender.com/v1';
 
 export class BillingApiClient {
+  private static getCookie(name: string): string | null {
+    if (typeof window === 'undefined') return null;
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]*)'));
+    return match ? decodeURIComponent(match[2]) : null;
+  }
+
+  private static setCookie(name: string, value: string, days = 7) {
+    if (typeof window === 'undefined') return;
+    const d = new Date();
+    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+    document.cookie = `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/`;
+  }
+
   private static getHeaders(): HeadersInit {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
 
-    if (typeof window !== 'undefined') {
-      const authData = localStorage.getItem('invoiceflow-auth');
-      if (authData) {
-        try {
-          const state = JSON.parse(authData).state;
-          if (state?.accessToken) {
-            headers['Authorization'] = `Bearer ${state.accessToken}`;
+    // 1. Try reading from cookies first (per request interceptor)
+    const token = this.getCookie('token');
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // 2. Fallback to localStorage state if cookies aren't set
+    if (!token) {
+      if (typeof window !== 'undefined') {
+        const authData = localStorage.getItem('invoiceflow-auth');
+        if (authData) {
+          try {
+            const state = JSON.parse(authData).state;
+            if (!headers['Authorization'] && state?.accessToken) {
+              headers['Authorization'] = `Bearer ${state.accessToken}`;
+            }
+          } catch (e) {
+            console.error('Error reading auth headers from localStorage', e);
           }
-          if (state?.company?.apiKey) {
-            headers['X-Api-Key'] = state.company.apiKey;
-          }
-        } catch (e) {
-          console.error('Error reading auth headers from localStorage', e);
         }
       }
     }
@@ -69,10 +89,16 @@ export class BillingApiClient {
 
   // Auth
   static async login(body: LoginRequest): Promise<LoginResponse> {
-    return this.request<LoginResponse>('/auth/login', {
+    const res = await this.request<LoginResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify(body),
     });
+
+    if (res.accessToken) {
+      this.setCookie('token', res.accessToken);
+    }
+
+    return res;
   }
 
   static async me(): Promise<MeResponse> {
@@ -141,9 +167,9 @@ export class BillingApiClient {
     });
   }
 
-  static async listDailySummaries(summaryType?: 'RC' | 'RA'): Promise<DailySummaryDetail[]> {
+  static async listDailySummaries(summaryType?: 'RC' | 'RA'): Promise<any> {
     const query = summaryType ? `?summaryType=${summaryType}` : '';
-    return this.request<DailySummaryDetail[]>(`/daily-summaries${query}`);
+    return this.request<any>(`/daily-summaries${query}`);
   }
 
   // Documents
@@ -151,51 +177,63 @@ export class BillingApiClient {
     return this.request<DocumentDetail>(`/documents/${id}`);
   }
 
-  static async listDocuments(filters: { docType?: string; status?: string; dailySummaryId?: string; search?: string } = {}): Promise<DocumentDetail[]> {
+  static async listDocuments(filters: { 
+    docType?: string; 
+    status?: string; 
+    dailySummaryId?: string; 
+    search?: string;
+    page?: number;
+    limit?: number;
+    serie?: string;
+    issueDate?: string;
+    from?: string;
+    to?: string;
+    pendingRc?: boolean;
+  } = {}): Promise<any> {
     const params = new URLSearchParams();
     if (filters.docType) params.append('docType', filters.docType);
     if (filters.status) params.append('status', filters.status);
     if (filters.dailySummaryId) params.append('dailySummaryId', filters.dailySummaryId);
     if (filters.search) params.append('search', filters.search);
+    if (filters.page) params.append('page', String(filters.page));
+    if (filters.limit) params.append('limit', String(filters.limit));
+    if (filters.serie) params.append('serie', filters.serie);
+    if (filters.issueDate) params.append('issueDate', filters.issueDate);
+    if (filters.from) params.append('from', filters.from);
+    if (filters.to) params.append('to', filters.to);
+    if (filters.pendingRc !== undefined) params.append('pendingRc', String(filters.pendingRc));
     
-    return this.request<DocumentDetail[]>(`/documents?${params.toString()}`);
+    return this.request<any>(`/documents?${params.toString()}`);
   }
 
   // Download helpers (return trigger links)
   static getXmlUrl(id: string): string {
-    const apiKey = this.getApiKey();
-    return `${BASE}/documents/${id}/xml?apiKey=${apiKey}`;
+    return `${BASE}/documents/${id}/xml`;
   }
 
   static getCdrUrl(id: string): string {
-    const apiKey = this.getApiKey();
-    return `${BASE}/documents/${id}/cdr?apiKey=${apiKey}`;
-  }
-
-  private static getApiKey(): string {
-    if (typeof window !== 'undefined') {
-      const authData = localStorage.getItem('invoiceflow-auth');
-      if (authData) {
-        try {
-          return JSON.parse(authData).state?.company?.apiKey || '';
-        } catch (e) {}
-      }
-    }
-    return '';
+    return `${BASE}/documents/${id}/cdr`;
   }
 
   // Customers
-  static async listCustomers(search?: string): Promise<any[]> {
-    const query = search ? `?search=${encodeURIComponent(search)}` : '';
-    return this.request<any[]>(`/customers${query}`);
+  static async listCustomers(params: { q?: string; page?: number; limit?: number; isActive?: boolean } = {}): Promise<any> {
+    const query = new URLSearchParams();
+    if (params.q) query.append('q', params.q);
+    if (params.page) query.append('page', String(params.page));
+    if (params.limit) query.append('limit', String(params.limit));
+    if (params.isActive !== undefined) query.append('isActive', String(params.isActive));
+    const qs = query.toString();
+    return this.request<any>(`/customers${qs ? '?' + qs : ''}`);
   }
 
   static async findCustomerByDoc(docNumber: string): Promise<any[]> {
-    return this.request<any[]>(`/customers?docNumber=${docNumber}`);
+    const res = await this.request<any>(`/customers?q=${docNumber}`);
+    // External API returns { data: [], meta: {} }
+    return Array.isArray(res) ? res : (res?.data ?? []);
   }
 
-  static async getCustomerDetail(id: string): Promise<{ customer: any; metrics: any }> {
-    return this.request<{ customer: any; metrics: any }>(`/customers/${id}`);
+  static async getCustomerDetail(id: string): Promise<any> {
+    return this.request<any>(`/customers/${id}`);
   }
 
   static async createCustomer(body: any): Promise<any> {
@@ -207,7 +245,7 @@ export class BillingApiClient {
 
   static async updateCustomer(id: string, body: any): Promise<any> {
     return this.request<any>(`/customers/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       body: JSON.stringify(body),
     });
   }
@@ -219,9 +257,14 @@ export class BillingApiClient {
   }
 
   // Products
-  static async listProducts(search?: string): Promise<any[]> {
-    const query = search ? `?search=${encodeURIComponent(search)}` : '';
-    return this.request<any[]>(`/products${query}`);
+  static async listProducts(params: { q?: string; page?: number; limit?: number; isActive?: boolean } = {}): Promise<any> {
+    const query = new URLSearchParams();
+    if (params.q) query.append('q', params.q);
+    if (params.page) query.append('page', String(params.page));
+    if (params.limit) query.append('limit', String(params.limit));
+    if (params.isActive !== undefined) query.append('isActive', String(params.isActive));
+    const qs = query.toString();
+    return this.request<any>(`/products${qs ? '?' + qs : ''}`);
   }
 
   static async getProduct(id: string): Promise<any> {
@@ -237,7 +280,7 @@ export class BillingApiClient {
 
   static async updateProduct(id: string, body: any): Promise<any> {
     return this.request<any>(`/products/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       body: JSON.stringify(body),
     });
   }
@@ -245,6 +288,23 @@ export class BillingApiClient {
   static async deleteProduct(id: string): Promise<any> {
     return this.request<any>(`/products/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  // Series
+  static async listSeries(params: { docType?: string; isActive?: boolean } = {}): Promise<any> {
+    const query = new URLSearchParams();
+    if (params.docType) query.append('docType', params.docType);
+    if (params.isActive !== undefined) query.append('isActive', String(params.isActive));
+    const qs = query.toString();
+    return this.request<any>(`/series${qs ? '?' + qs : ''}`);
+  }
+
+  // Cancel documents (boletas signed pre-RC)
+  static async cancelDocuments(documentIds: string[], cancelReason?: string): Promise<any> {
+    return this.request<any>('/documents/cancel', {
+      method: 'POST',
+      body: JSON.stringify({ documentIds, cancelReason }),
     });
   }
 

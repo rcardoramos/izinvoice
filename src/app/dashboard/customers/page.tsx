@@ -34,8 +34,9 @@ export default function CustomersCrudPage() {
   const loadCustomers = async () => {
     try {
       setLoading(true);
-      const data = await BillingApiClient.listCustomers();
-      setCustomers(data);
+      const res = await BillingApiClient.listCustomers({ limit: 100 });
+      const customersData = Array.isArray(res) ? res : (res?.data ?? []);
+      setCustomers(customersData);
     } catch (e) {
       console.error(e);
     } finally {
@@ -86,13 +87,13 @@ export default function CustomersCrudPage() {
     setModalMode('edit');
     setFormCustomer({
       id: customer.id,
-      docType: customer.doc_type,
-      docNumber: customer.doc_number,
-      razonSocial: customer.razon_social,
-      nombreComercial: customer.nombre_comercial || '',
-      direccion: customer.direccion || '',
-      correo: customer.correo || '',
-      telefono: customer.telefono || '',
+      docType: customer.docType ?? customer.doc_type,
+      docNumber: customer.docNumber ?? customer.doc_number,
+      razonSocial: customer.razonSocial ?? customer.razon_social,
+      nombreComercial: customer.nombreComercial ?? customer.nombre_comercial ?? '',
+      direccion: customer.direccion ?? customer.address ?? '',
+      correo: customer.correo ?? customer.email ?? '',
+      telefono: customer.telefono ?? customer.phone ?? '',
     });
     setShowModal(true);
   };
@@ -100,8 +101,18 @@ export default function CustomersCrudPage() {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const apiPayload: any = {
+        docType: formCustomer.docType,
+        docNumber: formCustomer.docNumber,
+        legalName: formCustomer.razonSocial,
+      };
+      if (formCustomer.nombreComercial) apiPayload.commercialName = formCustomer.nombreComercial;
+      if (formCustomer.direccion) apiPayload.address = formCustomer.direccion;
+      if (formCustomer.correo) apiPayload.email = formCustomer.correo;
+      if (formCustomer.telefono) apiPayload.phone = formCustomer.telefono;
+
       if (modalMode === 'create') {
-        const created = await BillingApiClient.createCustomer(formCustomer);
+        const created = await BillingApiClient.createCustomer(apiPayload);
         setCustomers((prev) => [...prev, created]);
         addNotification({
           id: Math.random().toString(),
@@ -111,7 +122,7 @@ export default function CustomersCrudPage() {
           created_at: new Date().toISOString(),
         });
       } else {
-        const updated = await BillingApiClient.updateCustomer(formCustomer.id, formCustomer);
+        const updated = await BillingApiClient.updateCustomer(formCustomer.id, apiPayload);
         setCustomers((prev) => prev.map((c) => (c.id === formCustomer.id ? updated : c)));
         addNotification({
           id: Math.random().toString(),
@@ -156,33 +167,40 @@ export default function CustomersCrudPage() {
     {
       key: 'razon_social',
       label: 'Razón Social / Nombre',
-      render: (val: any, row: any) => (
-        <button
-          onClick={() => setSelectedCustomerId(row.id)}
-          className="font-semibold text-blue-600 dark:text-blue-400 hover:underline text-left cursor-pointer"
-        >
-          {val}
-        </button>
-      ),
+      render: (val: any, row: any) => {
+        const name = row.razonSocial ?? row.razon_social ?? row.legalName ?? val ?? '-';
+        return (
+          <button
+            onClick={() => setSelectedCustomerId(row.id)}
+            className="font-semibold text-blue-600 dark:text-blue-400 hover:underline text-left cursor-pointer"
+          >
+            {name}
+          </button>
+        );
+      },
     },
     {
       key: 'doc_number',
       label: 'Documento',
-      render: (val: any, row: any) => (
-        <span className="font-mono">
-          {row.doc_type === '6' ? 'RUC' : 'DNI'} {val}
-        </span>
-      ),
+      render: (val: any, row: any) => {
+        const type = row.docType ?? row.doc_type;
+        const number = row.docNumber ?? row.doc_number ?? val;
+        return (
+          <span className="font-mono">
+            {type === '6' ? 'RUC' : 'DNI'} {number}
+          </span>
+        );
+      },
     },
     {
       key: 'correo',
       label: 'Correo',
-      render: (val: any) => val || '-',
+      render: (val: any, row: any) => row.correo ?? row.email ?? val ?? '-',
     },
     {
       key: 'telefono',
       label: 'Teléfono',
-      render: (val: any) => val || '-',
+      render: (val: any, row: any) => row.telefono ?? row.phone ?? val ?? '-',
     },
     {
       key: 'actions',
@@ -197,7 +215,7 @@ export default function CustomersCrudPage() {
             <Edit2 className="w-3.5 h-3.5" />
           </button>
           <button
-            onClick={() => handleDeleteCustomer(row.id, row.razon_social)}
+            onClick={() => handleDeleteCustomer(row.id, row.razonSocial ?? row.razon_social ?? row.legalName)}
             className="p-1 rounded hover:bg-rose-500/10 text-rose-500 cursor-pointer"
             title="Eliminar"
           >
@@ -265,10 +283,10 @@ export default function CustomersCrudPage() {
                   </div>
                   <div>
                     <h4 className="font-bold text-sm text-zinc-900 dark:text-white leading-tight">
-                      {clientDetail.customer.razon_social}
+                      {clientDetail.customer.razonSocial ?? clientDetail.customer.razon_social ?? clientDetail.customer.legalName}
                     </h4>
                     <p className="font-mono text-[10px] text-zinc-400 mt-1">
-                      {clientDetail.customer.doc_type === '6' ? 'RUC' : 'DNI'}: {clientDetail.customer.doc_number}
+                      {(clientDetail.customer.docType ?? clientDetail.customer.doc_type) === '6' ? 'RUC' : 'DNI'}: {clientDetail.customer.docNumber ?? clientDetail.customer.doc_number}
                     </p>
                   </div>
                 </div>
@@ -276,15 +294,13 @@ export default function CustomersCrudPage() {
                 <div className="grid grid-cols-2 gap-4 border-y border-zinc-100 dark:border-zinc-800/60 py-4 font-medium">
                   <div>
                     <span className="text-zinc-400">Dirección:</span>
-                    <p className="mt-0.5 text-zinc-700 dark:text-zinc-200">{clientDetail.customer.direccion || '-'}</p>
+                    <p className="mt-0.5 text-zinc-700 dark:text-zinc-200">{clientDetail.customer.direccion ?? clientDetail.customer.address ?? '-'}</p>
                   </div>
                   <div>
                     <span className="text-zinc-400">Correo:</span>
-                    <p className="mt-0.5 text-zinc-700 dark:text-zinc-200">{clientDetail.customer.correo || '-'}</p>
+                    <p className="mt-0.5 text-zinc-700 dark:text-zinc-200">{clientDetail.customer.correo ?? clientDetail.customer.email ?? '-'}</p>
                   </div>
-                </div>
-
-                {/* Analytical Metrics grid */}
+                                {/* Analytical Metrics grid */}
                 <div className="space-y-3">
                   <p className="font-semibold text-zinc-400 uppercase text-[9px] tracking-wider">Métricas de Compra</p>
                   <div className="grid grid-cols-3 gap-3 text-center">
@@ -292,19 +308,19 @@ export default function CustomersCrudPage() {
                     <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3.5 rounded-xl space-y-1.5">
                       <DollarSign className="w-4 h-4 mx-auto text-blue-500" />
                       <span className="text-[10px] text-zinc-400">Monto Facturado</span>
-                      <p className="font-bold font-mono text-sm">S/ {clientDetail.metrics.totalBilled.toFixed(2)}</p>
+                      <p className="font-bold font-mono text-sm">S/ {(clientDetail.metrics?.totalBilled ?? 0).toFixed(2)}</p>
                     </div>
 
                     <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3.5 rounded-xl space-y-1.5">
                       <Calendar className="w-4 h-4 mx-auto text-emerald-500" />
                       <span className="text-[10px] text-zinc-400">Última Compra</span>
-                      <p className="font-bold font-mono text-xs">{clientDetail.metrics.lastPurchaseDate || 'N/A'}</p>
+                      <p className="font-bold font-mono text-xs">{clientDetail.metrics?.lastPurchaseDate || 'N/A'}</p>
                     </div>
 
                     <div className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-3.5 rounded-xl space-y-1.5">
                       <TrendingUp className="w-4 h-4 mx-auto text-amber-500" />
                       <span className="text-[10px] text-zinc-400">Frecuencia</span>
-                      <p className="font-bold text-xs">{clientDetail.metrics.frequency}</p>
+                      <p className="font-bold text-xs">{clientDetail.metrics?.frequency || 'N/A'}</p>
                     </div>
 
                   </div>
@@ -312,7 +328,7 @@ export default function CustomersCrudPage() {
 
                 {/* Document purchase history table representation */}
                 <div className="space-y-3">
-                  <p className="font-semibold text-zinc-400 uppercase text-[9px] tracking-wider">Historial de Compras ({clientDetail.metrics.history.length})</p>
+                  <p className="font-semibold text-zinc-400 uppercase text-[9px] tracking-wider">Historial de Compras ({(clientDetail.metrics?.history ?? []).length})</p>
                   <div className="border border-zinc-100 dark:border-zinc-800/80 rounded-xl overflow-hidden">
                     <table className="w-full text-left text-xs">
                       <thead>
@@ -323,7 +339,7 @@ export default function CustomersCrudPage() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-zinc-50 dark:divide-zinc-850/60">
-                        {clientDetail.metrics.history.length === 0 ? (
+                        {(!clientDetail.metrics?.history || clientDetail.metrics.history.length === 0) ? (
                           <tr>
                             <td colSpan={3} className="p-4 text-center text-zinc-400">Sin compras registradas</td>
                           </tr>
@@ -331,15 +347,15 @@ export default function CustomersCrudPage() {
                           clientDetail.metrics.history.map((h: any) => (
                             <tr key={h.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/40 text-zinc-700 dark:text-zinc-300">
                               <td className="p-2.5 font-mono font-bold text-blue-600 dark:text-blue-400">{h.serie}-{h.correlativo}</td>
-                              <td className="p-2.5">{h.issueDate}</td>
-                              <td className="p-2.5 text-right font-mono font-semibold">S/ {h.total.toFixed(2)}</td>
+                              <td className="p-2.5">{h.issueDate ?? h.issue_date}</td>
+                              <td className="p-2.5 text-right font-mono font-semibold">S/ {(h.total ?? 0).toFixed(2)}</td>
                             </tr>
                           ))
                         )}
                       </tbody>
                     </table>
                   </div>
-                </div>
+                </div>    </div>
 
               </div>
             ) : null}

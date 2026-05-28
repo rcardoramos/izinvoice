@@ -17,6 +17,13 @@ interface DataTableProps<T> {
   loading?: boolean;
   emptyMessage?: string;
   actions?: React.ReactNode;
+  serverSide?: boolean;
+  totalItems?: number;
+  totalPages?: number;
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
+  onSearchChange?: (query: string) => void;
+  searchValue?: string;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -27,33 +34,74 @@ export function DataTable<T extends Record<string, any>>({
   loading = false,
   emptyMessage = 'No se encontraron registros.',
   actions,
+  serverSide = false,
+  totalItems,
+  totalPages: propTotalPages,
+  currentPage: propCurrentPage,
+  onPageChange,
+  onSearchChange,
+  searchValue,
 }: DataTableProps<T>) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+  const [localCurrentPage, setLocalCurrentPage] = useState(1);
   const itemsPerPage = 8;
+
+  const searchQuery = serverSide ? (searchValue ?? '') : localSearchQuery;
+  const currentPage = serverSide ? (propCurrentPage ?? 1) : localCurrentPage;
 
   // Search filter
   const filteredData = React.useMemo(() => {
+    if (serverSide) return data;
     if (!searchQuery || !searchKey) return data;
     return data.filter((item) => {
       const val = item[searchKey as string];
       if (val === undefined || val === null) return false;
       return String(val).toLowerCase().includes(searchQuery.toLowerCase());
     });
-  }, [data, searchQuery, searchKey]);
+  }, [data, searchQuery, searchKey, serverSide]);
 
   // Pagination calculation
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
+  const totalPages = serverSide ? (propTotalPages ?? 1) : (Math.ceil(filteredData.length / itemsPerPage) || 1);
+  
   const paginatedData = React.useMemo(() => {
+    if (serverSide) return data;
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredData.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredData, currentPage]);
+  }, [filteredData, currentPage, serverSide, data]);
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+      if (serverSide && onPageChange) {
+        onPageChange(page);
+      } else {
+        setLocalCurrentPage(page);
+      }
     }
   };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (serverSide && onSearchChange) {
+      onSearchChange(val);
+    } else {
+      setLocalSearchQuery(val);
+      setLocalCurrentPage(1);
+    }
+  };
+
+  const showPagination = serverSide 
+    ? (totalPages > 1) 
+    : (filteredData.length > itemsPerPage);
+
+  const startRecord = serverSide 
+    ? ((currentPage - 1) * (totalItems ? Math.ceil(totalItems / totalPages) : itemsPerPage) + 1)
+    : ((currentPage - 1) * itemsPerPage + 1);
+
+  const endRecord = serverSide
+    ? Math.min(totalItems ?? 0, currentPage * (totalItems ? Math.ceil(totalItems / totalPages) : itemsPerPage))
+    : Math.min(filteredData.length, currentPage * itemsPerPage);
+
+  const totalCount = serverSide ? (totalItems ?? 0) : filteredData.length;
 
   return (
     <div className="space-y-4">
@@ -63,11 +111,8 @@ export function DataTable<T extends Record<string, any>>({
           <SearchInput
             placeholder={searchPlaceholder}
             value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
-            disabled={!searchKey}
+            onChange={handleSearchChange}
+            disabled={!serverSide && !searchKey}
           />
         </div>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
@@ -130,11 +175,11 @@ export function DataTable<T extends Record<string, any>>({
         </div>
 
         {/* Pagination controls */}
-        {!loading && filteredData.length > itemsPerPage && (
+        {!loading && showPagination && (
           <div className="p-4 bg-zinc-50/50 border-t border-zinc-150 flex items-center justify-between text-[11px] text-zinc-500 select-none">
             <span>
-              Mostrando {Math.min(filteredData.length, (currentPage - 1) * itemsPerPage + 1)} -{' '}
-              {Math.min(filteredData.length, currentPage * itemsPerPage)} de {filteredData.length} registros
+              Mostrando {totalCount > 0 ? startRecord : 0} -{' '}
+              {endRecord} de {totalCount} registros
             </span>
             <div className="flex items-center gap-1.5">
               <button

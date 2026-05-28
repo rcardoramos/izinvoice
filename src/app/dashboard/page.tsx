@@ -59,18 +59,32 @@ export default function DashboardPage() {
 
         if (isSaaSAdmin) {
           // Load SaaS Super Admin metrics
-          const [companies, audits, docs] = await Promise.all([
-            BillingApiClient.listSaasCompanies(),
-            BillingApiClient.listAuditLogs(),
-            BillingApiClient.listDocuments(),
+          const [companiesRes, auditsRes, docsRes] = await Promise.all([
+            BillingApiClient.listSaasCompanies().catch(err => {
+              console.warn('Failed to load SaaS companies', err);
+              return [];
+            }),
+            BillingApiClient.listAuditLogs().catch(err => {
+              console.warn('Failed to load audit logs', err);
+              return [];
+            }),
+            BillingApiClient.listDocuments().catch(err => {
+              console.warn('Failed to load documents', err);
+              return [];
+            }),
           ]);
+
+          // Unwrap paginated responses
+          const companies: any[] = Array.isArray(companiesRes) ? companiesRes : (companiesRes as any)?.data ?? [];
+          const audits: any[] = Array.isArray(auditsRes) ? auditsRes : (auditsRes as any)?.data ?? [];
+          const docs: any[] = Array.isArray(docsRes) ? docsRes : (docsRes as any)?.data ?? [];
 
           const totalCompanies = companies.length;
           const activeSubscriptions = companies.filter((c: any) => c.status === 'active').length;
           const totalDocuments = docs.length;
           const totalRevenue = docs
             .filter((d: any) => ['accepted', 'signed', 'submitted'].includes(d.status))
-            .reduce((sum: number, d: any) => sum + parseFloat(d.total), 0);
+            .reduce((sum: number, d: any) => sum + parseFloat(d.total || '0'), 0);
 
           setSaasMetrics({
             totalCompanies,
@@ -81,7 +95,7 @@ export default function DashboardPage() {
 
           // Show last 5 registered companies
           const sortedCompanies = [...companies].sort(
-            (a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+            (a: any, b: any) => new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime()
           );
           setRecentCompanies(sortedCompanies.slice(0, 4));
           setRecentAudits(audits.slice(0, 6));
@@ -95,8 +109,8 @@ export default function DashboardPage() {
 
           const formattedDaily = days.map((dateStr) => {
             const daySales = docs
-              .filter((d: any) => ['accepted', 'signed', 'submitted'].includes(d.status) && d.issue_date === dateStr)
-              .reduce((sum: number, d: any) => sum + parseFloat(d.total), 0);
+              .filter((d: any) => ['accepted', 'signed', 'submitted'].includes(d.status) && (d.issueDate ?? d.issue_date) === dateStr)
+              .reduce((sum: number, d: any) => sum + parseFloat(d.total || '0'), 0);
             
             const label = new Date(dateStr + 'T00:00:00').toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric' });
             return { name: label, total: daySales };
@@ -105,29 +119,43 @@ export default function DashboardPage() {
 
         } else {
           // Load local company metrics
-          const [docs, customers, audits] = await Promise.all([
-            BillingApiClient.listDocuments(),
-            BillingApiClient.listCustomers(),
-            BillingApiClient.listAuditLogs(),
+          const [docsRes, customersRes, auditsRes] = await Promise.all([
+            BillingApiClient.listDocuments().catch(err => {
+              console.warn('Failed to load documents', err);
+              return [];
+            }),
+            BillingApiClient.listCustomers({ limit: 1 }).catch(err => {
+              console.warn('Failed to load customers', err);
+              return [];
+            }),
+            BillingApiClient.listAuditLogs().catch(err => {
+              console.warn('Failed to load audit logs', err);
+              return [];
+            }),
           ]);
+
+          // Unwrap paginated responses from real API
+          const docs: any[] = Array.isArray(docsRes) ? docsRes : (docsRes?.data ?? []);
+          const customersTotal: number = docsRes?.meta?.total ?? (Array.isArray(customersRes) ? customersRes.length : (customersRes?.meta?.total ?? 0));
+          const audits: any[] = Array.isArray(auditsRes) ? auditsRes : (auditsRes?.data ?? []);
 
           const todayStr = new Date().toISOString().split('T')[0];
           const currentMonthStr = todayStr.substring(0, 7); // YYYY-MM
 
-          // Calculate basic KPIs
+          // Calculate basic KPIs — external API uses camelCase (issueDate, docType)
           const activeDocs = docs.filter((d: any) => ['accepted', 'signed', 'submitted'].includes(d.status));
           
           const dailyBilling = activeDocs
-            .filter((d: any) => d.issue_date === todayStr)
-            .reduce((sum: number, d: any) => sum + parseFloat(d.total), 0);
+            .filter((d: any) => (d.issueDate ?? d.issue_date) === todayStr)
+            .reduce((sum: number, d: any) => sum + parseFloat(d.total || '0'), 0);
 
           const monthlyBilling = activeDocs
-            .filter((d: any) => d.issue_date.startsWith(currentMonthStr))
-            .reduce((sum: number, d: any) => sum + parseFloat(d.total), 0);
+            .filter((d: any) => (d.issueDate ?? d.issue_date ?? '').startsWith(currentMonthStr))
+            .reduce((sum: number, d: any) => sum + parseFloat(d.total || '0'), 0);
 
-          const invoicesCount = docs.filter((d: any) => d.doc_type === '01').length;
-          const boletasCount = docs.filter((d: any) => d.doc_type === '03').length;
-          const creditNotesCount = docs.filter((d: any) => d.doc_type === '07').length;
+          const invoicesCount = docs.filter((d: any) => (d.docType ?? d.doc_type) === '01').length;
+          const boletasCount = docs.filter((d: any) => (d.docType ?? d.doc_type) === '03').length;
+          const creditNotesCount = docs.filter((d: any) => (d.docType ?? d.doc_type) === '07').length;
           const voidedCount = docs.filter((d: any) => d.status === 'voided').length;
 
           setMetrics({
@@ -135,7 +163,7 @@ export default function DashboardPage() {
             monthlyBilling,
             invoicesCount,
             boletasCount,
-            customersCount: customers.length,
+            customersCount: Array.isArray(customersRes) ? customersRes.length : (customersRes?.meta?.total ?? 0),
             voidedCount,
             creditNotesCount,
             sunatStatus: company?.sunatEnvironment === 'production' ? 'Producción OK' : 'Beta Pruebas',
@@ -150,8 +178,8 @@ export default function DashboardPage() {
 
           const formattedDaily = days.map((dateStr) => {
             const daySales = activeDocs
-              .filter((d: any) => d.issue_date === dateStr)
-              .reduce((sum: number, d: any) => sum + parseFloat(d.total), 0);
+              .filter((d: any) => (d.issueDate ?? d.issue_date) === dateStr)
+              .reduce((sum: number, d: any) => sum + parseFloat(d.total || '0'), 0);
             
             const label = new Date(dateStr + 'T00:00:00').toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric' });
             return { name: label, total: daySales };
@@ -167,8 +195,8 @@ export default function DashboardPage() {
 
           const formattedMonthly = months.map((monthStr) => {
             const monthSales = activeDocs
-              .filter((d: any) => d.issue_date.startsWith(monthStr))
-              .reduce((sum: number, d: any) => sum + parseFloat(d.total), 0);
+              .filter((d: any) => (d.issueDate ?? d.issue_date ?? '').startsWith(monthStr))
+              .reduce((sum: number, d: any) => sum + parseFloat(d.total || '0'), 0);
             
             const label = new Date(monthStr + '-02T00:00:00').toLocaleDateString('es-PE', { month: 'short' });
             return { name: label, total: monthSales };
