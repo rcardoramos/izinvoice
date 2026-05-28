@@ -69,7 +69,7 @@ export function PdfViewer({ document, companyName, companyRuc, companyAddress }:
           <div className="space-y-1.5 text-zinc-800">
             <p className="flex items-center gap-2 text-[11px]"><Calendar className="w-4 h-4 text-zinc-400" /> <b>Fecha Emisión:</b> {document.issueDate}</p>
             <p className="flex items-center gap-2 text-[11px]"><FileSpreadsheet className="w-4 h-4 text-zinc-400" /> <b>Moneda:</b> {p.moneda || 'PEN'}</p>
-            {p.formaPago && <p className="text-[11px]"><b>Forma de Pago:</b> {p.formaPago === 'CON' ? 'Contado' : 'Crédito'}</p>}
+            {p.formaPago && <p className="text-[11px]"><b>Forma de Pago:</b> {['CON', 'Contado'].includes(p.formaPago) ? 'Contado' : 'Crédito'}</p>}
             {p.documentoAfectado && (
               <p className="text-[#4f46e5] font-semibold text-[11px]">
                 <b>Documento Afectado:</b> {p.documentoAfectado.serie}-{p.documentoAfectado.correlativo}

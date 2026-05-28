@@ -26,7 +26,7 @@ export default function NewBoletaPage() {
   const [docType, setDocType] = useState<'01' | '03'>('03');
   const [serie, setSerie] = useState('B001');
   const [moneda, setMoneda] = useState('PEN');
-  const [formaPago, setFormaPago] = useState('CON');
+  const [formaPago, setFormaPago] = useState('Contado');
 
   // Client Selection State
   const [clientDoc, setClientDoc] = useState('');
@@ -338,8 +338,8 @@ export default function NewBoletaPage() {
                     onChange={(e) => setFormaPago(e.target.value)}
                     className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1.5 px-2.5 text-xs text-zinc-900 dark:text-zinc-300"
                   >
-                    <option value="CON">Contado</option>
-                    <option value="CRE">Crédito</option>
+                    <option value="Contado">Contado</option>
+                    <option value="Credito">Crédito</option>
                   </select>
                 </div>
               </div>
