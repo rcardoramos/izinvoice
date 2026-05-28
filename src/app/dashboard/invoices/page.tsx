@@ -574,36 +574,14 @@ export default function InvoicesHistoryPage() {
                 </div>
 
                 {/* Specific actions based on status - compact inline row */}
-                {(selectedDoc.status === 'accepted' || (selectedDoc.status === 'signed' && selectedDoc.docType === '03')) && (
+                {selectedDoc.status === 'accepted' && (
                   <div className="flex items-center gap-2">
-                    {selectedDoc.status === 'accepted' && (
-                      <button
-                        onClick={() => setShowNoteDialog(true)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 rounded-lg text-[10px] font-bold text-zinc-700 dark:text-zinc-350 transition-colors cursor-pointer"
-                      >
-                        <PlusCircle className="w-3.5 h-3.5 text-blue-500" /> Emitir Nota de Crédito
-                      </button>
-                    )}
-                    
-                    {selectedDoc.status === 'accepted' && selectedDoc.docType === '01' && (
-                      <button
-                        onClick={handleVoidFactura}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-455 transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" /> Anular Factura
-                      </button>
-                    )}
-
-                    {selectedDoc.status === 'signed' && selectedDoc.docType === '03' && (
-                      <div className="w-full flex justify-center py-0.5">
-                        <button
-                          onClick={() => setCancelModal(true)}
-                          className="flex items-center gap-1.5 py-1.5 px-4 border border-rose-200 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:border-rose-900/40 text-[10px] font-bold text-rose-600 dark:text-rose-400 rounded-lg transition-colors cursor-pointer w-fit"
-                        >
-                          <Ban className="w-3.5 h-3.5 text-rose-500" /> Cancelar Boleta
-                        </button>
-                      </div>
-                    )}
+                    <button
+                      onClick={() => setShowNoteDialog(true)}
+                      className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 rounded-lg text-[10px] font-bold text-zinc-700 dark:text-zinc-350 transition-colors cursor-pointer"
+                    >
+                      <PlusCircle className="w-3.5 h-3.5 text-blue-500" /> Emitir Nota de Crédito
+                    </button>
                   </div>
                 )}
 
@@ -613,38 +591,6 @@ export default function InvoicesHistoryPage() {
                     <span>Boleta firmada localmente. Pendiente de comunicación SUNAT (Resumen Diario RC).</span>
                   </div>
                 )}
-
-                {/* Send and print action panel */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => window.print()}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 rounded-lg text-[10px] font-bold text-zinc-700 dark:text-zinc-350 transition-colors cursor-pointer"
-                  >
-                    <Printer className="w-3.5 h-3.5 text-indigo-500" /> Imprimir / PDF
-                  </button>
-                  
-                  <a
-                    href={`mailto:${selectedDoc.payload?.cliente?.correo || ''}?subject=${encodeURIComponent(
-                      `Comprobante de Pago Electrónico ${selectedDoc.serie}-${selectedDoc.correlativo}`
-                    )}&body=${encodeURIComponent(
-                      `Estimado cliente,\n\nLe hacemos llegar su comprobante electrónico ${selectedDoc.serie}-${selectedDoc.correlativo} por un monto de S/ ${(selectedDoc.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.\n\nAtentamente,\n${company?.businessName || ''}`
-                    )}`}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 rounded-lg text-[10px] font-bold text-zinc-700 dark:text-zinc-350 transition-colors cursor-pointer text-center"
-                  >
-                    <Mail className="w-3.5 h-3.5 text-blue-500" /> Correo
-                  </a>
-                  
-                  <a
-                    href={`https://wa.me/${(selectedDoc.payload?.cliente?.telefono || '').replace(/\D/g, '') ? ((selectedDoc.payload?.cliente?.telefono || '').replace(/\D/g, '').startsWith('51') ? (selectedDoc.payload?.cliente?.telefono || '').replace(/\D/g, '') : '51' + (selectedDoc.payload?.cliente?.telefono || '').replace(/\D/g, '')) : ''}?text=${encodeURIComponent(
-                      `Estimado cliente, le adjuntamos su comprobante electrónico ${selectedDoc.serie}-${selectedDoc.correlativo} por un monto de S/ ${(selectedDoc.total || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. ¡Muchas gracias por su preferencia!`
-                    )}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 rounded-lg text-[10px] font-bold text-zinc-700 dark:text-zinc-350 transition-colors cursor-pointer text-center"
-                  >
-                    <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-500" /> WhatsApp
-                  </a>
-                </div>
 
                 {/* PDF receipt print format wrapper */}
                 <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 bg-zinc-100 dark:bg-zinc-900/40 print-invoice-container">
