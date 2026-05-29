@@ -5,12 +5,21 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { BillingApiClient } from '@/services/api-client';
 import { useAppStore } from '@/store/app';
-import { PlusCircle, Edit2, Trash2 } from 'lucide-react';
+import { PlusCircle, Edit2, Ban, CheckCircle } from 'lucide-react';
 
 export default function ProductsCrudPage() {
   const { addNotification } = useAppStore();
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Search & Pagination & Filter States
+  const [searchVal, setSearchVal] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
   // Add/Edit modal state
   const [showModal, setShowModal] = useState(false);
@@ -27,9 +36,21 @@ export default function ProductsCrudPage() {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const res = await BillingApiClient.listProducts({ limit: 100 });
-      const productsData = Array.isArray(res) ? res : (res?.data ?? []);
+      const params: any = {
+        page,
+        limit,
+        q: debouncedSearch || undefined,
+      };
+      if (statusFilter === 'active') params.isActive = true;
+      if (statusFilter === 'inactive') params.isActive = false;
+
+      const res = await BillingApiClient.listProducts(params);
+      const productsData = res?.data ?? [];
+      const meta = res?.meta ?? { total: productsData.length, totalPages: 1 };
+
       setProducts(productsData);
+      setTotalItems(meta.total);
+      setTotalPages(meta.totalPages);
     } catch (e) {
       console.error(e);
     } finally {
@@ -38,8 +59,16 @@ export default function ProductsCrudPage() {
   };
 
   useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchVal);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchVal]);
+
+  useEffect(() => {
     loadProducts();
-  }, []);
+  }, [page, debouncedSearch, statusFilter]);
 
   const handleOpenCreate = () => {
     setModalMode('create');
@@ -78,13 +107,13 @@ export default function ProductsCrudPage() {
     try {
       const apiPayload = {
         code: formProduct.codigo,
-        description: formProduct.nombre, // formProduct.nombre is the main name/description
+        description: formProduct.nombre,
         unitPrice: parseFloat(formProduct.precio),
       };
 
       if (modalMode === 'create') {
-        const created = await BillingApiClient.createProduct(apiPayload);
-        setProducts((prev) => [...prev, created]);
+        await BillingApiClient.createProduct(apiPayload);
+        loadProducts();
         addNotification({
           id: Math.random().toString(),
           title: 'Producto Creado',
@@ -93,8 +122,8 @@ export default function ProductsCrudPage() {
           created_at: new Date().toISOString(),
         });
       } else {
-        const updated = await BillingApiClient.updateProduct(formProduct.id, apiPayload);
-        setProducts((prev) => prev.map((p) => (p.id === formProduct.id ? updated : p)));
+        await BillingApiClient.updateProduct(formProduct.id, apiPayload);
+        loadProducts();
         addNotification({
           id: Math.random().toString(),
           title: 'Producto Actualizado',
@@ -109,20 +138,33 @@ export default function ProductsCrudPage() {
     }
   };
 
-  const handleDeleteProduct = async (id: string, name: string) => {
-    if (!confirm(`¿Está seguro de que desea eliminar el producto '${name}'?`)) return;
+  const handleToggleProductStatus = async (product: any, enable: boolean) => {
+    const name = product.nombre ?? product.description ?? product.name ?? '-';
+    const actionText = enable ? 'habilitar' : 'deshabilitar';
+    if (!confirm(`¿Está seguro de que desea ${actionText} el producto '${name}'?`)) return;
     try {
-      await BillingApiClient.deleteProduct(id);
-      setProducts((prev) => prev.filter((p) => p.id !== id));
-      addNotification({
-        id: Math.random().toString(),
-        title: 'Producto Eliminado',
-        message: `El producto '${name}' fue retirado del catálogo.`,
-        type: 'info',
-        created_at: new Date().toISOString(),
-      });
+      if (enable) {
+        await BillingApiClient.updateProduct(product.id, { isActive: true });
+        addNotification({
+          id: Math.random().toString(),
+          title: 'Producto Habilitado',
+          message: `El producto '${name}' fue habilitado con éxito.`,
+          type: 'success',
+          created_at: new Date().toISOString(),
+        });
+      } else {
+        await BillingApiClient.deleteProduct(product.id);
+        addNotification({
+          id: Math.random().toString(),
+          title: 'Producto Deshabilitado',
+          message: `El producto '${name}' fue deshabilitado con éxito.`,
+          type: 'info',
+          created_at: new Date().toISOString(),
+        });
+      }
+      loadProducts();
     } catch (err: any) {
-      alert(err.message || 'Error al eliminar producto.');
+      alert(err.message || `Error al ${actionText} producto.`);
     }
   };
 
@@ -140,7 +182,6 @@ export default function ProductsCrudPage() {
         return <p className="font-semibold text-zinc-900 dark:text-white">{name}</p>;
       },
     },
-
     {
       key: 'unidad_medida',
       label: 'Medida',
@@ -166,26 +207,56 @@ export default function ProductsCrudPage() {
       },
     },
     {
+      key: 'status',
+      label: 'Estado',
+      render: (val: any, row: any) => {
+        const isActive = !row.deleted_at && row.status !== 'inactive' && row.isActive !== false;
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide border ${
+            isActive 
+              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' 
+              : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+            {isActive ? 'Activo' : 'Inactivo'}
+          </span>
+        );
+      },
+    },
+    {
       key: 'actions',
       label: 'Acciones',
-      render: (_: any, row: any) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleOpenEdit(row)}
-            className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 cursor-pointer"
-            title="Editar"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => handleDeleteProduct(row.id, row.name ?? row.nombre)}
-            className="p-1 rounded hover:bg-rose-500/10 text-rose-500 cursor-pointer"
-            title="Eliminar"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      ),
+      render: (_: any, row: any) => {
+        const isActive = !row.deleted_at && row.status !== 'inactive' && row.isActive !== false;
+        return (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleOpenEdit(row)}
+              className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 cursor-pointer"
+              title="Editar"
+            >
+              <Edit2 className="w-3.5 h-3.5" />
+            </button>
+            {isActive ? (
+              <button
+                onClick={() => handleToggleProductStatus(row, false)}
+                className="p-1 rounded hover:bg-rose-500/10 text-rose-500 cursor-pointer"
+                title="Deshabilitar"
+              >
+                <Ban className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <button
+                onClick={() => handleToggleProductStatus(row, true)}
+                className="p-1 rounded hover:bg-emerald-500/10 text-emerald-500 cursor-pointer"
+                title="Habilitar"
+              >
+                <CheckCircle className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -201,16 +272,48 @@ export default function ProductsCrudPage() {
           columns={columns}
           data={products}
           searchPlaceholder="Buscar por código, nombre..."
-          searchKey="nombre"
           loading={loading}
-          emptyMessage="No hay productos registrados en esta empresa."
+          emptyMessage="No se encontraron productos."
+          serverSide={true}
+          itemsPerPage={limit}
+          totalItems={totalItems}
+          totalPages={totalPages}
+          currentPage={page}
+          onPageChange={(p) => setPage(p)}
+          searchValue={searchVal}
+          onSearchChange={(q) => setSearchVal(q)}
           actions={
-            <button
-              onClick={handleOpenCreate}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-500 transition-colors cursor-pointer"
-            >
-              <PlusCircle className="w-4 h-4" /> Registrar Producto
-            </button>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="flex items-center gap-1 border border-zinc-200 dark:border-zinc-800 rounded-lg p-0.5 bg-zinc-50 dark:bg-zinc-900 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => { setStatusFilter('all'); setPage(1); }}
+                  className={`px-2 py-1 rounded-md transition-all font-medium cursor-pointer ${statusFilter === 'all' ? 'bg-white dark:bg-zinc-800 shadow-xs text-zinc-900 dark:text-white' : 'text-zinc-500'}`}
+                >
+                  Todos
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setStatusFilter('active'); setPage(1); }}
+                  className={`px-2 py-1 rounded-md transition-all font-medium cursor-pointer ${statusFilter === 'active' ? 'bg-white dark:bg-zinc-800 shadow-xs text-emerald-600 dark:text-emerald-400' : 'text-zinc-500'}`}
+                >
+                  Activos
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setStatusFilter('inactive'); setPage(1); }}
+                  className={`px-2 py-1 rounded-md transition-all font-medium cursor-pointer ${statusFilter === 'inactive' ? 'bg-white dark:bg-zinc-800 shadow-xs text-rose-600 dark:text-rose-400' : 'text-zinc-500'}`}
+                >
+                  Inactivos
+                </button>
+              </div>
+              <button
+                onClick={handleOpenCreate}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-500 transition-colors cursor-pointer whitespace-nowrap"
+              >
+                <PlusCircle className="w-4 h-4" /> Registrar Producto
+              </button>
+            </div>
           }
         />
       </div>

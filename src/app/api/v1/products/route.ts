@@ -8,13 +8,28 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get('search');
+    const qParam = searchParams.get('q') || searchParams.get('search');
+    const isActiveParam = searchParams.get('isActive');
 
     let products = FileDb.getTable('products');
-    products = products.filter((p: any) => p.company_id === ctx.company.id && !p.deleted_at);
+    
+    // Filter by company
+    if (ctx.company) {
+      products = products.filter((p: any) => p.company_id === ctx.company.id);
+    }
 
-    if (search) {
-      const q = search.toLowerCase();
+    // Filter by isActive
+    if (isActiveParam !== null) {
+      const activeFilter = isActiveParam === 'true';
+      products = products.filter((p: any) => {
+        const isCurrentlyActive = !p.deleted_at && p.status !== 'inactive';
+        return activeFilter ? isCurrentlyActive : !isCurrentlyActive;
+      });
+    }
+
+    // Search filter
+    if (qParam) {
+      const q = qParam.toLowerCase();
       products = products.filter(
         (p: any) =>
           p.codigo.toLowerCase().includes(q) ||
@@ -23,7 +38,25 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    return NextResponse.json(products);
+    // Pagination
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '20', 10);
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+
+    const total = products.length;
+    const paginatedProducts = products.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(total / limit);
+
+    return NextResponse.json({
+      data: paginatedProducts,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+    });
   } catch (error: any) {
     return NextResponse.json({ message: 'Error retrieving products', error: error.message }, { status: 500 });
   }

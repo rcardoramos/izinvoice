@@ -8,21 +8,31 @@ export async function GET(req: NextRequest) {
 
   try {
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get('search');
+    const qParam = searchParams.get('q') || searchParams.get('search');
     const docNumber = searchParams.get('docNumber');
+    const isActiveParam = searchParams.get('isActive');
 
     let customers = FileDb.getTable('customers');
+    
     // Filter by company (bypassed for super admin)
     if (ctx.company) {
-      customers = customers.filter((c: any) => c.company_id === ctx.company.id && !c.deleted_at);
-    } else {
-      customers = customers.filter((c: any) => !c.deleted_at);
+      customers = customers.filter((c: any) => c.company_id === ctx.company.id);
     }
 
+    // Filter by isActive
+    if (isActiveParam !== null) {
+      const activeFilter = isActiveParam === 'true';
+      customers = customers.filter((c: any) => {
+        const isCurrentlyActive = !c.deleted_at && c.status !== 'inactive';
+        return activeFilter ? isCurrentlyActive : !isCurrentlyActive;
+      });
+    }
+
+    // Search filter
     if (docNumber) {
       customers = customers.filter((c: any) => c.doc_number === docNumber);
-    } else if (search) {
-      const q = search.toLowerCase();
+    } else if (qParam) {
+      const q = qParam.toLowerCase();
       customers = customers.filter(
         (c: any) =>
           c.doc_number.includes(q) ||
@@ -31,7 +41,25 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    return NextResponse.json(customers);
+    // Pagination
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '20', 10);
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+
+    const total = customers.length;
+    const paginatedCustomers = customers.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(total / limit);
+
+    return NextResponse.json({
+      data: paginatedCustomers,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+    });
   } catch (error: any) {
     return NextResponse.json({ message: 'Error retrieving customers', error: error.message }, { status: 500 });
   }

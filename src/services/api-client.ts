@@ -252,7 +252,8 @@ export class BillingApiClient {
 
   static async deleteCustomer(id: string): Promise<any> {
     return this.request<any>(`/customers/${id}`, {
-      method: 'DELETE',
+      method: 'PATCH',
+      body: JSON.stringify({ isActive: false }),
     });
   }
 
@@ -287,7 +288,8 @@ export class BillingApiClient {
 
   static async deleteProduct(id: string): Promise<any> {
     return this.request<any>(`/products/${id}`, {
-      method: 'DELETE',
+      method: 'PATCH',
+      body: JSON.stringify({ isActive: false }),
     });
   }
 

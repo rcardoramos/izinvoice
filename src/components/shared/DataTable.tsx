@@ -24,6 +24,7 @@ interface DataTableProps<T> {
   onPageChange?: (page: number) => void;
   onSearchChange?: (query: string) => void;
   searchValue?: string;
+  itemsPerPage?: number;
 }
 
 export function DataTable<T extends Record<string, any>>({
@@ -41,10 +42,10 @@ export function DataTable<T extends Record<string, any>>({
   onPageChange,
   onSearchChange,
   searchValue,
+  itemsPerPage = 8,
 }: DataTableProps<T>) {
   const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [localCurrentPage, setLocalCurrentPage] = useState(1);
-  const itemsPerPage = 8;
 
   const searchQuery = serverSide ? (searchValue ?? '') : localSearchQuery;
   const currentPage = serverSide ? (propCurrentPage ?? 1) : localCurrentPage;
@@ -93,12 +94,10 @@ export function DataTable<T extends Record<string, any>>({
     ? (totalPages > 1) 
     : (filteredData.length > itemsPerPage);
 
-  const startRecord = serverSide 
-    ? ((currentPage - 1) * (totalItems ? Math.ceil(totalItems / totalPages) : itemsPerPage) + 1)
-    : ((currentPage - 1) * itemsPerPage + 1);
+  const startRecord = ((currentPage - 1) * itemsPerPage + 1);
 
   const endRecord = serverSide
-    ? Math.min(totalItems ?? 0, currentPage * (totalItems ? Math.ceil(totalItems / totalPages) : itemsPerPage))
+    ? Math.min(totalItems ?? 0, currentPage * itemsPerPage)
     : Math.min(filteredData.length, currentPage * itemsPerPage);
 
   const totalCount = serverSide ? (totalItems ?? 0) : filteredData.length;

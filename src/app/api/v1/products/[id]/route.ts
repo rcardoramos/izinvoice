@@ -23,7 +23,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -39,17 +39,28 @@ export async function PUT(
       return NextResponse.json({ message: 'Producto no encontrado' }, { status: 404 });
     }
 
-    const updated = FileDb.update('products', id, {
-      nombre: body.nombre || product.nombre,
-      descripcion: body.descripcion !== undefined ? body.descripcion : product.descripcion,
-      categoria: body.categoria !== undefined ? body.categoria : product.categoria,
-      unidad_medida: body.unidadMedida || product.unidad_medida,
-      precio: body.precio !== undefined ? parseFloat(body.precio) : product.precio,
-      igv_rate: body.igvRate !== undefined ? parseFloat(body.igvRate) : product.igv_rate,
-      status: body.status || product.status,
-    });
+    const updates: any = {};
+    if (body.nombre !== undefined) updates.nombre = body.nombre;
+    if (body.descripcion !== undefined) updates.descripcion = body.descripcion;
+    if (body.categoria !== undefined) updates.categoria = body.categoria;
+    if (body.unidadMedida !== undefined) updates.unidad_medida = body.unidadMedida;
+    if (body.precio !== undefined) updates.precio = parseFloat(body.precio);
+    if (body.igvRate !== undefined) updates.igv_rate = parseFloat(body.igvRate);
+    if (body.status !== undefined) updates.status = body.status;
 
-    logAudit(ctx.company.id, ctx.user.id, 'UPDATE_PRODUCT', 'PRODUCTS', `Updated product ${product.nombre} (${product.codigo})`);
+    if (body.isActive === false) {
+      updates.deleted_at = new Date().toISOString();
+      updates.status = 'inactive';
+      logAudit(ctx.company.id, ctx.user.id, 'DELETE_PRODUCT', 'PRODUCTS', `Deleted product ${product.nombre} (${product.codigo})`);
+    } else if (body.isActive === true) {
+      updates.deleted_at = null;
+      updates.status = 'active';
+      logAudit(ctx.company.id, ctx.user.id, 'ACTIVATE_PRODUCT', 'PRODUCTS', `Activated product ${product.nombre} (${product.codigo})`);
+    } else {
+      logAudit(ctx.company.id, ctx.user.id, 'UPDATE_PRODUCT', 'PRODUCTS', `Updated product ${product.nombre} (${product.codigo})`);
+    }
+
+    const updated = FileDb.update('products', id, updates);
 
     return NextResponse.json(updated);
   } catch (error: any) {

@@ -5,12 +5,21 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { BillingApiClient } from '@/services/api-client';
 import { useAppStore } from '@/store/app';
-import { PlusCircle, Edit2, Trash2, X, User, DollarSign, Calendar, TrendingUp, RefreshCw } from 'lucide-react';
+import { PlusCircle, Edit2, Trash2, X, User, DollarSign, Calendar, TrendingUp, RefreshCw, Ban, CheckCircle } from 'lucide-react';
 
 export default function CustomersCrudPage() {
   const { addNotification } = useAppStore();
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Search & Pagination & Filter States
+  const [searchVal, setSearchVal] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
   // Client Drawer details
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -34,9 +43,21 @@ export default function CustomersCrudPage() {
   const loadCustomers = async () => {
     try {
       setLoading(true);
-      const res = await BillingApiClient.listCustomers({ limit: 100 });
-      const customersData = Array.isArray(res) ? res : (res?.data ?? []);
+      const params: any = {
+        page,
+        limit,
+        q: debouncedSearch || undefined,
+      };
+      if (statusFilter === 'active') params.isActive = true;
+      if (statusFilter === 'inactive') params.isActive = false;
+
+      const res = await BillingApiClient.listCustomers(params);
+      const customersData = res?.data ?? [];
+      const meta = res?.meta ?? { total: customersData.length, totalPages: 1 };
+
       setCustomers(customersData);
+      setTotalItems(meta.total);
+      setTotalPages(meta.totalPages);
     } catch (e) {
       console.error(e);
     } finally {
@@ -45,8 +66,16 @@ export default function CustomersCrudPage() {
   };
 
   useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchVal);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchVal]);
+
+  useEffect(() => {
     loadCustomers();
-  }, []);
+  }, [page, debouncedSearch, statusFilter]);
 
   // Fetch customer profile details
   useEffect(() => {
@@ -112,8 +141,8 @@ export default function CustomersCrudPage() {
       if (formCustomer.telefono) apiPayload.phone = formCustomer.telefono;
 
       if (modalMode === 'create') {
-        const created = await BillingApiClient.createCustomer(apiPayload);
-        setCustomers((prev) => [...prev, created]);
+        await BillingApiClient.createCustomer(apiPayload);
+        loadCustomers();
         addNotification({
           id: Math.random().toString(),
           title: 'Cliente Creado',
@@ -122,8 +151,8 @@ export default function CustomersCrudPage() {
           created_at: new Date().toISOString(),
         });
       } else {
-        const updated = await BillingApiClient.updateCustomer(formCustomer.id, apiPayload);
-        setCustomers((prev) => prev.map((c) => (c.id === formCustomer.id ? updated : c)));
+        await BillingApiClient.updateCustomer(formCustomer.id, apiPayload);
+        loadCustomers();
         addNotification({
           id: Math.random().toString(),
           title: 'Cliente Actualizado',
@@ -144,22 +173,34 @@ export default function CustomersCrudPage() {
     }
   };
 
-  const handleDeleteCustomer = async (id: string, name: string) => {
-    if (!confirm(`¿Está seguro de que desea eliminar al cliente ${name}?`)) return;
+  const handleToggleCustomerStatus = async (customer: any, enable: boolean) => {
+    const name = customer.razonSocial ?? customer.razon_social ?? customer.legalName ?? '-';
+    const actionText = enable ? 'habilitar' : 'deshabilitar';
+    if (!confirm(`¿Está seguro de que desea ${actionText} al cliente ${name}?`)) return;
     try {
-      await BillingApiClient.deleteCustomer(id);
-      setCustomers((prev) => prev.filter((c) => c.id !== id));
-      if (selectedCustomerId === id) setSelectedCustomerId(null);
-      
-      addNotification({
-        id: Math.random().toString(),
-        title: 'Cliente Eliminado',
-        message: `El cliente ${name} fue retirado con éxito.`,
-        type: 'info',
-        created_at: new Date().toISOString(),
-      });
+      if (enable) {
+        await BillingApiClient.updateCustomer(customer.id, { isActive: true });
+        addNotification({
+          id: Math.random().toString(),
+          title: 'Cliente Habilitado',
+          message: `El cliente ${name} fue habilitado con éxito.`,
+          type: 'success',
+          created_at: new Date().toISOString(),
+        });
+      } else {
+        await BillingApiClient.deleteCustomer(customer.id);
+        addNotification({
+          id: Math.random().toString(),
+          title: 'Cliente Deshabilitado',
+          message: `El cliente ${name} fue deshabilitado con éxito.`,
+          type: 'info',
+          created_at: new Date().toISOString(),
+        });
+      }
+      loadCustomers();
+      if (selectedCustomerId === customer.id) setSelectedCustomerId(null);
     } catch (err: any) {
-      alert(err.message || 'Error al eliminar cliente.');
+      alert(err.message || `Error al ${actionText} cliente.`);
     }
   };
 
@@ -203,26 +244,56 @@ export default function CustomersCrudPage() {
       render: (val: any, row: any) => row.telefono ?? row.phone ?? val ?? '-',
     },
     {
+      key: 'status',
+      label: 'Estado',
+      render: (val: any, row: any) => {
+        const isActive = !row.deleted_at && row.status !== 'inactive' && row.isActive !== false;
+        return (
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide border ${
+            isActive 
+              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' 
+              : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+            {isActive ? 'Activo' : 'Inactivo'}
+          </span>
+        );
+      },
+    },
+    {
       key: 'actions',
       label: 'Acciones',
-      render: (_: any, row: any) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleOpenEdit(row)}
-            className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 cursor-pointer"
-            title="Editar"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => handleDeleteCustomer(row.id, row.razonSocial ?? row.razon_social ?? row.legalName)}
-            className="p-1 rounded hover:bg-rose-500/10 text-rose-500 cursor-pointer"
-            title="Eliminar"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      ),
+      render: (_: any, row: any) => {
+        const isActive = !row.deleted_at && row.status !== 'inactive' && row.isActive !== false;
+        return (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleOpenEdit(row)}
+              className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 cursor-pointer"
+              title="Editar"
+            >
+              <Edit2 className="w-3.5 h-3.5" />
+            </button>
+            {isActive ? (
+              <button
+                onClick={() => handleToggleCustomerStatus(row, false)}
+                className="p-1 rounded hover:bg-rose-500/10 text-rose-500 cursor-pointer"
+                title="Deshabilitar"
+              >
+                <Ban className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <button
+                onClick={() => handleToggleCustomerStatus(row, true)}
+                className="p-1 rounded hover:bg-emerald-500/10 text-emerald-500 cursor-pointer"
+                title="Habilitar"
+              >
+                <CheckCircle className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -240,16 +311,48 @@ export default function CustomersCrudPage() {
             columns={columns}
             data={customers}
             searchPlaceholder="Buscar por nombre, documento..."
-            searchKey="razon_social"
             loading={loading}
-            emptyMessage="No hay clientes registrados en esta empresa."
+            emptyMessage="No se encontraron clientes."
+            serverSide={true}
+            itemsPerPage={limit}
+            totalItems={totalItems}
+            totalPages={totalPages}
+            currentPage={page}
+            onPageChange={(p) => setPage(p)}
+            searchValue={searchVal}
+            onSearchChange={(q) => setSearchVal(q)}
             actions={
-              <button
-                onClick={handleOpenCreate}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-500 transition-colors cursor-pointer"
-              >
-                <PlusCircle className="w-4 h-4" /> Registrar Cliente
-              </button>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <div className="flex items-center gap-1 border border-zinc-200 dark:border-zinc-800 rounded-lg p-0.5 bg-zinc-50 dark:bg-zinc-900 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => { setStatusFilter('all'); setPage(1); }}
+                    className={`px-2 py-1 rounded-md transition-all font-medium cursor-pointer ${statusFilter === 'all' ? 'bg-white dark:bg-zinc-800 shadow-xs text-zinc-900 dark:text-white' : 'text-zinc-500'}`}
+                  >
+                    Todos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setStatusFilter('active'); setPage(1); }}
+                    className={`px-2 py-1 rounded-md transition-all font-medium cursor-pointer ${statusFilter === 'active' ? 'bg-white dark:bg-zinc-800 shadow-xs text-emerald-600 dark:text-emerald-400' : 'text-zinc-500'}`}
+                  >
+                    Activos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setStatusFilter('inactive'); setPage(1); }}
+                    className={`px-2 py-1 rounded-md transition-all font-medium cursor-pointer ${statusFilter === 'inactive' ? 'bg-white dark:bg-zinc-800 shadow-xs text-rose-600 dark:text-rose-400' : 'text-zinc-500'}`}
+                  >
+                    Inactivos
+                  </button>
+                </div>
+                <button
+                  onClick={handleOpenCreate}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-500 transition-colors cursor-pointer"
+                >
+                  <PlusCircle className="w-4 h-4" /> Registrar Cliente
+                </button>
+              </div>
             }
           />
         </div>

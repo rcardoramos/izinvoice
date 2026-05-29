@@ -76,7 +76,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -92,16 +92,27 @@ export async function PUT(
       return NextResponse.json({ message: 'Cliente no encontrado' }, { status: 404 });
     }
 
-    const updated = FileDb.update('customers', id, {
-      razon_social: body.razonSocial || customer.razon_social,
-      nombre_comercial: body.nombreComercial !== undefined ? body.nombreComercial : customer.nombre_comercial,
-      direccion: body.direccion !== undefined ? body.direccion : customer.direccion,
-      correo: body.correo !== undefined ? body.correo : customer.correo,
-      telefono: body.telefono !== undefined ? body.telefono : customer.telefono,
-      status: body.status || customer.status,
-    });
+    const updates: any = {};
+    if (body.razonSocial !== undefined) updates.razon_social = body.razonSocial;
+    if (body.nombreComercial !== undefined) updates.nombre_comercial = body.nombreComercial;
+    if (body.direccion !== undefined) updates.direccion = body.direccion;
+    if (body.correo !== undefined) updates.correo = body.correo;
+    if (body.telefono !== undefined) updates.telefono = body.telefono;
+    if (body.status !== undefined) updates.status = body.status;
+    
+    if (body.isActive === false) {
+      updates.deleted_at = new Date().toISOString();
+      updates.status = 'inactive';
+      logAudit(ctx.company.id, ctx.user.id, 'DELETE_CUSTOMER', 'CUSTOMERS', `Deleted customer ${customer.razon_social} (${customer.doc_number})`);
+    } else if (body.isActive === true) {
+      updates.deleted_at = null;
+      updates.status = 'active';
+      logAudit(ctx.company.id, ctx.user.id, 'ACTIVATE_CUSTOMER', 'CUSTOMERS', `Activated customer ${customer.razon_social} (${customer.doc_number})`);
+    } else {
+      logAudit(ctx.company.id, ctx.user.id, 'UPDATE_CUSTOMER', 'CUSTOMERS', `Updated customer ${customer.razon_social} (${customer.doc_number})`);
+    }
 
-    logAudit(ctx.company.id, ctx.user.id, 'UPDATE_CUSTOMER', 'CUSTOMERS', `Updated customer ${customer.razon_social} (${customer.doc_number})`);
+    const updated = FileDb.update('customers', id, updates);
 
     return NextResponse.json(updated);
   } catch (error: any) {
