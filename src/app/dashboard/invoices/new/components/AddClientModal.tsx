@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { BillingApiClient } from '@/services/api-client';
 import { DOCUMENT_TYPES, getDocTypeConfigByCode } from '@/utils/document-types';
+import { AlertModal } from '@/components/shared/AlertModal';
 
 interface AddClientModalProps {
   isOpen: boolean;
@@ -31,6 +32,22 @@ export function AddClientModal({
   });
   const [loading, setLoading] = useState(false);
 
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'warning',
+  });
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'warning') => {
+    setAlertConfig({ isOpen: true, title, message, type });
+  };
+
   useEffect(() => {
     if (isOpen) {
       setFormData({
@@ -53,7 +70,7 @@ export function AddClientModal({
     const config = getDocTypeConfigByCode(formData.docType);
     if (config) {
       if (!config.pattern.test(formData.docNumber)) {
-        alert(config.errorMessage);
+        showAlert('Documento Inválido', config.errorMessage, 'error');
         return;
       }
     }
@@ -73,7 +90,7 @@ export function AddClientModal({
       onSubmitSuccess(created);
       onClose();
     } catch (err: any) {
-      alert(err.message || 'Error al guardar cliente');
+      showAlert('Error', err.message || 'Error al guardar cliente', 'error');
     } finally {
       setLoading(false);
     }
@@ -84,7 +101,8 @@ export function AddClientModal({
   );
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none">
+    <>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none">
       <div className="w-[450px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
         <h3 className="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider border-b border-zinc-100 dark:border-zinc-800 pb-2">
           Registrar Cliente
@@ -179,5 +197,13 @@ export function AddClientModal({
         </form>
       </div>
     </div>
-  );
+    <AlertModal
+      isOpen={alertConfig.isOpen}
+      title={alertConfig.title}
+      message={alertConfig.message}
+      type={alertConfig.type}
+      onClose={() => setAlertConfig((prev) => ({ ...prev, isOpen: false }))}
+    />
+  </>
+);
 }

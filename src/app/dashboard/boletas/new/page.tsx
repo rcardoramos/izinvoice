@@ -19,6 +19,7 @@ import { SearchInput } from '@/components/shared/SearchInput';
 import { AddClientModal } from '@/app/dashboard/invoices/new/components/AddClientModal';
 import { EmissionResultModal } from '@/app/dashboard/invoices/new/components/EmissionResultModal';
 import { DOCUMENT_TYPES, getDocTypeConfigByCode } from '@/utils/document-types';
+import { AlertModal } from '@/components/shared/AlertModal';
 
 export default function NewBoletaPage() {
   const router = useRouter();
@@ -37,6 +38,23 @@ export default function NewBoletaPage() {
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [isSimpleBoleta, setIsSimpleBoleta] = useState(false);
+
+  // Custom Alert Modal State
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'warning',
+  });
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'warning') => {
+    setAlertConfig({ isOpen: true, title, message, type });
+  };
 
   // Product Catalog State — loaded from real API
   const [productsList, setProductsList] = useState<any[]>([]);
@@ -125,7 +143,7 @@ export default function NewBoletaPage() {
     if (docType === '01') {
       const isRuc = /^\d{11}$/.test(clientDoc);
       if (!isRuc) {
-        alert('Para Facturas, debe ingresar un número de RUC válido de exactamente 11 dígitos numéricos.');
+        showAlert('RUC Inválido', 'Para Facturas, debe ingresar un número de RUC válido de exactamente 11 dígitos numéricos.', 'error');
         return;
       }
     } else {
@@ -134,18 +152,18 @@ export default function NewBoletaPage() {
       if (length === 8) {
         const isDni = /^\d{8}$/.test(clientDoc);
         if (!isDni) {
-          alert('El número de DNI debe contener exactamente 8 dígitos numéricos.');
+          showAlert('DNI Inválido', 'El número de DNI debe contener exactamente 8 dígitos numéricos.', 'error');
           return;
         }
       } else if (length === 11) {
         const isRuc = /^\d{11}$/.test(clientDoc);
         if (!isRuc) {
-          alert('El número de RUC debe contener exactamente 11 dígitos numéricos.');
+          showAlert('RUC Inválido', 'El número de RUC debe contener exactamente 11 dígitos numéricos.', 'error');
           return;
         }
       } else {
         // Fallback checks for other document types (CE, Passport, etc.)
-        alert('El documento debe ser un DNI de exactamente 8 dígitos o un RUC de exactamente 11 dígitos.');
+        showAlert('Documento Inválido', 'El documento debe ser un DNI de exactamente 8 dígitos o un RUC de exactamente 11 dígitos.', 'warning');
         return;
       }
     }
@@ -191,7 +209,7 @@ export default function NewBoletaPage() {
     if (!prod) return;
 
     if (lines.some((l) => l.id === prod.id)) {
-      alert('El producto ya se encuentra en las líneas del comprobante.');
+      showAlert('Producto Duplicado', 'El producto seleccionado ya se encuentra en las líneas del comprobante.', 'warning');
       return;
     }
 
@@ -234,7 +252,7 @@ export default function NewBoletaPage() {
   // Submit boleta to real API
   const handleEmitBoleta = async () => {
     if (!selectedClient) {
-      alert('Debe seleccionar o registrar un cliente antes de emitir.');
+      showAlert('Cliente Requerido', 'Debe seleccionar o registrar un cliente antes de emitir el comprobante.', 'warning');
       return;
     }
 
@@ -244,37 +262,37 @@ export default function NewBoletaPage() {
     if (docType === '01') {
       // Factura validation rules
       if (clientType !== '6') {
-        alert('Las Facturas requieren obligatoriamente un cliente con RUC.');
+        showAlert('Cliente Inválido', 'Las Facturas requieren obligatoriamente un cliente con RUC.', 'error');
         return;
       }
       if (!/^\d{11}$/.test(clientNumber)) {
-        alert('El número de RUC de la Factura debe contener exactamente 11 dígitos numéricos.');
+        showAlert('RUC Inválido', 'El número de RUC de la Factura debe contener exactamente 11 dígitos numéricos.', 'error');
         return;
       }
     } else {
       // Boleta validation rules
       if (isSimpleBoleta) {
         if (clientType !== '0' || clientNumber !== '-') {
-          alert('Error de estructura: Boleta simple debe registrarse sin documento (tipoDoc: 0, numDoc: -).');
+          showAlert('Error de Estructura', 'La boleta simple debe registrarse sin documento (tipoDoc: 0, numDoc: -).', 'error');
           return;
         }
       } else {
         // Boleta identificada validation rules
         if (clientType === '1') {
           if (!/^\d{8}$/.test(clientNumber)) {
-            alert('El número de DNI del cliente debe contener exactamente 8 dígitos numéricos.');
+            showAlert('DNI Inválido', 'El número de DNI del cliente debe contener exactamente 8 dígitos numéricos.', 'error');
             return;
           }
         } else if (clientType === '6') {
           if (!/^\d{11}$/.test(clientNumber)) {
-            alert('El número de RUC del cliente debe contener exactamente 11 dígitos numéricos.');
+            showAlert('RUC Inválido', 'El número de RUC del cliente debe contener exactamente 11 dígitos numéricos.', 'error');
             return;
           }
         } else {
           // Fallback checks for other configurations (CE, Passport, etc.)
           const config = getDocTypeConfigByCode(clientType);
           if (config && !config.pattern.test(clientNumber)) {
-            alert(config.errorMessage);
+            showAlert('Formato Inválido', config.errorMessage, 'error');
             return;
           }
         }
@@ -282,7 +300,7 @@ export default function NewBoletaPage() {
     }
 
     if (lines.length === 0) {
-      alert('Debe agregar al menos un producto a las líneas del comprobante.');
+      showAlert('Detalle Requerido', 'Debe agregar al menos un producto a las líneas del comprobante.', 'warning');
       return;
     }
 
@@ -705,6 +723,14 @@ export default function NewBoletaPage() {
         igvTotal={igvTotal}
         total={total}
         company={company}
+      />
+
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig((prev) => ({ ...prev, isOpen: false }))}
       />
     </div>
   );
