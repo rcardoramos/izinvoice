@@ -54,7 +54,7 @@ export function RevenueChart({ data, type = 'area' }: RevenueChartProps) {
 
   return (
     <div className="w-full h-64 select-none relative min-w-0">
-      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+      <ResponsiveContainer width="100%" height={256} minWidth={0}>
         {type === 'area' ? (
           <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>

@@ -15,7 +15,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, user, company, setSession, accessToken } = useAuthStore();
+  const { isAuthenticated, user, company, setSession, accessToken, clearSession } = useAuthStore();
   const { theme } = useAppStore();
   const [loading, setLoading] = useState(true);
 
@@ -45,8 +45,15 @@ export default function DashboardLayout({
           // Only update if something actually changed
           setSession(accessToken!, normalizedUser, me.company ?? company!);
         }
-      } catch {
-        // Silently ignore — keep existing cached session
+      } catch (err: any) {
+        // Clear session and redirect to landing page on 401 Unauthorized
+        if (err?.statusCode === 401 || err?.message === 'Unauthorized') {
+          console.warn('Session expired or unauthorized. Logging out.');
+          clearSession();
+          router.push('/');
+          return;
+        }
+        // Silently ignore other errors (e.g. temporary network downtime) — keep existing cached session
       }
 
       // Super Admin routing restrictions (no tenant company context)

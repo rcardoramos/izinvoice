@@ -20,7 +20,8 @@ import {
   Printer, 
   UserPlus, 
   PackagePlus,
-  RefreshCw
+  RefreshCw,
+  X
 } from 'lucide-react';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { AddClientModal } from './components/AddClientModal';
@@ -113,6 +114,7 @@ export default function NewInvoicePage() {
       const results = await BillingApiClient.findCustomerByDoc(clientDoc);
       if (results.length > 0) {
         setSelectedClient(results[0]);
+        setClientDoc(''); // Clear input once selected
       } else {
         setSelectedClient(null);
       }
@@ -460,7 +462,19 @@ export default function NewInvoicePage() {
 
               {/* Autofilled client details card */}
               {selectedClient ? (
-                <div className="p-3 bg-blue-500/[0.02] border border-blue-500/10 rounded-xl space-y-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+                <div className="p-3 bg-blue-500/[0.02] border border-blue-500/10 rounded-xl space-y-1.5 text-xs text-zinc-700 dark:text-zinc-300 relative pr-8">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedClient(null);
+                      setClientDoc('');
+                      setSearchPerformed(false);
+                    }}
+                    className="absolute top-2.5 right-2.5 text-zinc-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors p-1 cursor-pointer rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    title="Desvincular cliente"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                   <p className="font-bold text-zinc-900 dark:text-white">
                     {selectedClient.legalName ?? selectedClient.razon_social}
                   </p>
@@ -468,7 +482,7 @@ export default function NewInvoicePage() {
                     {(selectedClient.docType ?? selectedClient.doc_type) === '6' ? 'RUC' : 'DNI'}: {selectedClient.docNumber ?? selectedClient.doc_number}
                   </p>
                   {(selectedClient.address ?? selectedClient.direccion) && (
-                    <p className="text-[10px] text-zinc-400 truncate">{selectedClient.address ?? selectedClient.direccion}</p>
+                    <p className="text-[10px] text-zinc-400 truncate pr-4">{selectedClient.address ?? selectedClient.direccion}</p>
                   )}
                   <div className="flex items-center gap-1.5 text-[10px] text-emerald-500 font-medium">
                     <Check className="w-3.5 h-3.5" /> Autocompletado

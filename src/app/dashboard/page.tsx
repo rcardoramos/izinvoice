@@ -65,7 +65,9 @@ export default function DashboardPage() {
               return [];
             }),
             BillingApiClient.listAuditLogs().catch(err => {
-              console.warn('Failed to load audit logs', err);
+              if (err?.statusCode !== 404) {
+                console.warn('Failed to load audit logs', err);
+              }
               return [];
             }),
             BillingApiClient.listDocuments().catch(err => {
@@ -129,7 +131,9 @@ export default function DashboardPage() {
               return [];
             }),
             BillingApiClient.listAuditLogs().catch(err => {
-              console.warn('Failed to load audit logs', err);
+              if (err?.statusCode !== 404) {
+                console.warn('Failed to load audit logs', err);
+              }
               return [];
             }),
           ]);
