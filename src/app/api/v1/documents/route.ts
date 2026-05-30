@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const docType = searchParams.get('docType');
     const status = searchParams.get('status');
     const dailySummaryId = searchParams.get('dailySummaryId');
-    const search = searchParams.get('search');
+    const search = searchParams.get('q') || searchParams.get('search');
 
     let docs = FileDb.getTable('documents');
     

@@ -55,6 +55,20 @@ export default function InvoicesHistoryPage() {
   });
   
   const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Debounce search input to prevent rapid API requests on every keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFilters((prev) => {
+        if (prev.search === searchQuery) return prev;
+        return { ...prev, search: searchQuery };
+      });
+      setPage(1);
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
   const [limit] = useState(8); // match DataTable itemsPerPage default
   const [meta, setMeta] = useState({
     total: 0,
@@ -154,6 +168,7 @@ export default function InvoicesHistoryPage() {
   };
 
   const handleResetFilters = () => {
+    setSearchQuery('');
     setFilters({
       docType: '',
       status: '',
@@ -589,8 +604,8 @@ export default function InvoicesHistoryPage() {
             totalPages={meta.totalPages}
             currentPage={page}
             onPageChange={(p) => setPage(p)}
-            searchValue={filters.search}
-            onSearchChange={(q) => handleFilterChange('search', q)}
+            searchValue={searchQuery}
+            onSearchChange={(q) => setSearchQuery(q)}
           />
         </div>
       </div>

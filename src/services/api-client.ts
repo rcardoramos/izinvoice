@@ -194,7 +194,7 @@ export class BillingApiClient {
     if (filters.docType) params.append('docType', filters.docType);
     if (filters.status) params.append('status', filters.status);
     if (filters.dailySummaryId) params.append('dailySummaryId', filters.dailySummaryId);
-    if (filters.search) params.append('search', filters.search);
+    if (filters.search) params.append('q', filters.search);
     if (filters.page) params.append('page', String(filters.page));
     if (filters.limit) params.append('limit', String(filters.limit));
     if (filters.serie) params.append('serie', filters.serie);
