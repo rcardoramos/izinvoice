@@ -371,7 +371,7 @@ export default function NewInvoicePage() {
         subtitle="Emisión autorizada de Facturas, Boletas y Notas SUNAT"
       />
 
-      <div className="p-8 space-y-6 max-w-5xl w-full mx-auto pb-16">
+      <div className="p-8 space-y-6 max-w-7xl w-full mx-auto pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Setup / Document configurations panel */}
