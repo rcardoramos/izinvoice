@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { BillingApiClient } from '@/services/api-client';
+import { DOCUMENT_TYPES, getDocTypeConfigByCode } from '@/utils/document-types';
 
 interface AddClientModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface AddClientModalProps {
   onSubmitSuccess: (createdClient: any) => void;
   initialDocNumber?: string;
   initialDocType?: string;
+  allowedDocTypes?: string[]; // e.g., ['6'] for Factura
 }
 
 export function AddClientModal({
@@ -17,6 +19,7 @@ export function AddClientModal({
   onSubmitSuccess,
   initialDocNumber = '',
   initialDocType = '6',
+  allowedDocTypes,
 }: AddClientModalProps) {
   const [formData, setFormData] = useState({
     docType: initialDocType,
@@ -45,6 +48,16 @@ export function AddClientModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Enforce document type validations based on centralized configuration
+    const config = getDocTypeConfigByCode(formData.docType);
+    if (config) {
+      if (!config.pattern.test(formData.docNumber)) {
+        alert(config.errorMessage);
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const apiPayload: any = {
@@ -66,6 +79,10 @@ export function AddClientModal({
     }
   };
 
+  const selectableTypes = Object.values(DOCUMENT_TYPES).filter((doc) =>
+    !allowedDocTypes || allowedDocTypes.includes(doc.code)
+  );
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none">
       <div className="w-[450px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -81,8 +98,11 @@ export function AddClientModal({
                 onChange={(e) => setFormData({ ...formData, docType: e.target.value })}
                 className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2 text-zinc-900 dark:text-zinc-150"
               >
-                <option value="1">DNI (1)</option>
-                <option value="6">RUC (6)</option>
+                {selectableTypes.map((doc) => (
+                  <option key={doc.code} value={doc.code}>
+                    {doc.label} ({doc.code})
+                  </option>
+                ))}
               </select>
             </div>
             <div>

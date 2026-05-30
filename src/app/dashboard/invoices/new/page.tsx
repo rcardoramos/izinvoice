@@ -26,6 +26,7 @@ import {
 import { SearchInput } from '@/components/shared/SearchInput';
 import { AddClientModal } from './components/AddClientModal';
 import { EmissionResultModal } from './components/EmissionResultModal';
+import { DOCUMENT_TYPES, getDocTypeConfigByCode } from '@/utils/document-types';
 
 export default function NewInvoicePage() {
   const router = useRouter();
@@ -44,6 +45,7 @@ export default function NewInvoicePage() {
   const [clientSearching, setClientSearching] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [isSimpleBoleta, setIsSimpleBoleta] = useState(false);
 
   // Product Catalog State
   const [productsList, setProductsList] = useState<any[]>([]);
@@ -98,16 +100,58 @@ export default function NewInvoicePage() {
   // Update default series prefix when docType changes
   useEffect(() => {
     setSerie(docType === '01' ? 'F001' : 'B001');
-    // For Boletas (03), clear RUC check defaults
-    if (docType === '03' && (selectedClient?.docType ?? selectedClient?.doc_type) === '6') {
-      setSelectedClient(null);
-      setClientDoc('');
+    
+    // If switching to Factura, disable simple boleta and clear non-RUC clients
+    if (docType === '01') {
+      setIsSimpleBoleta(false);
+      const tipo = selectedClient?.docType ?? selectedClient?.doc_type;
+      if (tipo !== '6') {
+        setSelectedClient(null);
+        setClientDoc('');
+        setSearchPerformed(false);
+      }
+    } else {
+      // For Boletas (03), clear RUC check defaults if they don't match boleta default selection
+      if ((selectedClient?.docType ?? selectedClient?.doc_type) === '6') {
+        setSelectedClient(null);
+        setClientDoc('');
+        setSearchPerformed(false);
+      }
     }
   }, [docType]);
 
   // Client DNI/RUC Autocomplete Search
   const searchClient = async () => {
     if (!clientDoc) return;
+
+    // Execute real-time format validation before searching
+    if (docType === '01') {
+      const isRuc = /^\d{11}$/.test(clientDoc);
+      if (!isRuc) {
+        alert('Para Facturas, debe ingresar un número de RUC válido de exactamente 11 dígitos numéricos.');
+        return;
+      }
+    } else {
+      // Boleta con identificación
+      const length = clientDoc.length;
+      if (length === 8) {
+        const isDni = /^\d{8}$/.test(clientDoc);
+        if (!isDni) {
+          alert('El número de DNI debe contener exactamente 8 dígitos numéricos.');
+          return;
+        }
+      } else if (length === 11) {
+        const isRuc = /^\d{11}$/.test(clientDoc);
+        if (!isRuc) {
+          alert('El número de RUC debe contener exactamente 11 dígitos numéricos.');
+          return;
+        }
+      } else {
+        alert('El documento debe ser un DNI de exactamente 8 dígitos o un RUC de exactamente 11 dígitos.');
+        return;
+      }
+    }
+
     setClientSearching(true);
     setSearchPerformed(true);
     try {
@@ -197,9 +241,47 @@ export default function NewInvoicePage() {
       return;
     }
 
-    if (docType === '01' && (selectedClient.docType ?? selectedClient.doc_type) !== '6') {
-      alert('Las Facturas requieren un cliente con RUC válido.');
-      return;
+    const clientType = selectedClient.docType ?? selectedClient.doc_type;
+    const clientNumber = selectedClient.docNumber ?? selectedClient.doc_number;
+
+    if (docType === '01') {
+      // Factura validation rules
+      if (clientType !== '6') {
+        alert('Las Facturas requieren obligatoriamente un cliente con RUC.');
+        return;
+      }
+      if (!/^\d{11}$/.test(clientNumber)) {
+        alert('El número de RUC de la Factura debe contener exactamente 11 dígitos numéricos.');
+        return;
+      }
+    } else {
+      // Boleta validation rules
+      if (isSimpleBoleta) {
+        if (clientType !== '0' || clientNumber !== '-') {
+          alert('Error de estructura: Boleta simple debe registrarse sin documento (tipoDoc: 0, numDoc: -).');
+          return;
+        }
+      } else {
+        // Boleta identificada validation rules
+        if (clientType === '1') {
+          if (!/^\d{8}$/.test(clientNumber)) {
+            alert('El número de DNI del cliente debe contener exactamente 8 dígitos numéricos.');
+            return;
+          }
+        } else if (clientType === '6') {
+          if (!/^\d{11}$/.test(clientNumber)) {
+            alert('El número de RUC del cliente debe contener exactamente 11 dígitos numéricos.');
+            return;
+          }
+        } else {
+          // Fallback checks for other configurations (CE, Passport, etc.)
+          const config = getDocTypeConfigByCode(clientType);
+          if (config && !config.pattern.test(clientNumber)) {
+            alert(config.errorMessage);
+            return;
+          }
+        }
+      }
     }
 
     if (lines.length === 0) {
@@ -427,65 +509,121 @@ export default function NewInvoicePage() {
           {/* Client Search and Totals Panel */}
           <div className="space-y-6">
             
-            {/* Client registry section */}
-            <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4">
+                      <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-bold text-zinc-900 dark:text-white uppercase tracking-wider">Cliente Adquiriente</h3>
-                <button
-                  onClick={() => setShowAddClientModal(true)}
-                  className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-0.5 cursor-pointer"
-                >
-                  <UserPlus className="w-3.5 h-3.5" /> Registrar
-                </button>
+                {!isSimpleBoleta && (
+                  <button
+                    onClick={() => setShowAddClientModal(true)}
+                    className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-0.5 cursor-pointer"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" /> Registrar
+                  </button>
+                )}
               </div>
 
-              {/* Client doc lookups search */}
-              <div className="flex gap-2">
-                <SearchInput
-                  value={clientDoc}
-                  onChange={(e) => {
-                    setClientDoc(e.target.value);
-                    setSearchPerformed(false);
-                    setSelectedClient(null);
-                  }}
-                  onKeyDown={(e) => e.key === 'Enter' && searchClient()}
-                  placeholder={docType === '01' ? 'Ingrese RUC...' : 'RUC o DNI...'}
-                />
-                <button
-                  onClick={searchClient}
-                  disabled={clientSearching || !clientDoc}
-                  className="px-4 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl text-xs font-semibold hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center shrink-0"
-                >
-                  {clientSearching ? 'Buscando...' : 'Buscar'}
-                </button>
-              </div>
-
-              {/* Autofilled client details card */}
-              {selectedClient ? (
-                <div className="p-3 bg-blue-500/[0.02] border border-blue-500/10 rounded-xl space-y-1.5 text-xs text-zinc-700 dark:text-zinc-300 relative pr-8">
+              {/* Mode Selector: Identificado vs Consumidor Final (Only for Boleta 03) */}
+              {docType === '03' && (
+                <div className="grid grid-cols-2 gap-2 p-1 bg-zinc-50 dark:bg-zinc-950/60 rounded-xl border border-zinc-150 dark:border-zinc-800/80">
                   <button
                     type="button"
                     onClick={() => {
+                      setIsSimpleBoleta(false);
                       setSelectedClient(null);
                       setClientDoc('');
                       setSearchPerformed(false);
                     }}
-                    className="absolute top-2.5 right-2.5 text-zinc-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors p-1 cursor-pointer rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                    title="Desvincular cliente"
+                    className={`py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      !isSimpleBoleta
+                        ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200/50 dark:border-zinc-700/55'
+                        : 'text-zinc-400 hover:text-zinc-500'
+                    }`}
                   >
-                    <X className="w-3.5 h-3.5" />
+                    Identificado
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSimpleBoleta(true);
+                      setSelectedClient({
+                        docType: '0',
+                        docNumber: '-',
+                        legalName: 'VARIOS',
+                        razon_social: 'VARIOS',
+                        doc_type: '0',
+                        doc_number: '-',
+                      });
+                      setClientDoc('');
+                      setSearchPerformed(false);
+                    }}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      isSimpleBoleta
+                        ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200/50 dark:border-zinc-700/55'
+                        : 'text-zinc-400 hover:text-zinc-500'
+                    }`}
+                  >
+                    Consumidor Final
+                  </button>
+                </div>
+              )}
+
+              {/* Client doc search - hidden when Boleta Simple is active */}
+              {!isSimpleBoleta && (
+                <div className="flex gap-2">
+                  <SearchInput
+                    value={clientDoc}
+                    onChange={(e) => {
+                      setClientDoc(e.target.value);
+                      setSearchPerformed(false);
+                      setSelectedClient(null);
+                    }}
+                    onKeyDown={(e) => e.key === 'Enter' && searchClient()}
+                    placeholder={docType === '01' ? 'Ingrese RUC...' : 'RUC o DNI...'}
+                  />
+                  <button
+                    onClick={searchClient}
+                    disabled={clientSearching || !clientDoc}
+                    className="px-4 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 rounded-xl text-xs font-semibold hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors disabled:opacity-50 cursor-pointer flex items-center justify-center shrink-0"
+                  >
+                    {clientSearching ? 'Buscando...' : 'Buscar'}
+                  </button>
+                </div>
+              )}
+
+              {/* Autofilled client details card */}
+              {selectedClient ? (
+                <div className="p-3 bg-blue-500/[0.02] border border-blue-500/10 rounded-xl space-y-1.5 text-xs text-zinc-700 dark:text-zinc-300 relative pr-8">
+                  {!isSimpleBoleta && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedClient(null);
+                        setClientDoc('');
+                        setSearchPerformed(false);
+                      }}
+                      className="absolute top-2.5 right-2.5 text-zinc-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors p-1 cursor-pointer rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      title="Desvincular client"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                   <p className="font-bold text-zinc-900 dark:text-white">
                     {selectedClient.legalName ?? selectedClient.razon_social}
                   </p>
                   <p className="font-mono text-[10px] text-zinc-400">
-                    {(selectedClient.docType ?? selectedClient.doc_type) === '6' ? 'RUC' : 'DNI'}: {selectedClient.docNumber ?? selectedClient.doc_number}
+                    {(selectedClient.docType ?? selectedClient.doc_type) === '6'
+                      ? 'RUC'
+                      : (selectedClient.docType ?? selectedClient.doc_type) === '1'
+                      ? 'DNI'
+                      : (selectedClient.docType ?? selectedClient.doc_type) === '0'
+                      ? 'Sin Documento'
+                      : getDocTypeConfigByCode(selectedClient.docType ?? selectedClient.doc_type)?.label ?? 'Doc'}: {selectedClient.docNumber ?? selectedClient.doc_number}
                   </p>
                   {(selectedClient.address ?? selectedClient.direccion) && (
                     <p className="text-[10px] text-zinc-400 truncate pr-4">{selectedClient.address ?? selectedClient.direccion}</p>
                   )}
                   <div className="flex items-center gap-1.5 text-[10px] text-emerald-500 font-medium">
-                    <Check className="w-3.5 h-3.5" /> Autocompletado
+                    <Check className="w-3.5 h-3.5" /> {isSimpleBoleta ? 'Cliente por Defecto (Boleta Simple)' : 'Autocompletado'}
                   </div>
                 </div>
               ) : clientDoc && searchPerformed && !clientSearching ? (
@@ -500,7 +638,7 @@ export default function NewInvoicePage() {
                 </div>
               ) : (
                 <div className="p-4 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl text-center text-xs text-zinc-400">
-                  Ingrese RUC/DNI para vincular cliente.
+                  {docType === '01' ? 'Ingrese RUC para vincular cliente.' : 'Ingrese RUC/DNI para vincular cliente.'}
                 </div>
               )}
             </div>
@@ -542,7 +680,8 @@ export default function NewInvoicePage() {
         onClose={() => setShowAddClientModal(false)}
         onSubmitSuccess={handleClientRegistered}
         initialDocNumber={clientDoc}
-        initialDocType={clientDoc.length === 11 ? '6' : '1'}
+        initialDocType={docType === '01' ? '6' : clientDoc.length === 11 ? '6' : '1'}
+        allowedDocTypes={docType === '01' ? ['6'] : undefined}
       />
 
       <EmissionResultModal
