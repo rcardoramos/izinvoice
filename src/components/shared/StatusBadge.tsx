@@ -46,6 +46,12 @@ export function StatusBadge({ status }: StatusBadgeProps) {
       textClass = 'text-zinc-500';
       icon = <Ban className="w-3.5 h-3.5" />;
       break;
+    case 'cancelled':
+      bgClass = 'bg-red-500/10 border-red-500/20';
+      textClass = 'text-red-500';
+      icon = <Ban className="w-3.5 h-3.5" />;
+      label = 'Cancelado';
+      break;
     case 'observed':
       bgClass = 'bg-yellow-500/10 border-yellow-500/20';
       textClass = 'text-yellow-500';

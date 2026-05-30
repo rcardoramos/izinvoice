@@ -15,7 +15,8 @@ export type DocumentStatus =
   | 'rejected'
   | 'failed'
   | 'observed'
-  | 'voided';
+  | 'voided'
+  | 'cancelled';
 
 export type DailySummaryStatus =
   | 'draft'
@@ -41,6 +42,7 @@ export const STATUS_LABELS: Record<DocumentStatus, string> = {
   failed: 'Fallido',
   observed: 'Observado',
   voided: 'Anulado',
+  cancelled: 'Cancelado',
 };
 
 export const SUMMARY_STATUS_LABELS: Record<DailySummaryStatus, string> = {
