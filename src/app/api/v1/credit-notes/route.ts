@@ -89,6 +89,12 @@ export async function POST(req: NextRequest) {
           serie: affectedDoc.serie,
           correlativo: affectedDoc.correlativo,
         },
+        billingReference: {
+          id: `${affectedDoc.serie}-${affectedDoc.correlativo}`,
+          documentTypeCode: affectedDoc.doc_type,
+          serie: affectedDoc.serie,
+          correlativo: affectedDoc.correlativo,
+        },
         motivoCodigo: motivoCodigo || '01', // Catálogo 09: Anulación de la operación
         motivoDescripcion: motivoDescripcion || 'ANULACION DE LA VENTA',
         totals: {

@@ -41,6 +41,18 @@ const WhatsAppIcon = ({ className = "w-3.5 h-3.5" }: { className?: string }) => 
   </svg>
 );
 
+const CATALOG_09_REASONS = [
+  { value: '01', label: 'Anulación de la operación', isTotal: true },
+  { value: '02', label: 'Anulación por error en el RUC', isTotal: true },
+  { value: '03', label: 'Corrección por error en la descripción', isTotal: false },
+  { value: '04', label: 'Descuento global', isTotal: false },
+  { value: '06', label: 'Devolución total', isTotal: true },
+  { value: '07', label: 'Devolución parcial', isTotal: false },
+  { value: '08', label: 'Bonificación', isTotal: false },
+  { value: '09', label: 'Disminución en el valor', isTotal: false },
+  { value: '10', label: 'Otros conceptos', isTotal: false },
+];
+
 export default function InvoicesHistoryPage() {
   const { company } = useAuthStore();
   const [documents, setDocuments] = useState<any[]>([]);
@@ -90,9 +102,25 @@ export default function InvoicesHistoryPage() {
   const [noteForm, setNoteForm] = useState({
     serie: '',
     motivoCodigo: '01',
-    motivoDescripcion: 'ANULACION DE LA VENTA',
+    motivoDescripcion: 'ANULACIÓN DE LA OPERACIÓN',
   });
+  const [creditAmount, setCreditAmount] = useState<string>('');
   const [noteEmitting, setNoteEmitting] = useState(false);
+
+  const handleReasonChange = (code: string) => {
+    const reason = CATALOG_09_REASONS.find(r => r.value === code);
+    if (!reason) return;
+    
+    setNoteForm(prev => ({
+      ...prev,
+      motivoCodigo: code,
+      motivoDescripcion: reason.label.toUpperCase()
+    }));
+    
+    if (reason.isTotal && selectedDoc) {
+      setCreditAmount(parseFloat(selectedDoc.total || '0').toFixed(2));
+    }
+  };
 
   // Cancel boleta modal state
   const [cancelModal, setCancelModal] = useState(false);
@@ -203,10 +231,12 @@ export default function InvoicesHistoryPage() {
         
         // Preset default NC series based on affected document type
         const prefix = detail.docType === '01' ? 'FC01' : 'BC01';
-        setNoteForm((prev) => ({
-          ...prev,
+        setNoteForm({
           serie: prefix,
-        }));
+          motivoCodigo: '01',
+          motivoDescripcion: 'ANULACIÓN DE LA OPERACIÓN',
+        });
+        setCreditAmount(parseFloat(detail.total || '0').toFixed(2));
       } catch (err) {
         console.error(err);
       } finally {
@@ -219,15 +249,40 @@ export default function InvoicesHistoryPage() {
   // Action: emit credit note
   const handleEmitCreditNote = async () => {
     if (!selectedDoc) return;
+    
+    const isTotalReason = CATALOG_09_REASONS.find(r => r.value === noteForm.motivoCodigo)?.isTotal ?? false;
+    const amountVal = isTotalReason ? parseFloat(selectedDoc.total || '0') : parseFloat(creditAmount);
+    
+    if (isNaN(amountVal) || amountVal <= 0) {
+      alert('Por favor ingrese un importe válido mayor a 0.');
+      return;
+    }
+    const maxVal = parseFloat(selectedDoc.total || '0');
+    if (amountVal > maxVal) {
+      alert('El importe a creditar no puede ser mayor al total del documento afectado.');
+      return;
+    }
+
     try {
       setNoteEmitting(true);
       
+      const IGV_FACTOR = 1.18;
+      // Convert amountVal (with IGV) to precioUnitario (without IGV)
+      const precioUnitario = Math.round((amountVal / IGV_FACTOR) * 100) / 100;
+
       const payload = {
         serie: noteForm.serie,
-        moneda: selectedDoc.payload.moneda || 'PEN',
+        moneda: selectedDoc.payload?.moneda || selectedDoc.moneda || 'PEN',
         documentoAfectadoId: selectedDoc.id,
-        cliente: selectedDoc.payload.cliente,
-        items: selectedDoc.payload.items,
+        cliente: selectedDoc.payload?.cliente || selectedDoc.cliente,
+        items: [
+          {
+            codigo: 'AJUSTE',
+            descripcion: noteForm.motivoDescripcion,
+            cantidad: 1,
+            precioUnitario,
+          },
+        ],
         motivoCodigo: noteForm.motivoCodigo,
         motivoDescripcion: noteForm.motivoDescripcion,
       };
@@ -408,6 +463,18 @@ export default function InvoicesHistoryPage() {
         `Estimado cliente,\n\nLe hacemos llegar su comprobante electrónico ${selectedDoc?.serie}-${selectedDoc?.correlativo} por un monto de S/ ${parseFloat(selectedDoc?.total || '0').toFixed(2)}.\n\nAtentamente,\n${company?.businessName || ''}`
       )}`
     : null;
+
+  // Calculate breakdown
+  const totalDoc = parseFloat(selectedDoc?.total || '0');
+  const isTotalReason = CATALOG_09_REASONS.find(r => r.value === noteForm.motivoCodigo)?.isTotal ?? false;
+  const amountNum = parseFloat(creditAmount) || 0;
+  
+  const creditAmountWithIgv = isTotalReason ? totalDoc : amountNum;
+  const IGV_FACTOR = 1.18;
+  const totalVal = creditAmountWithIgv;
+  const baseVal = Math.round((totalVal / IGV_FACTOR) * 100) / 100;
+  const igvVal = Math.round((totalVal - baseVal) * 100) / 100;
+  const isAmountInvalid = !isTotalReason && (isNaN(amountNum) || amountNum <= 0 || amountNum > totalDoc);
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -805,54 +872,103 @@ export default function InvoicesHistoryPage() {
       {/* Credit Note prompt Dialog */}
       {showNoteDialog && selectedDoc && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none">
-          <div className="w-[450px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden p-6 shadow-2xl space-y-4">
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider border-b border-zinc-100 dark:border-zinc-800 pb-2">
+          <div className="w-[500px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden p-6 shadow-2xl space-y-4">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider border-b border-zinc-150 dark:border-zinc-800/80 pb-2.5">
               Emitir Nota de Crédito
             </h3>
-            <p className="text-xs text-zinc-400 leading-snug">
-              Se emitirá una Nota de Crédito electrónica afectando el documento original <b>{selectedDoc.serie}-{selectedDoc.correlativo}</b>.
-            </p>
+            
+            {/* Info Box */}
+            <div className="bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 p-3 rounded-xl space-y-1 text-[11px] text-zinc-650 dark:text-zinc-400">
+              <div className="flex justify-between">
+                <span>Documento afectado:</span>
+                <span className="font-bold text-zinc-900 dark:text-white font-mono">{selectedDoc.serie}-{String(selectedDoc.correlativo).padStart(8, '0')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Total documento:</span>
+                <span className="font-bold text-zinc-900 dark:text-white font-mono">{selectedDoc.payload?.moneda || selectedDoc.moneda || 'PEN'} {parseFloat(selectedDoc.total || '0').toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between truncate">
+                <span>Cliente:</span>
+                <span className="font-semibold text-zinc-900 dark:text-white max-w-[280px] truncate">
+                  {selectedDoc.payload?.cliente?.razonSocial || selectedDoc.cliente?.razonSocial || 'VARIOS'}
+                </span>
+              </div>
+            </div>
 
             <div className="space-y-4 text-xs">
               <div>
-                <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Serie Nota</label>
-                <select
+                <label className="block text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-500 mb-1">Serie de la Nota</label>
+                <CustomSelect
                   value={noteForm.serie}
-                  onChange={(e) => setNoteForm({ ...noteForm, serie: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                >
-                  {selectedDoc.docType === '01' ? (
-                    <option value="FC01">FC01 (Nota Crédito Factura)</option>
-                  ) : (
-                    <option value="BC01">BC01 (Nota Crédito Boleta)</option>
-                  )}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Motivo de Emisión</label>
-                <select
-                  value={noteForm.motivoCodigo}
-                  onChange={(e) => setNoteForm({ ...noteForm, motivoCodigo: e.target.value })}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
-                >
-                  <option value="01">Anulación de la operación</option>
-                  <option value="02">Anulación por error en el RUC</option>
-                  <option value="06">Devolución total</option>
-                  <option value="07">Devolución parcial</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1">Sustento / Descripción</label>
-                <input
-                  type="text"
-                  value={noteForm.motivoDescripcion}
-                  onChange={(e) => setNoteForm({ ...noteForm, motivoDescripcion: e.target.value.toUpperCase() })}
-                  required
-                  placeholder="ANULACION DE OPERACION POR ERROR"
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-2"
+                  onChange={(val) => setNoteForm({ ...noteForm, serie: val })}
+                  options={selectedDoc.docType === '01' ? [
+                    { value: 'FC01', label: 'FC01 (Nota de Crédito para Factura)' }
+                  ] : [
+                    { value: 'BC01', label: 'BC01 (Nota de Crédito para Boleta)' }
+                  ]}
                 />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-500 mb-1">Motivo de Emisión (SUNAT)</label>
+                <CustomSelect
+                  value={noteForm.motivoCodigo}
+                  onChange={handleReasonChange}
+                  options={CATALOG_09_REASONS}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-500 mb-1">Sustento / Descripción</label>
+                  <input
+                    type="text"
+                    value={noteForm.motivoDescripcion}
+                    onChange={(e) => setNoteForm({ ...noteForm, motivoDescripcion: e.target.value.toUpperCase() })}
+                    required
+                    placeholder="Sustento de emisión..."
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-2.5 text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-500 mb-1">
+                    Importe a Acreditar ({selectedDoc.payload?.moneda || selectedDoc.moneda || 'PEN'})
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    disabled={isTotalReason}
+                    value={isTotalReason ? totalDoc.toFixed(2) : creditAmount}
+                    onChange={(e) => setCreditAmount(e.target.value)}
+                    placeholder="0.00"
+                    className={`w-full bg-zinc-50 dark:bg-zinc-950 border rounded-xl p-2.5 text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono ${
+                      isTotalReason ? 'opacity-60 cursor-not-allowed border-zinc-200 dark:border-zinc-800' : 
+                      isAmountInvalid ? 'border-rose-500 focus:ring-rose-500' : 'border-zinc-200 dark:border-zinc-800'
+                    }`}
+                  />
+                  {isAmountInvalid && (
+                    <span className="text-[10px] text-rose-500 mt-1 block">
+                      Debe ser mayor a 0 y menor o igual a {totalDoc.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Live Calculations Box */}
+              <div className="bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 p-3.5 rounded-xl space-y-1.5 font-mono text-[11px] text-zinc-650 dark:text-zinc-400">
+                <div className="flex justify-between">
+                  <span>Base Imponible (sin IGV):</span>
+                  <span className="font-semibold text-zinc-900 dark:text-white">{selectedDoc.payload?.moneda || selectedDoc.moneda || 'PEN'} {baseVal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>IGV (18%):</span>
+                  <span className="font-semibold text-zinc-900 dark:text-white">{selectedDoc.payload?.moneda || selectedDoc.moneda || 'PEN'} {igvVal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between border-t border-zinc-200 dark:border-zinc-800 pt-1.5 text-xs font-bold text-zinc-900 dark:text-white">
+                  <span>Total Nota de Crédito:</span>
+                  <span>{selectedDoc.payload?.moneda || selectedDoc.moneda || 'PEN'} {totalVal.toFixed(2)}</span>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
@@ -866,10 +982,10 @@ export default function InvoicesHistoryPage() {
                 </button>
                 <button
                   onClick={handleEmitCreditNote}
-                  disabled={noteEmitting || !noteForm.motivoDescripcion}
+                  disabled={noteEmitting || !noteForm.motivoDescripcion || isAmountInvalid}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                 >
-                  {noteEmitting ? 'Emitiendo...' : 'Emitir Nota'}
+                  {noteEmitting ? 'Emitiendo...' : 'Emitir Nota de Crédito'}
                 </button>
               </div>
             </div>

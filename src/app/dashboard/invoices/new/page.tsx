@@ -131,12 +131,18 @@ export default function NewInvoicePage() {
         setSearchPerformed(false);
       }
     } else {
-      // For Boletas (03), clear RUC check defaults if they don't match boleta default selection
-      if ((selectedClient?.docType ?? selectedClient?.doc_type) === '6') {
-        setSelectedClient(null);
-        setClientDoc('');
-        setSearchPerformed(false);
-      }
+      // For Boletas (03), default to Simple Boleta with default VARIOS client
+      setIsSimpleBoleta(true);
+      setSelectedClient({
+        docType: '0',
+        docNumber: '-',
+        legalName: 'VARIOS',
+        razon_social: 'VARIOS',
+        doc_type: '0',
+        doc_number: '-',
+      });
+      setClientDoc('');
+      setSearchPerformed(false);
     }
   }, [docType]);
 
@@ -538,22 +544,6 @@ export default function NewInvoicePage() {
                   <button
                     type="button"
                     onClick={() => {
-                      setIsSimpleBoleta(false);
-                      setSelectedClient(null);
-                      setClientDoc('');
-                      setSearchPerformed(false);
-                    }}
-                    className={`py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                      !isSimpleBoleta
-                        ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200/50 dark:border-zinc-700/55'
-                        : 'text-zinc-400 hover:text-zinc-500'
-                    }`}
-                  >
-                    DNI/RUC
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
                       setIsSimpleBoleta(true);
                       setSelectedClient({
                         docType: '0',
@@ -573,6 +563,22 @@ export default function NewInvoicePage() {
                     }`}
                   >
                     Boleta Simple
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSimpleBoleta(false);
+                      setSelectedClient(null);
+                      setClientDoc('');
+                      setSearchPerformed(false);
+                    }}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      !isSimpleBoleta
+                        ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200/50 dark:border-zinc-700/55'
+                        : 'text-zinc-400 hover:text-zinc-500'
+                    }`}
+                  >
+                    DNI/RUC
                   </button>
                 </div>
               )}

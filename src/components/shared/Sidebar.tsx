@@ -53,11 +53,11 @@ export function Sidebar() {
 
   const rawLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-    { name: 'Nueva Boleta', path: '/dashboard/boletas/new', icon: <Receipt className="w-4 h-4" /> },
-    { name: 'Historial Docs', path: '/dashboard/invoices', icon: <FileText className="w-4 h-4" /> },
+    { name: 'Nuevo comprobante', path: '/dashboard/boletas/new', icon: <Receipt className="w-4 h-4" /> },
+    { name: 'Listado de Comprobantes', path: '/dashboard/invoices', icon: <FileText className="w-4 h-4" /> },
     { name: 'Clientes', path: '/dashboard/customers', icon: <Users className="w-4 h-4" /> },
     { name: 'Productos', path: '/dashboard/products', icon: <Package className="w-4 h-4" /> },
-    { name: 'Resúmenes SUNAT', path: '/dashboard/daily-summaries', icon: <Layers className="w-4 h-4" /> },
+    { name: 'Resúmenes', path: '/dashboard/daily-summaries', icon: <Layers className="w-4 h-4" /> },
     { name: 'Configuración', path: '/dashboard/settings', icon: <Settings className="w-4 h-4" /> },
   ];
 

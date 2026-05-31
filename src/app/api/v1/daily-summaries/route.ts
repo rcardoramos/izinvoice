@@ -12,6 +12,13 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const summaryType = searchParams.get('summaryType');
+    const referenceDate = searchParams.get('referenceDate');
+    const issueDate = searchParams.get('issueDate');
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
+    const status = searchParams.get('status');
+    const page = parseInt(searchParams.get('page') || '1') || 1;
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20') || 20, 100);
 
     let summaries = FileDb.getTable('daily_summaries');
     summaries = summaries.filter((s: any) => s.company_id === ctx.company.id);
@@ -19,21 +26,61 @@ export async function GET(req: NextRequest) {
     if (summaryType) {
       summaries = summaries.filter((s: any) => s.summary_type === summaryType);
     }
+    if (referenceDate) {
+      summaries = summaries.filter((s: any) => s.reference_date === referenceDate);
+    }
+    if (issueDate) {
+      summaries = summaries.filter((s: any) => s.issue_date === issueDate);
+    } else {
+      if (from) {
+        summaries = summaries.filter((s: any) => s.issue_date >= from);
+      }
+      if (to) {
+        summaries = summaries.filter((s: any) => s.issue_date <= to);
+      }
+    }
+    if (status) {
+      summaries = summaries.filter((s: any) => s.status === status);
+    }
 
     // Sort by created_at desc
     summaries.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    // Join document counts
+    // Join document counts and map to camelCase API format
     const allDocs = FileDb.getTable('documents');
-    const result = summaries.map((s: any) => {
+    const mapped = summaries.map((s: any) => {
       const linked = allDocs.filter((d: any) => d.daily_summary_id === s.id);
       return {
-        ...s,
+        id: s.id,
+        summaryType: s.summary_type,
+        summaryCode: s.summary_code,
+        referenceDate: s.reference_date,
+        issueDate: s.issue_date,
+        correlativo: s.correlativo,
+        ticket: s.ticket,
+        status: s.status,
+        statusCode: s.status_code,
+        errorMessage: s.error_message,
         documentCount: linked.length,
+        createdAt: s.created_at,
+        updatedAt: s.updated_at,
       };
     });
 
-    return NextResponse.json(result);
+    const total = mapped.length;
+    const totalPages = Math.ceil(total / limit);
+    const offset = (page - 1) * limit;
+    const paginated = mapped.slice(offset, offset + limit);
+
+    return NextResponse.json({
+      data: paginated,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages,
+      }
+    });
   } catch (error: any) {
     return NextResponse.json({ message: 'Error retrieving summaries', error: error.message }, { status: 500 });
   }

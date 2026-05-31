@@ -35,11 +35,18 @@ export default function NewBoletaPage() {
 
   // Client Selection State
   const [clientDoc, setClientDoc] = useState('');
-  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [selectedClient, setSelectedClient] = useState<any>({
+    docType: '0',
+    docNumber: '-',
+    legalName: 'VARIOS',
+    razon_social: 'VARIOS',
+    doc_type: '0',
+    doc_number: '-',
+  });
   const [clientSearching, setClientSearching] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [showAddClientModal, setShowAddClientModal] = useState(false);
-  const [isSimpleBoleta, setIsSimpleBoleta] = useState(false);
+  const [isSimpleBoleta, setIsSimpleBoleta] = useState(true);
 
   // Custom Alert Modal State
   const [alertConfig, setAlertConfig] = useState<{
@@ -134,6 +141,18 @@ export default function NewBoletaPage() {
           setSearchPerformed(false);
         }
       }
+    } else {
+      setIsSimpleBoleta(true);
+      setSelectedClient({
+        docType: '0',
+        docNumber: '-',
+        legalName: 'VARIOS',
+        razon_social: 'VARIOS',
+        doc_type: '0',
+        doc_number: '-',
+      });
+      setClientDoc('');
+      setSearchPerformed(false);
     }
   }, [docType, availableSeries]);
 
@@ -359,7 +378,15 @@ export default function NewBoletaPage() {
     setApiError(null);
     setLines([]);
     setClientDoc('');
-    setSelectedClient(null);
+    setSelectedClient({
+      docType: '0',
+      docNumber: '-',
+      legalName: 'VARIOS',
+      razon_social: 'VARIOS',
+      doc_type: '0',
+      doc_number: '-',
+    });
+    setIsSimpleBoleta(true);
     setSearchPerformed(false);
   };
 
@@ -542,22 +569,6 @@ export default function NewBoletaPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      setIsSimpleBoleta(false);
-                      setSelectedClient(null);
-                      setClientDoc('');
-                      setSearchPerformed(false);
-                    }}
-                    className={`py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                      !isSimpleBoleta
-                        ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200/50 dark:border-zinc-700/55'
-                        : 'text-zinc-400 hover:text-zinc-500'
-                    }`}
-                  >
-                    DNI/RUC
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
                       setIsSimpleBoleta(true);
                       setSelectedClient({
                         docType: '0',
@@ -577,6 +588,22 @@ export default function NewBoletaPage() {
                     }`}
                   >
                     Boleta Simple
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSimpleBoleta(false);
+                      setSelectedClient(null);
+                      setClientDoc('');
+                      setSearchPerformed(false);
+                    }}
+                    className={`py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      !isSimpleBoleta
+                        ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200/50 dark:border-zinc-700/55'
+                        : 'text-zinc-400 hover:text-zinc-500'
+                    }`}
+                  >
+                    DNI/RUC
                   </button>
                 </div>
               )}

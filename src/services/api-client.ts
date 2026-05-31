@@ -174,6 +174,32 @@ export class BillingApiClient {
     });
   }
 
+  static async listDailySummaries(filters: {
+    referenceDate?: string;
+    issueDate?: string;
+    from?: string;
+    to?: string;
+    summaryType?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  } = {}): Promise<{
+    data: DailySummaryDetail[];
+    meta: { page: number; limit: number; total: number; totalPages: number };
+  }> {
+    const params = new URLSearchParams();
+    if (filters.referenceDate) params.append('referenceDate', filters.referenceDate);
+    if (filters.issueDate) params.append('issueDate', filters.issueDate);
+    if (filters.from) params.append('from', filters.from);
+    if (filters.to) params.append('to', filters.to);
+    if (filters.summaryType) params.append('summaryType', filters.summaryType);
+    if (filters.status) params.append('status', filters.status);
+    if (filters.page) params.append('page', String(filters.page));
+    if (filters.limit) params.append('limit', String(filters.limit));
+
+    return this.request<any>(`/daily-summaries?${params.toString()}`);
+  }
+
   static async getDailySummary(id: string): Promise<DailySummaryDetail> {
     return this.request<DailySummaryDetail>(`/daily-summaries/${id}`);
   }

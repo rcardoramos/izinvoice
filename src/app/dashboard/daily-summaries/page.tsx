@@ -25,6 +25,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { todayPE, formatIssueDatePE, nowPE } from '@/utils/date-pe';
+import { CustomSelect } from '@/components/shared/CustomSelect';
 
 // ─── NOTE: GET /daily-summaries (list) is in Backlog per API-REFERENCE.md ────
 // We persist submitted RCs in localStorage and refresh each one individually
@@ -73,7 +74,26 @@ interface PreviewDoc {
   total: string | number;
   status: any;
   cliente?: { razonSocial?: string; numDoc?: string; tipoDoc?: string };
-  payload?: { cliente?: { razonSocial?: string; numDoc?: string; tipoDoc?: string } };
+  billingReference?: {
+    id?: string;
+    documentTypeCode?: string;
+    serie?: string;
+    correlativo?: number;
+  };
+  payload?: {
+    cliente?: { razonSocial?: string; numDoc?: string; tipoDoc?: string };
+    documentoAfectado?: {
+      docType: string;
+      serie: string;
+      correlativo: number;
+    };
+    billingReference?: {
+      id?: string;
+      documentTypeCode?: string;
+      serie?: string;
+      correlativo?: number;
+    };
+  };
 }
 
 interface PreviewResponse {
@@ -141,9 +161,20 @@ function StepBreadcrumb({ step }: { step: Step }) {
 export default function DailySummariesPage() {
   const { addNotification } = useAppStore();
 
-  // History from localStorage
+  // Summaries API state
   const [summaries, setSummaries] = useState<RcRecord[]>([]);
+  const [summariesMeta, setSummariesMeta] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
+  const [summariesLoading, setSummariesLoading] = useState(false);
   const [checkingIds, setCheckingIds] = useState<Record<string, boolean>>({});
+
+  // Filters state
+  const [filterReferenceDate, setFilterReferenceDate] = useState('');
+  const [filterIssueDate, setFilterIssueDate] = useState('');
+  const [filterFromDate, setFilterFromDate] = useState('');
+  const [filterToDate, setFilterToDate] = useState('');
+  const [filterSummaryType, setFilterSummaryType] = useState(''); // '' (Todos), 'RC', 'RA'
+  const [filterStatus, setFilterStatus] = useState(''); // '' (Todos), 'draft', 'processing', 'accepted', 'rejected', 'failed', 'cancelled'
+  const [summariesPage, setSummariesPage] = useState(1);
 
   // Wizard state
   const [step, setStep] = useState<Step | null>(null);
@@ -161,11 +192,68 @@ export default function DailySummariesPage() {
   const [submitResult, setSubmitResult] = useState<any>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const loadSummaries = useCallback(() => {
-    setSummaries(loadHistory());
-  }, []);
+  const fetchSummariesList = useCallback(async () => {
+    setSummariesLoading(true);
+    try {
+      const res = await BillingApiClient.listDailySummaries({
+        referenceDate: filterReferenceDate || undefined,
+        issueDate: filterIssueDate || undefined,
+        from: filterFromDate || undefined,
+        to: filterToDate || undefined,
+        summaryType: filterSummaryType || undefined,
+        status: filterStatus || undefined,
+        page: summariesPage,
+        limit: 10,
+      });
 
-  useEffect(() => { loadSummaries(); }, [loadSummaries]);
+      const mapped: RcRecord[] = res.data.map((item: any) => ({
+        id: item.id,
+        summaryCode: item.summaryCode,
+        referenceDate: item.referenceDate,
+        issueDate: item.issueDate,
+        status: item.status,
+        ticket: item.ticket,
+        documentCount: item.documentCount,
+        createdAt: item.createdAt,
+      }));
+
+      setSummaries(mapped);
+      setSummariesMeta(res.meta);
+    } catch (err: any) {
+      addNotification({
+        id: Math.random().toString(),
+        title: 'Error al cargar historial',
+        message: err?.message || 'No se pudo obtener el historial de resúmenes.',
+        type: 'error',
+        created_at: nowPE(),
+      });
+    } finally {
+      setSummariesLoading(false);
+    }
+  }, [
+    filterReferenceDate,
+    filterIssueDate,
+    filterFromDate,
+    filterToDate,
+    filterSummaryType,
+    filterStatus,
+    summariesPage,
+    addNotification,
+  ]);
+
+  useEffect(() => {
+    fetchSummariesList();
+  }, [fetchSummariesList]);
+
+  const handleClearFilters = () => {
+    setFilterReferenceDate('');
+    setFilterIssueDate('');
+    setFilterFromDate('');
+    setFilterToDate('');
+    setFilterSummaryType('');
+    setFilterStatus('');
+    setSummariesPage(1);
+  };
 
   // ── Open wizard ──
   const openWizard = () => {
@@ -243,7 +331,9 @@ export default function DailySummariesPage() {
       };
       const updated = upsertRecord(loadHistory(), record);
       saveHistory(updated);
-      setSummaries(updated);
+      
+      // Refresh API list
+      fetchSummariesList();
 
       addNotification({
         id: Math.random().toString(),
@@ -267,7 +357,9 @@ export default function DailySummariesPage() {
         };
         const updated = upsertRecord(loadHistory(), record);
         saveHistory(updated);
-        setSummaries(updated);
+        
+        // Refresh API list
+        fetchSummariesList();
       }
       const hint = typeof errObj === 'object'
         ? (errObj?.hint || errObj?.message || JSON.stringify(errObj))
@@ -294,8 +386,10 @@ export default function DailySummariesPage() {
           documentCount: (res as any).sunat?.documentCount ?? existing.documentCount,
         });
         saveHistory(updated);
-        setSummaries(updated);
       }
+
+      // Refresh API list
+      fetchSummariesList();
 
       if (res.status === 'accepted') {
         addNotification({
@@ -357,7 +451,7 @@ export default function DailySummariesPage() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="text-sm font-bold text-zinc-900">Historial de Resúmenes</h2>
-            <p className="text-[11px] text-zinc-500 mt-0.5">RCs enviados desde este dispositivo</p>
+            <p className="text-[11px] text-zinc-500 mt-0.5">Historial y filtros de resúmenes del sistema</p>
           </div>
           <button
             onClick={openWizard}
@@ -366,6 +460,131 @@ export default function DailySummariesPage() {
             <Layers className="w-3.5 h-3.5" />
             Nuevo Resumen Diario (RC)
           </button>
+        </div>
+
+        {/* Filters Card */}
+        <div className="bg-white border border-zinc-200 p-5 rounded-2xl shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-zinc-700 uppercase tracking-wider flex items-center gap-1.5 select-none">
+              <Layers className="w-3.5 h-3.5 text-zinc-400" />
+              Filtros de búsqueda
+            </h3>
+            {(filterReferenceDate || filterIssueDate || filterFromDate || filterToDate || filterSummaryType || filterStatus) && (
+              <button
+                onClick={handleClearFilters}
+                className="text-[10px] font-bold text-indigo-600 hover:text-indigo-500 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <X className="w-3 h-3" /> Limpiar Filtros
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {/* F. Referencia */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">F. Referencia</label>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={filterReferenceDate}
+                  onChange={(e) => {
+                    setFilterReferenceDate(e.target.value);
+                    setSummariesPage(1);
+                  }}
+                  className="w-full text-xs border border-zinc-200 hover:border-zinc-300 rounded-xl px-3 py-1.5 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all cursor-pointer"
+                />
+              </div>
+            </div>
+
+            {/* F. Envío */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">F. Envío Exacta</label>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={filterIssueDate}
+                  disabled={!!(filterFromDate || filterToDate)}
+                  onChange={(e) => {
+                    setFilterIssueDate(e.target.value);
+                    setSummariesPage(1);
+                  }}
+                  className="w-full text-xs border border-zinc-200 hover:border-zinc-300 rounded-xl px-3 py-1.5 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-40"
+                />
+              </div>
+            </div>
+
+            {/* Desde */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Desde (Envío)</label>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={filterFromDate}
+                  disabled={!!filterIssueDate}
+                  onChange={(e) => {
+                    setFilterFromDate(e.target.value);
+                    setSummariesPage(1);
+                  }}
+                  className="w-full text-xs border border-zinc-200 hover:border-zinc-300 rounded-xl px-3 py-1.5 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-40"
+                />
+              </div>
+            </div>
+
+            {/* Hasta */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Hasta (Envío)</label>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={filterToDate}
+                  disabled={!!filterIssueDate}
+                  onChange={(e) => {
+                    setFilterToDate(e.target.value);
+                    setSummariesPage(1);
+                  }}
+                  className="w-full text-xs border border-zinc-200 hover:border-zinc-300 rounded-xl px-3 py-1.5 bg-zinc-50/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all cursor-pointer disabled:opacity-40"
+                />
+              </div>
+            </div>
+
+            {/* Tipo */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Tipo Resumen</label>
+              <CustomSelect
+                value={filterSummaryType}
+                onChange={(val) => {
+                  setFilterSummaryType(val);
+                  setSummariesPage(1);
+                }}
+                options={[
+                  { value: '', label: 'Todos' },
+                  { value: 'RC', label: 'RC (Altas)' },
+                  { value: 'RA', label: 'RA (Bajas)' },
+                ]}
+              />
+            </div>
+
+            {/* Estado */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Estado SUNAT</label>
+              <CustomSelect
+                value={filterStatus}
+                onChange={(val) => {
+                  setFilterStatus(val);
+                  setSummariesPage(1);
+                }}
+                options={[
+                  { value: '', label: 'Todos' },
+                  { value: 'draft', label: 'Borrador' },
+                  { value: 'processing', label: 'En Proceso' },
+                  { value: 'accepted', label: 'Aceptado' },
+                  { value: 'rejected', label: 'Rechazado' },
+                  { value: 'failed', label: 'Fallido' },
+                  { value: 'cancelled', label: 'Cancelado' },
+                ]}
+              />
+            </div>
+          </div>
         </div>
 
         {/* History table */}
@@ -441,6 +660,31 @@ export default function DailySummariesPage() {
                   })}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {summariesMeta.totalPages > 1 && (
+            <div className="flex justify-between items-center px-6 py-4 border-t border-zinc-200 bg-zinc-50/50 select-none">
+              <span className="text-[11px] text-zinc-500 font-medium">
+                Página {summariesPage} de {summariesMeta.totalPages} ({summariesMeta.total} resúmenes en total)
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSummariesPage(p => Math.max(p - 1, 1))}
+                  disabled={summariesPage <= 1 || summariesLoading}
+                  className="px-3 py-1.5 text-[11px] font-semibold border border-zinc-200 rounded-lg hover:bg-zinc-50 disabled:opacity-40 cursor-pointer text-zinc-600 transition-all select-none"
+                >
+                  ← Anterior
+                </button>
+                <button
+                  onClick={() => setSummariesPage(p => Math.min(p + 1, summariesMeta.totalPages))}
+                  disabled={summariesPage >= summariesMeta.totalPages || summariesLoading}
+                  className="px-3 py-1.5 text-[11px] font-semibold border border-zinc-200 rounded-lg hover:bg-zinc-50 disabled:opacity-40 cursor-pointer text-zinc-600 transition-all select-none"
+                >
+                  Siguiente →
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -614,6 +858,52 @@ export default function DailySummariesPage() {
                                       {doc.serie}-{String(doc.correlativo).padStart(8, '0')}
                                     </span>
                                     <p className="text-[9px] text-zinc-400 mt-0.5">{doc.issueDate ?? '—'}</p>
+                                    {(() => {
+                                      if (doc.docType !== '07') return null;
+
+                                      // 1. Try payload.documentoAfectado
+                                      const affected = doc.payload?.documentoAfectado;
+                                      if (affected && affected.serie) {
+                                        return (
+                                          <p className="text-[9px] text-amber-700 font-semibold mt-1 bg-amber-50 border border-amber-100/50 px-1.5 py-0.5 rounded inline-block">
+                                            Afecta: {affected.serie}-{String(affected.correlativo).padStart(8, '0')}
+                                          </p>
+                                        );
+                                      }
+
+                                      // 2. Try billingReference (both in payload or at root level)
+                                      const billingRef = doc.payload?.billingReference || doc.billingReference;
+                                      if (billingRef) {
+                                        if (billingRef.serie && billingRef.correlativo) {
+                                          return (
+                                            <p className="text-[9px] text-amber-700 font-semibold mt-1 bg-amber-50 border border-amber-100/50 px-1.5 py-0.5 rounded inline-block">
+                                              Afecta: {billingRef.serie}-{String(billingRef.correlativo).padStart(8, '0')}
+                                            </p>
+                                          );
+                                        }
+                                        if (billingRef.id) {
+                                          const parts = billingRef.id.split('-');
+                                          if (parts.length === 2) {
+                                            const serie = parts[0];
+                                            const corr = parts[1];
+                                            if (!isNaN(parseInt(corr))) {
+                                              return (
+                                                <p className="text-[9px] text-amber-700 font-semibold mt-1 bg-amber-50 border border-amber-100/50 px-1.5 py-0.5 rounded inline-block">
+                                                  Afecta: {serie}-{corr.padStart(8, '0')}
+                                                </p>
+                                              );
+                                            }
+                                          }
+                                          return (
+                                            <p className="text-[9px] text-amber-700 font-semibold mt-1 bg-amber-50 border border-amber-100/50 px-1.5 py-0.5 rounded inline-block">
+                                              Afecta: {billingRef.id}
+                                            </p>
+                                          );
+                                        }
+                                      }
+
+                                      return null;
+                                    })()}
                                   </td>
                                   <td className="px-4 py-2.5 max-w-[160px]">
                                     <p className="font-medium text-zinc-800 truncate">{cliente?.razonSocial ?? '—'}</p>
