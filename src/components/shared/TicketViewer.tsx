@@ -89,6 +89,12 @@ export function TicketViewer({ document, companyName, companyRuc, companyAddress
           <span className="text-zinc-400 font-semibold uppercase text-[8px] tracking-wider">Forma Pago:</span>
           <span>{['CON', 'Contado'].includes(p.formaPago || 'CON') ? 'Contado' : 'Crédito'}</span>
         </p>
+        {p.documentoAfectado && (
+          <p className="flex justify-between text-[#4f46e5] font-semibold">
+            <span className="text-indigo-400 font-semibold uppercase text-[8px] tracking-wider font-mono">Doc. Afectado:</span>
+            <span className="font-mono">{p.documentoAfectado.serie}-{p.documentoAfectado.correlativo}</span>
+          </p>
+        )}
         
         {/* Client details */}
         <div className="border-t border-zinc-100 pt-1.5 mt-1.5 space-y-1">
