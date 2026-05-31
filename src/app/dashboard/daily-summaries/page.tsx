@@ -206,7 +206,8 @@ export default function DailySummariesPage() {
         docType: '03',
         status: 'accepted',
       });
-      const filtered = docs.filter((doc: any) => {
+      const docsList = Array.isArray(docs) ? docs : (docs?.data ?? []);
+      const filtered = docsList.filter((doc: any) => {
         const issueDateDoc = doc.issueDate || doc.issue_date;
         const dailySummaryId = doc.dailySummaryId || doc.daily_summary_id;
         const isAlreadyVoided = doc.payload?._rcVoid;
