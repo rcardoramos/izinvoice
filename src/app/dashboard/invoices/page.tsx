@@ -750,8 +750,12 @@ export default function InvoicesHistoryPage() {
                       </button>
                     )}
 
-                    {/* Cancelar Boleta */}
-                    {selectedDoc.status === 'signed' && (selectedDoc.docType === '03' || selectedDoc.doc_type === '03') && (
+                    {/* Cancelar Boleta / Nota */}
+                    {selectedDoc.status === 'signed' && (
+                      selectedDoc.docType === '03' || selectedDoc.doc_type === '03' ||
+                      selectedDoc.docType === '07' || selectedDoc.doc_type === '07' ||
+                      selectedDoc.docType === '08' || selectedDoc.doc_type === '08'
+                    ) && (
                       <button
                         type="button"
                         onClick={() => {
@@ -767,10 +771,21 @@ export default function InvoicesHistoryPage() {
                   </div>
                 </div>
 
-                {selectedDoc.status === 'signed' && selectedDoc.docType === '03' && (
+                {selectedDoc.status === 'signed' && (
+                  selectedDoc.docType === '03' || selectedDoc.doc_type === '03' ||
+                  selectedDoc.docType === '07' || selectedDoc.doc_type === '07' ||
+                  selectedDoc.docType === '08' || selectedDoc.doc_type === '08'
+                ) && (
                   <div className="p-2.5 bg-amber-500/5 border border-amber-500/10 rounded-xl flex items-center gap-2 text-[10px] text-amber-700 dark:text-amber-400 font-medium">
                     <Info className="w-3.5 h-3.5 shrink-0 text-amber-500" />
-                    <span>Boleta firmada localmente. Pendiente de comunicación SUNAT (Resumen Diario RC).</span>
+                    <span>
+                      {(() => {
+                        const type = selectedDoc.docType || selectedDoc.doc_type;
+                        if (type === '07') return 'Nota de Crédito firmada localmente. Pendiente de comunicación SUNAT (Resumen Diario RC).';
+                        if (type === '08') return 'Nota de Débito firmada localmente. Pendiente de comunicación SUNAT (Resumen Diario RC).';
+                        return 'Boleta firmada localmente. Pendiente de comunicación SUNAT (Resumen Diario RC).';
+                      })()}
+                    </span>
                   </div>
                 )}
 

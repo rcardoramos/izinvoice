@@ -22,6 +22,17 @@ export function CancelBoletaModal({ doc, onCancel, onClose }: CancelBoletaModalP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const getDocName = () => {
+    switch (doc.docType) {
+      case '07':
+        return 'Nota de Crédito';
+      case '08':
+        return 'Nota de Débito';
+      default:
+        return 'Boleta';
+    }
+  };
+
   const docLabel = `${doc.serie}-${String(doc.correlativo).padStart(8, '0')}`;
 
   const handleConfirm = async () => {
@@ -29,8 +40,9 @@ export function CancelBoletaModal({ doc, onCancel, onClose }: CancelBoletaModalP
     setLoading(true);
     try {
       await onCancel(reason.trim());
-    } catch (err: any) {
-      setError(err?.message || 'Error al cancelar la boleta.');
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : '';
+      setError(errMsg || `Error al cancelar la ${getDocName().toLowerCase()}.`);
     } finally {
       setLoading(false);
     }
@@ -47,7 +59,7 @@ export function CancelBoletaModal({ doc, onCancel, onClose }: CancelBoletaModalP
               <Ban className="w-4.5 h-4.5 text-red-600" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-zinc-900">Cancelar Boleta</h2>
+              <h2 className="text-sm font-bold text-zinc-900">Cancelar {getDocName()}</h2>
               <p className="text-[11px] text-zinc-400 font-mono mt-0.5">{docLabel}</p>
             </div>
           </div>
@@ -63,11 +75,11 @@ export function CancelBoletaModal({ doc, onCancel, onClose }: CancelBoletaModalP
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
             <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <p className="text-xs font-semibold text-amber-800">¿Qué significa cancelar esta boleta?</p>
+              <p className="text-xs font-semibold text-amber-800">¿Qué significa cancelar esta {getDocName().toLowerCase()}?</p>
               <ul className="text-[11px] text-amber-700 space-y-1 list-disc list-inside">
-                <li>La boleta <strong>no se comunicará a SUNAT</strong> y quedará marcada como <em>cancelada</em>.</li>
-                <li>Solo aplica a boletas <strong>firmadas localmente</strong> que aún no fueron incluidas en un Resumen Diario (RC).</li>
-                <li>Esta acción <strong>es irreversible</strong>. Si la boleta ya fue entregada al cliente, considera emitir una Nota de Crédito en su lugar.</li>
+                <li>La {getDocName().toLowerCase()} <strong>no se comunicará a SUNAT</strong> y quedará marcada como <em>cancelada</em>.</li>
+                <li>Solo aplica a {getDocName().toLowerCase() === 'boleta' ? 'boletas' : 'notas'} <strong>firmadas localmente</strong> que aún no fueron incluidas en un Resumen Diario (RC).</li>
+                <li>Esta acción <strong>es irreversible</strong>. {doc.docType === '03' && 'Si la boleta ya fue entregada al cliente, considera emitir una Nota de Crédito en su lugar.'}</li>
               </ul>
             </div>
           </div>
@@ -130,7 +142,7 @@ export function CancelBoletaModal({ doc, onCancel, onClose }: CancelBoletaModalP
             {loading ? (
               <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Cancelando...</>
             ) : (
-              <><Ban className="w-3.5 h-3.5" /> Cancelar Boleta</>
+              <><Ban className="w-3.5 h-3.5" /> Cancelar {getDocName()}</>
             )}
           </button>
         </div>
