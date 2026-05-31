@@ -564,7 +564,7 @@ export default function NewBoletaPage() {
                         : 'text-zinc-400 hover:text-zinc-500'
                     }`}
                   >
-                    Identificado
+                    DNI/RUC
                   </button>
                   <button
                     type="button"
@@ -587,7 +587,7 @@ export default function NewBoletaPage() {
                         : 'text-zinc-400 hover:text-zinc-500'
                     }`}
                   >
-                    Consumidor Final
+                    Boleta Simple
                   </button>
                 </div>
               )}
