@@ -738,8 +738,12 @@ export default function InvoicesHistoryPage() {
                       </button>
                     )}
 
-                    {/* Anular Factura */}
-                    {selectedDoc.status === 'accepted' && (selectedDoc.docType === '01' || selectedDoc.doc_type === '01') && (
+                    {/* Anular Factura / Nota a nivel de Factura */}
+                    {selectedDoc.status === 'accepted' && (
+                      (selectedDoc.docType === '01' || selectedDoc.doc_type === '01') ||
+                      ((selectedDoc.docType === '07' || selectedDoc.doc_type === '07') && selectedDoc.serie.startsWith('FC')) ||
+                      ((selectedDoc.docType === '08' || selectedDoc.doc_type === '08') && selectedDoc.serie.startsWith('FD'))
+                    ) && (
                       <button
                         type="button"
                         onClick={handleVoidFacturaClick}

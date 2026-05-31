@@ -20,11 +20,26 @@ export async function GET(req: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1') || 1;
     const limit = Math.min(parseInt(searchParams.get('limit') || '20') || 20, 100);
 
+    const allDocs = FileDb.getTable('documents');
     let summaries = FileDb.getTable('daily_summaries');
     summaries = summaries.filter((s: any) => s.company_id === ctx.company.id);
 
     if (summaryType) {
-      summaries = summaries.filter((s: any) => s.summary_type === summaryType);
+      if (summaryType === 'RC_VOID') {
+        summaries = summaries.filter((s: any) => {
+          if (s.summary_type !== 'RC') return false;
+          const linked = allDocs.filter((d: any) => d.daily_summary_id === s.id);
+          return linked.some((d: any) => d.payload?._rcVoid?.voidSummaryId === s.id);
+        });
+      } else if (summaryType === 'RC') {
+        summaries = summaries.filter((s: any) => {
+          if (s.summary_type !== 'RC') return false;
+          const linked = allDocs.filter((d: any) => d.daily_summary_id === s.id);
+          return !linked.some((d: any) => d.payload?._rcVoid?.voidSummaryId === s.id);
+        });
+      } else {
+        summaries = summaries.filter((s: any) => s.summary_type === summaryType);
+      }
     }
     if (referenceDate) {
       summaries = summaries.filter((s: any) => s.reference_date === referenceDate);
@@ -47,12 +62,16 @@ export async function GET(req: NextRequest) {
     summaries.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     // Join document counts and map to camelCase API format
-    const allDocs = FileDb.getTable('documents');
     const mapped = summaries.map((s: any) => {
       const linked = allDocs.filter((d: any) => d.daily_summary_id === s.id);
+      const hasVoid = linked.some((d: any) => d.payload?._rcVoid?.voidSummaryId === s.id);
+      let calculatedType = s.summary_type;
+      if (s.summary_type === 'RC' && hasVoid) {
+        calculatedType = 'RC_VOID';
+      }
       return {
         id: s.id,
-        summaryType: s.summary_type,
+        summaryType: calculatedType,
         summaryCode: s.summary_code,
         referenceDate: s.reference_date,
         issueDate: s.issue_date,

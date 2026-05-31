@@ -5,6 +5,27 @@ import { VoidedDocumentsRequest, DailySummarySubmitResponse } from '@/types/docu
 import { SunatMockService } from '@/utils/sunat-mock';
 import { todayPE } from '@/utils/date-pe';
 
+interface DbDocument {
+  id: string;
+  company_id: string;
+  doc_type: string;
+  serie: string;
+  correlativo: number;
+  status: string;
+  issue_date: string;
+  total: number;
+  daily_summary_id: string | null;
+  payload?: {
+    _rcVoid?: unknown;
+  };
+}
+
+interface DbSummary {
+  company_id: string;
+  summary_type: string;
+  issue_date: string;
+}
+
 export async function POST(req: NextRequest) {
   const ctx = getAuthContext(req);
   if (!ctx) return unauthorizedResponse();
@@ -21,9 +42,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Retrieve documents and validate void conditions
-    const allDocs = FileDb.getTable('documents');
+    const allDocs = FileDb.getTable('documents') as DbDocument[];
     const matchedDocs = allDocs.filter(
-      (doc: any) =>
+      (doc) =>
         doc.company_id === ctx.company.id &&
         documentIds.includes(doc.id)
     );
@@ -38,9 +59,13 @@ export async function POST(req: NextRequest) {
     const refDate = referenceDate || matchedDocs[0].issue_date;
 
     for (const doc of matchedDocs) {
-      if (doc.doc_type !== '01') {
+      const docType = doc.doc_type;
+      const isNote = docType === '07' || docType === '08';
+      const isInvoiceLevel = docType === '01' || (isNote && (doc.serie.startsWith('FC') || doc.serie.startsWith('FD')));
+
+      if (!isInvoiceLevel) {
         return NextResponse.json(
-          { statusCode: 400, message: `El documento ${doc.serie}-${doc.correlativo} no es una Factura. Las boletas se anulan vía resúmenes diarios (RC).` },
+          { statusCode: 400, message: `El documento ${doc.serie}-${doc.correlativo} no es una Factura o Nota a nivel de Factura. Las boletas y notas a nivel de boleta se anulan vía resúmenes diarios (RC).` },
           { status: 400 }
         );
       }
@@ -68,9 +93,9 @@ export async function POST(req: NextRequest) {
     const finalIssueDate = issueDate || todayStr;
 
     // Determine the next correlativo for RA summaries on the finalIssueDate
-    const allSummaries = FileDb.getTable('daily_summaries');
+    const allSummaries = FileDb.getTable('daily_summaries') as DbSummary[];
     const todaySummaries = allSummaries.filter(
-      (s: any) =>
+      (s) =>
         s.company_id === ctx.company.id &&
         s.summary_type === 'RA' &&
         s.issue_date === finalIssueDate
@@ -102,8 +127,8 @@ export async function POST(req: NextRequest) {
     FileDb.insert('daily_summaries', summaryRecord);
 
     // Update documents to lock them under the RA daily summary
-    const updatedDocs = allDocs.map((doc: any) => {
-      const match = matchedDocs.find((m: any) => m.id === doc.id);
+    const updatedDocs = allDocs.map((doc) => {
+      const match = matchedDocs.find((m) => m.id === doc.id);
       if (match) {
         return {
           ...doc,
@@ -124,7 +149,7 @@ export async function POST(req: NextRequest) {
     // Logs & notifications
     FileDb.insert('notifications', {
       company_id: ctx.company.id,
-      title: 'Baja de Factura Enviada',
+      title: 'Baja de Comprobante Enviada',
       message: `Comunicación de baja ${summaryCode} enviada a SUNAT. Ticket generado: ${ticket}.`,
       type: 'info',
       read: false,
@@ -135,7 +160,7 @@ export async function POST(req: NextRequest) {
       ctx.user.id,
       'VOID_INVOICES_RA',
       'SUMMARIES',
-      `Sent voided documents summary RA ${summaryCode} for ${matchedDocs.length} facturas. Reason: ${motivoBaja || 'ERROR EN DATOS'}. Ticket: ${ticket}`,
+      `Sent voided documents summary RA ${summaryCode} for ${matchedDocs.length} documents. Reason: ${motivoBaja || 'ERROR EN DATOS'}. Ticket: ${ticket}`,
       'success'
     );
 
@@ -143,8 +168,8 @@ export async function POST(req: NextRequest) {
       id: summaryId,
       summaryType: 'RA',
       summaryCode,
-      referenceDate: refDate as any,
-      issueDate: finalIssueDate as any,
+      referenceDate: refDate as unknown as DailySummarySubmitResponse['referenceDate'],
+      issueDate: finalIssueDate as unknown as DailySummarySubmitResponse['issueDate'],
       correlativo: nextCorrelativo,
       status: 'processing',
       ticket,
@@ -158,9 +183,10 @@ export async function POST(req: NextRequest) {
     };
 
     return NextResponse.json(response);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMessage = error instanceof Error ? error.message : 'Error desconocido';
     return NextResponse.json(
-      { statusCode: 500, message: 'Error interno de servidor', error: error.message },
+      { statusCode: 500, message: 'Error interno de servidor', error: errMessage },
       { status: 500 }
     );
   }

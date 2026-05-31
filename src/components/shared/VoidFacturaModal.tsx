@@ -22,6 +22,17 @@ export function VoidFacturaModal({ doc, onVoid, onClose }: VoidFacturaModalProps
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const getDocName = () => {
+    switch (doc.docType) {
+      case '07':
+        return 'Nota de Crédito';
+      case '08':
+        return 'Nota de Débito';
+      default:
+        return 'Factura';
+    }
+  };
+
   const docLabel = `${doc.serie}-${String(doc.correlativo).padStart(8, '0')}`;
 
   const handleConfirm = async () => {
@@ -33,8 +44,9 @@ export function VoidFacturaModal({ doc, onVoid, onClose }: VoidFacturaModalProps
     setLoading(true);
     try {
       await onVoid(reason.trim());
-    } catch (err: any) {
-      setError(err?.message || 'Error al procesar la comunicación de baja.');
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : '';
+      setError(errMsg || 'Error al procesar la comunicación de baja.');
     } finally {
       setLoading(false);
     }
@@ -51,7 +63,7 @@ export function VoidFacturaModal({ doc, onVoid, onClose }: VoidFacturaModalProps
               <Ban className="w-4.5 h-4.5 text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-zinc-900 dark:text-white">Anulación de Factura (Baja)</h2>
+              <h2 className="text-sm font-bold text-zinc-900 dark:text-white">Anulación de {getDocName()} (Baja)</h2>
               <p className="text-[11px] text-zinc-400 font-mono mt-0.5">{docLabel}</p>
             </div>
           </div>
@@ -67,11 +79,11 @@ export function VoidFacturaModal({ doc, onVoid, onClose }: VoidFacturaModalProps
           <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-250 dark:border-amber-900 rounded-xl p-4 flex gap-3">
             <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <p className="text-xs font-semibold text-amber-800 dark:text-amber-400">¿Qué significa dar de baja esta factura?</p>
-              <ul className="text-[11px] text-amber-700 dark:text-amber-550 space-y-1 list-disc list-inside">
+              <p className="text-xs font-semibold text-amber-800 dark:text-amber-400">¿Qué significa dar de baja esta {getDocName().toLowerCase()}?</p>
+              <ul className="text-[11px] text-amber-700 dark:text-amber-555 space-y-1 list-disc list-inside">
                 <li>Se enviará una <strong>comunicación de baja (RA)</strong> a SUNAT.</li>
-                <li>Solo aplica a facturas en estado <strong>Aceptado</strong>.</li>
-                <li>La fecha de referencia de la baja coincidirá con la de emisión de la factura.</li>
+                <li>Solo aplica a {getDocName().toLowerCase() === 'factura' ? 'facturas' : 'notas'} en estado <strong>Aceptado</strong>.</li>
+                <li>La fecha de referencia de la baja coincidirá con la de emisión de la {getDocName().toLowerCase()}.</li>
                 <li>Esta acción <strong>es irreversible</strong> ante la SUNAT.</li>
               </ul>
             </div>

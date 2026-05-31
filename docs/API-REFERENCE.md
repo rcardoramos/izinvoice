@@ -244,9 +244,9 @@ Catálogo 06: `1` DNI, `6` RUC, etc.
 | POST   | `/debit-notes`                | Nota de débito `08`                        |
 | POST   | `/daily-summaries/preview`    | Vista previa RC altas (sin SUNAT)          |
 | POST   | `/daily-summaries`            | RC altas (boletas/notas `signed`)          |
-| POST   | `/daily-summaries/void/preview` | Vista previa RC anulación boletas        |
-| POST   | `/daily-summaries/void`       | RC anulación boletas                       |
-| POST   | `/voided-documents`           | RA baja facturas                           |
+| POST   | `/daily-summaries/void/preview` | Vista previa RC anulación (`03`, `07`, `08`) |
+| POST   | `/daily-summaries/void`       | RC anulación boletas y notas (`03`, `07`, `08`) |
+| POST   | `/voided-documents`           | RA baja facturas y notas factura (`01`, `07`, `08`) |
 | GET    | `/daily-summaries`            | Listado RC/RA paginado                     |
 | GET    | `/daily-summaries/:id`        | Detalle RC/RA                              |
 | POST   | `/daily-summaries/:id/status` | Polling ticket SUNAT                       |
@@ -855,52 +855,80 @@ Estados intermedios: `processing`, `submitted` → usar `/status` para poll.
 
 ---
 
-### `POST /v1/daily-summaries/void/preview` — Vista previa RC anulación
+#### Matriz anulación — RC void por tipo de documento (v1)
 
-Mismo body que void (`documentIds`, `referenceDate`, `issueDate`) más `page`, `limit`, `includeXml`. Sin efectos en BD ni SUNAT.
+Qué hacer según **estado** del comprobante y si ya fue informado a SUNAT. `POST /daily-summaries/void` acepta boletas `03` y notas `07`/`08` **accepted** vía RC en `documentIds`.
+
+| Doc | `signed` (sin RC / no aceptado en SUNAT) | `accepted` (ya en RC aceptado) |
+| --- | ---------------------------------------- | ------------------------------ |
+| Boleta `03` | Omitir del RC (no void); emitir doc. correcto si hace falta | **Void boleta** ✅ `POST /daily-summaries/void` (`ConditionCode 3`) |
+| NC `07` (sobre boleta) | Omitir del RC | **Void nota** ✅ `POST /daily-summaries/void` (`ConditionCode 3`) |
+| ND `08` (sobre boleta) | Omitir del RC | **Void nota** ✅ `POST /daily-summaries/void` (`ConditionCode 3`) |
+| NC / ND sobre factura `01` | N/A (`sendBill`, no RC) | **RA** ✅ `POST /voided-documents` (`07`/`08` `accepted`, sin RC) |
+
+**Notas:**
+
+- **Void boleta** = anular la **venta** no entregada (`documentIds[]` UUID boletas `03` `accepted` con `dailySummaryId`).
+- **Void nota** = anular NC/ND emitida por error (`documentIds[]` UUID notas `07`/`08` `accepted` con `dailySummaryId`; la boleta afectada **sigue** `accepted`).
+- **NC entregada válida** = crédito post-venta; **no** usar void sobre la boleta original por el mismo caso.
+- **NC/ND factura** van por `sendBill`; anular con **`POST /voided-documents`** (RA), no RC void.
+- Todos los `documentIds` del mismo request deben compartir `referenceDate` (= `issueDate` de cada comprobante).
 
 ---
 
-### `POST /v1/daily-summaries/void` — RC anulación boletas
+### `POST /v1/daily-summaries/void/preview` — Vista previa RC anulación
 
-Boletas `03` **accepted**, no entregadas al cliente.
+Mismo body que void (`documentIds`, `referenceDate`, `issueDate`) más `page`, `limit`, `includeXml`. Sin efectos en BD ni SUNAT. Acepta boletas `03` y notas `07`/`08` **accepted** vía RC.
+
+---
+
+### `POST /v1/daily-summaries/void` — RC anulación boletas y notas
+
+Boletas `03` o notas `07`/`08` en **`accepted`**, informadas previamente en RC. Ver matriz **RC void por tipo de documento** arriba.
 
 **Body:**
 
 ```json
 {
-  "documentIds": ["uuid-boleta-1"],
+  "documentIds": ["uuid-boleta-o-nota-1"],
   "referenceDate": "2026-05-26",
   "issueDate": "2026-05-26"
 }
 ```
 
-| Campo           | Notas                                   |
-| --------------- | --------------------------------------- |
-| `documentIds`   | UUID[] obligatorio                      |
-| `referenceDate` | Fecha emisión **original** de la boleta |
-| `issueDate`     | Fecha envío del RC void (default hoy)   |
+| Campo           | Notas                                              |
+| --------------- | -------------------------------------------------- |
+| `documentIds`   | UUID[] obligatorio (`03`, `07` o `08` `accepted`)  |
+| `referenceDate` | Fecha emisión **original** del comprobante a anular |
+| `issueDate`     | Fecha envío del RC void (default hoy)              |
 
-Tras CDR aceptado: boletas → `voided`.
+Tras CDR aceptado: comprobantes → `voided`.
 
 ---
 
-### `POST /v1/voided-documents` — RA (baja facturas)
+### `POST /v1/voided-documents` — RA (comunicación de baja)
 
-Solo facturas `01` en `accepted`.
+Facturas `01` y notas `07`/`08` sobre factura en **`accepted`**, informadas por `sendBill` (sin `dailySummaryId`). No incluye notas sobre boleta (esas van por RC void).
 
 **Body:**
 
 ```json
 {
-  "documentIds": ["uuid-factura"],
+  "documentIds": ["uuid-factura-o-nota"],
   "referenceDate": "2026-05-24",
   "issueDate": "2026-05-26",
   "motivoBaja": "ERROR EN DATOS"
 }
 ```
 
-`referenceDate` debe coincidir con `issueDate` de la factura.
+| Campo           | Notas                                              |
+| --------------- | -------------------------------------------------- |
+| `documentIds`   | UUID[] (`01`, `07` o `08` `accepted` vía sendBill) |
+| `referenceDate` | Fecha emisión **original** del comprobante         |
+| `issueDate`     | Fecha envío del RA (default hoy)                   |
+| `motivoBaja`    | Motivo por línea en el XML RA                      |
+
+`referenceDate` debe coincidir con `issueDate` de cada comprobante. Tras CDR aceptado: docs → `voided`.
 
 **Response:** misma forma que RC (`dailySummaryId` en body de error o `id` en éxito). Polling: `POST /v1/daily-summaries/{id}/status`.
 
@@ -966,6 +994,8 @@ curl -s "$BASE/daily-summaries?referenceDate=2026-05-30&summaryType=RC" \
 
 ### `GET /v1/daily-summaries/:id` — Detalle RC/RA
 
+Incluye **`documents[]`**: comprobantes con `daily_summary_id` = id del resumen (misma forma que ítems de `GET /documents`).
+
 **Response `200`:**
 
 ```json
@@ -980,11 +1010,32 @@ curl -s "$BASE/daily-summaries?referenceDate=2026-05-30&summaryType=RC" \
   "ticket": "2026123456789",
   "statusCode": "0",
   "errorMessage": null,
-  "documentCount": 3,
+  "documentCount": 2,
   "createdAt": "...",
-  "updatedAt": "..."
+  "updatedAt": "...",
+  "documents": [
+    {
+      "id": "...",
+      "docType": "03",
+      "serie": "B001",
+      "correlativo": 5,
+      "status": "accepted",
+      "total": "118.00",
+      "issueDate": "2026-05-26",
+      "dailySummaryId": "...",
+      "cliente": {
+        "tipoDoc": "1",
+        "numDoc": "12345678",
+        "razonSocial": "CLIENTE DEMO"
+      },
+      "createdAt": "...",
+      "updatedAt": "..."
+    }
+  ]
 }
 ```
+
+El listado `GET /v1/daily-summaries` **no** incluye `documents[]` (solo `documentCount`).
 
 ---
 
@@ -1335,13 +1386,15 @@ Cabeceras sin `payload` completo. Para ítems → detalle por id.
 | `issueDate` | `YYYY-MM-DD`           | —       | Día exacto (prioridad sobre rango)   |
 | `from`      | `YYYY-MM-DD`           | —       | Inicio rango                         |
 | `to`        | `YYYY-MM-DD`           | —       | Fin rango                            |
-| `docType`   | `01`\|`03`\|`07`\|`08` | —       | Tipo comprobante                     |
-| `status`    | string                 | —       | `signed`, `accepted`, `voided`, etc. |
+| `docType`   | string                 | —       | Tipo(s): uno (`03`) o varios separados por coma (`03,07,08`). También `docType=03&docType=07`. |
+| `status`    | string                 | —       | Estado(s): uno (`accepted`) o varios (`accepted,signed`) |
 | `serie`     | string                 | —       | ej. `B001` (match exacto)            |
 | `pendingRc` | boolean                | —       | `true` = signed sin RC (03/07/08)    |
 | `q`         | string                 | —       | ILIKE en `serie`, `correlativo`, `serie-correlativo`, `cliente.numDoc`, `cliente.razonSocial`, `id` |
 | `page`      | int                    | `1`     | Página                               |
 | `limit`     | int                    | `20`    | Máx `100`                            |
+
+**Orden (fijo):** `createdAt` DESC (más recientes primero) → `serie` ASC → `correlativo` ASC. Los filtros `issueDate` / `from` / `to` no cambian el criterio de orden.
 
 **Response `200`:**
 
@@ -1376,6 +1429,7 @@ Cabeceras sin `payload` completo. Para ítems → detalle por id.
 GET /v1/documents?issueDate=2026-05-26
 GET /v1/documents?issueDate=2026-05-26&pendingRc=true
 GET /v1/documents?from=2026-05-01&to=2026-05-31&docType=03&status=accepted&page=1&limit=10
+GET /v1/documents?docType=03,07,08&status=accepted,signed
 GET /v1/documents?q=B001-5
 GET /v1/documents?q=20100066603&docType=03
 GET /v1/documents?q=VARIOS&status=signed

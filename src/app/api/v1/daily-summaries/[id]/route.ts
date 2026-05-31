@@ -23,10 +23,15 @@ export async function GET(
 
     const allDocs = FileDb.getTable('documents');
     const linkedDocs = allDocs.filter((d: any) => d.daily_summary_id === id);
+    const hasVoid = linkedDocs.some((d: any) => d.payload?._rcVoid?.voidSummaryId === id);
+    let calculatedType = summary.summary_type;
+    if (summary.summary_type === 'RC' && hasVoid) {
+      calculatedType = 'RC_VOID';
+    }
 
-    const response: DailySummaryDetail = {
+    const response: DailySummaryDetail & { documents: any[] } = {
       id: summary.id,
-      summaryType: summary.summary_type,
+      summaryType: calculatedType as any,
       summaryCode: summary.summary_code,
       referenceDate: summary.reference_date,
       issueDate: summary.issue_date,
@@ -38,6 +43,16 @@ export async function GET(
       documentCount: linkedDocs.length,
       createdAt: summary.created_at,
       updatedAt: summary.updated_at,
+      documents: linkedDocs.map((d: any) => ({
+        id: d.id,
+        docType: d.doc_type,
+        serie: d.serie,
+        correlativo: d.correlativo,
+        status: d.status,
+        total: d.total,
+        issueDate: d.issue_date,
+        cliente: d.payload?.cliente || d.cliente,
+      })),
     };
 
     return NextResponse.json(response);

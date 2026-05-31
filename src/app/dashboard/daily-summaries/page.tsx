@@ -42,6 +42,7 @@ interface RcRecord {
   ticket: string | null;
   documentCount?: number;
   createdAt: string;
+  summaryType?: string;
 }
 
 function loadHistory(): RcRecord[] {
@@ -126,6 +127,38 @@ const getDocTypeColor = (docType: string) => {
   }
 };
 
+const getSummaryTypeBadge = (type: string) => {
+  switch (type) {
+    case 'RC':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          Altas (RC)
+        </span>
+      );
+    case 'RC_VOID':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          Anulación Boletas (RC Void)
+        </span>
+      );
+    case 'RA':
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-100">
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+          Baja Facturas (RA)
+        </span>
+      );
+    default:
+      return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-zinc-50 text-zinc-600 border border-zinc-200">
+          {type}
+        </span>
+      );
+  }
+};
+
 // ─── Step breadcrumb ──────────────────────────────────────────────────────────
 
 function StepBreadcrumb({ step }: { step: Step }) {
@@ -167,6 +200,11 @@ export default function DailySummariesPage() {
   const [summariesLoading, setSummariesLoading] = useState(false);
   const [checkingIds, setCheckingIds] = useState<Record<string, boolean>>({});
 
+  // Detail Modal state
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailData, setDetailData] = useState<any | null>(null);
+
   // Filters state
   const [filterReferenceDate, setFilterReferenceDate] = useState('');
   const [filterIssueDate, setFilterIssueDate] = useState('');
@@ -204,15 +242,14 @@ export default function DailySummariesPage() {
     try {
       const docs = await BillingApiClient.listDocuments({
         status: 'accepted',
+        issueDate: refDate,
+        docType: '03,07,08',
       });
       const docsList = Array.isArray(docs) ? docs : (docs?.data ?? []);
       const filtered = docsList.filter((doc: any) => {
-        const type = doc.docType || doc.doc_type;
-        const issueDateDoc = doc.issueDate || doc.issue_date;
         const dailySummaryId = doc.dailySummaryId || doc.daily_summary_id;
         const isAlreadyVoided = doc.payload?._rcVoid;
-        const isTargetType = type === '03' || type === '07' || type === '08';
-        return isTargetType && issueDateDoc === refDate && dailySummaryId && !isAlreadyVoided;
+        return dailySummaryId && !isAlreadyVoided;
       });
       setAcceptedBoletas(filtered);
       setSelectedDocIds([]);
@@ -266,6 +303,7 @@ export default function DailySummariesPage() {
         ticket: item.ticket,
         documentCount: item.documentCount,
         createdAt: item.createdAt,
+        summaryType: item.summaryType,
       }));
 
       setSummaries(mapped);
@@ -304,6 +342,27 @@ export default function DailySummariesPage() {
     setFilterSummaryType('');
     setFilterStatus('');
     setSummariesPage(1);
+  };
+
+  const handleOpenDetail = async (summaryId: string) => {
+    setDetailModalOpen(true);
+    setDetailLoading(true);
+    setDetailData(null);
+    try {
+      const data = await BillingApiClient.getDailySummary(summaryId);
+      setDetailData(data);
+    } catch (err: any) {
+      addNotification({
+        id: Math.random().toString(),
+        title: 'Error al cargar detalles',
+        message: err?.message || 'No se pudo obtener el detalle del resumen.',
+        type: 'error',
+        created_at: nowPE(),
+      });
+      setDetailModalOpen(false);
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   // ── Open wizard ──
@@ -419,6 +478,7 @@ export default function DailySummariesPage() {
         ticket: res.ticket ?? null,
         documentCount: res.sunat?.documentCount ?? selectedDocIds.length,
         createdAt: nowPE(),
+        summaryType: summaryMode === 'bajas' ? 'RC_VOID' : 'RC',
       };
       const updated = upsertRecord(loadHistory(), record);
       saveHistory(updated);
@@ -445,6 +505,7 @@ export default function DailySummariesPage() {
           status: errObj.status ?? 'failed',
           ticket: errObj.ticket ?? null,
           createdAt: nowPE(),
+          summaryType: summaryMode === 'bajas' ? 'RC_VOID' : 'RC',
         };
         const updated = upsertRecord(loadHistory(), record);
         saveHistory(updated);
@@ -475,6 +536,7 @@ export default function DailySummariesPage() {
           status: res.status,
           ticket: res.ticket ?? existing.ticket,
           documentCount: (res as any).sunat?.documentCount ?? existing.documentCount,
+          summaryType: res.summaryType ?? existing.summaryType,
         });
         saveHistory(updated);
       }
@@ -649,8 +711,9 @@ export default function DailySummariesPage() {
                 }}
                 options={[
                   { value: '', label: 'Todos' },
-                  { value: 'RC', label: 'RC (Altas)' },
-                  { value: 'RA', label: 'RA (Bajas)' },
+                  { value: 'RC', label: 'Altas (RC)' },
+                  { value: 'RC_VOID', label: 'Anulación Boletas (RC Void)' },
+                  { value: 'RA', label: 'Baja Facturas (RA)' },
                 ]}
               />
             </div>
@@ -693,7 +756,8 @@ export default function DailySummariesPage() {
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-zinc-50 border-b border-zinc-200 text-[10px] text-zinc-500 uppercase font-semibold tracking-wider">
-                    <th className="px-5 py-3.5">Código RC</th>
+                    <th className="px-5 py-3.5">Código</th>
+                    <th className="px-5 py-3.5">Tipo</th>
                     <th className="px-5 py-3.5">F.Referencia</th>
                     <th className="px-5 py-3.5">F.Envío</th>
                     <th className="px-5 py-3.5">Ticket SUNAT</th>
@@ -714,6 +778,9 @@ export default function DailySummariesPage() {
                             {sum.summaryCode}
                           </span>
                         </td>
+                        <td className="px-5 py-3.5">
+                          {getSummaryTypeBadge(sum.summaryType ?? 'RC')}
+                        </td>
                         <td className="px-5 py-3.5 font-medium text-zinc-700">{formatDate(sum.referenceDate)}</td>
                         <td className="px-5 py-3.5 text-zinc-500">{formatDate(sum.issueDate)}</td>
                         <td className="px-5 py-3.5">
@@ -727,24 +794,33 @@ export default function DailySummariesPage() {
                         </td>
                         <td className="px-5 py-3.5"><StatusBadge status={sum.status} /></td>
                         <td className="px-5 py-3.5 text-right">
-                          {canPoll ? (
+                          <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={() => handleCheckStatus(sum.id, sum.summaryCode)}
-                              disabled={isChecking}
-                              className="inline-flex items-center gap-1.5 py-1.5 px-3 rounded-lg border border-indigo-200 hover:bg-indigo-50 text-[11px] font-semibold text-indigo-600 transition-colors disabled:opacity-50 cursor-pointer"
+                              onClick={() => handleOpenDetail(sum.id)}
+                              className="inline-flex items-center gap-1 py-1 px-2.5 rounded-lg border border-zinc-200 hover:bg-zinc-50 text-[11px] font-semibold text-zinc-650 transition-colors cursor-pointer"
                             >
-                              <RefreshCw className={`w-3 h-3 ${isChecking ? 'animate-spin' : ''}`} />
-                              Consultar ticket
+                              <Eye className="w-3.5 h-3.5 text-zinc-500" />
+                              Ver Detalle
                             </button>
-                          ) : sum.status === 'accepted' ? (
-                            <span className="text-emerald-600 inline-flex items-center gap-1 text-[11px] font-semibold">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Aceptado
-                            </span>
-                          ) : (
-                            <span className="text-zinc-400 inline-flex items-center gap-1 text-[11px]">
-                              <AlertCircle className="w-3 h-3" /> —
-                            </span>
-                          )}
+                            {canPoll ? (
+                              <button
+                                onClick={() => handleCheckStatus(sum.id, sum.summaryCode)}
+                                disabled={isChecking}
+                                className="inline-flex items-center gap-1.5 py-1 px-3 rounded-lg border border-indigo-200 hover:bg-indigo-50 text-[11px] font-semibold text-indigo-600 transition-colors disabled:opacity-50 cursor-pointer"
+                              >
+                                <RefreshCw className={`w-3 h-3 ${isChecking ? 'animate-spin' : ''}`} />
+                                Consultar
+                              </button>
+                            ) : sum.status === 'accepted' ? (
+                              <span className="text-emerald-600 inline-flex items-center gap-1 text-[11px] font-semibold">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Aceptado
+                              </span>
+                            ) : (
+                              <span className="text-zinc-400 inline-flex items-center gap-1 text-[11px]">
+                                <AlertCircle className="w-3 h-3" /> —
+                              </span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1236,6 +1312,156 @@ export default function DailySummariesPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ─── Detail Modal ────────────────────────────────────────────────── */}
+      {detailModalOpen && (
+        <div className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="relative bg-white rounded-2xl shadow-2xl border border-zinc-200 w-full max-w-3xl my-8 transition-all overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+                  <Layers className="w-4 h-4 text-indigo-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-zinc-900">
+                    Detalle de Resumen
+                  </h3>
+                  {detailData && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-mono font-bold text-zinc-900 text-xs bg-zinc-100 px-2 py-0.5 rounded">
+                        {detailData.summaryCode}
+                      </span>
+                      {getSummaryTypeBadge(detailData.summaryType)}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setDetailModalOpen(false)}
+                className="p-2 rounded-xl hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-6">
+              {detailLoading ? (
+                <div className="flex flex-col items-center justify-center py-12 space-y-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                  <p className="text-xs font-semibold text-zinc-500">Cargando detalles del resumen...</p>
+                </div>
+              ) : detailData ? (
+                <>
+                  {/* Grid Metadata */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-zinc-50 border border-zinc-200/60 rounded-xl p-3.5">
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">F. Referencia</span>
+                      <span className="font-semibold text-zinc-800 text-xs font-mono">{formatDate(detailData.referenceDate)}</span>
+                    </div>
+                    <div className="bg-zinc-50 border border-zinc-200/60 rounded-xl p-3.5">
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">F. Envío</span>
+                      <span className="font-semibold text-zinc-800 text-xs font-mono">{formatDate(detailData.issueDate)}</span>
+                    </div>
+                    <div className="bg-zinc-50 border border-zinc-200/60 rounded-xl p-3.5 col-span-1">
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">Estado SUNAT</span>
+                      <StatusBadge status={detailData.status} />
+                    </div>
+                    <div className="bg-zinc-50 border border-zinc-200/60 rounded-xl p-3.5">
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-1">Ticket SUNAT</span>
+                      {detailData.ticket ? (
+                        <span className="font-mono text-indigo-700 text-xs bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">{detailData.ticket}</span>
+                      ) : (
+                        <span className="text-zinc-400 text-xs">Sin ticket</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Error Message if failed */}
+                  {detailData.errorMessage && (
+                    <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 flex gap-3 text-xs text-rose-700">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <div>
+                        <h5 className="font-bold mb-1">Error de SUNAT</h5>
+                        <p className="leading-relaxed">{detailData.errorMessage}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Documents table */}
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-bold text-zinc-700 uppercase tracking-wider">
+                      Comprobantes Incluidos ({detailData.documents?.length || 0})
+                    </h4>
+                    
+                    {!detailData.documents || detailData.documents.length === 0 ? (
+                      <div className="p-6 text-center border border-dashed border-zinc-200 rounded-xl bg-zinc-50/50">
+                        <p className="text-xs text-zinc-400">No hay documentos registrados para este resumen.</p>
+                      </div>
+                    ) : (
+                      <div className="border border-zinc-200 rounded-xl overflow-hidden max-h-72 overflow-y-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-zinc-50 border-b border-zinc-200 text-[9px] text-zinc-400 uppercase font-semibold">
+                              <th className="px-4 py-2.5">Tipo</th>
+                              <th className="px-4 py-2.5">Comprobante</th>
+                              <th className="px-4 py-2.5">Cliente</th>
+                              <th className="px-4 py-2.5 text-right">Total</th>
+                              <th className="px-4 py-2.5 text-center">Estado</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-100">
+                            {detailData.documents.map((doc: any) => (
+                              <tr key={doc.id} className="hover:bg-zinc-50/40 transition-colors">
+                                <td className="px-4 py-2.5">
+                                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${getDocTypeColor(doc.docType)}`}>
+                                    {DOC_TYPE_LABELS[doc.docType as keyof typeof DOC_TYPE_LABELS] ?? doc.docType}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-2.5 font-mono font-bold text-zinc-900">
+                                  {doc.serie}-{String(doc.correlativo).padStart(8, '0')}
+                                </td>
+                                <td className="px-4 py-2.5 text-zinc-500 max-w-[200px] truncate">
+                                  <p className="font-semibold text-zinc-800">{doc.cliente?.razonSocial || 'VARIOS'}</p>
+                                  <p className="text-[9px] text-zinc-400 font-mono">
+                                    {doc.cliente?.tipoDoc === '6' ? 'RUC' : 'DNI'}: {doc.cliente?.numDoc || '—'}
+                                  </p>
+                                </td>
+                                <td className="px-4 py-2.5 text-right font-mono font-semibold text-zinc-800">
+                                  {formatCurrency(doc.total)}
+                                </td>
+                                <td className="px-4 py-2.5 text-center">
+                                  <StatusBadge status={doc.status} />
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="p-8 text-center text-zinc-400 text-xs">
+                  No se pudo cargar la información.
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end px-6 py-4 border-t border-zinc-100 bg-zinc-50/50">
+              <button
+                type="button"
+                onClick={() => setDetailModalOpen(false)}
+                className="px-5 py-2 border border-zinc-200 rounded-xl text-xs font-semibold text-zinc-500 hover:bg-zinc-100 cursor-pointer transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}
