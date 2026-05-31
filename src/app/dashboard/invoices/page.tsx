@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { DataTable } from '@/components/shared/DataTable';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PdfViewer } from '@/components/shared/PdfViewer';
+import { TicketViewer } from '@/components/shared/TicketViewer';
 import { CancelBoletaModal } from '@/components/shared/CancelBoletaModal';
 import { BillingApiClient } from '@/services/api-client';
 import { DOC_TYPE_LABELS } from '@/types/enums';
@@ -80,6 +81,7 @@ export default function InvoicesHistoryPage() {
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [drawerLoading, setDrawerLoading] = useState(false);
   const [isSummarizedPdf, setIsSummarizedPdf] = useState(false);
+  const [printFormat, setPrintFormat] = useState<'pdf' | 'ticket'>('pdf');
   
   // Credit Note dialog state
   const [showNoteDialog, setShowNoteDialog] = useState(false);
@@ -185,6 +187,7 @@ export default function InvoicesHistoryPage() {
   // Fetch document details for the drawer
   useEffect(() => {
     setIsSummarizedPdf(false); // Reset visual summary on switch
+    setPrintFormat('pdf'); // Reset visual format on switch
     if (!selectedDocId) {
       setSelectedDoc(null);
       return;
@@ -689,39 +692,87 @@ export default function InvoicesHistoryPage() {
                   </div>
                 )}
 
-                {/* Summarized visual option for boletas */}
-                {(selectedDoc.docType === '03' || selectedDoc.doc_type === '03') && (
-                  <div className="flex items-center justify-between gap-4 p-3 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl">
+                {/* Print Layout Format and Summarization Toggles */}
+                <div className="flex flex-col gap-3 p-3 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl">
+                  {/* Row 1: PDF vs Ticket selector */}
+                  <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-400">Formato Visual:</span>
-                      <button
-                        type="button"
-                        onClick={() => setIsSummarizedPdf(prev => !prev)}
-                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
-                          isSummarizedPdf
-                            ? 'bg-[#4f46e5] text-white border-[#4f46e5] shadow-sm'
-                            : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800'
-                        }`}
-                      >
-                        {isSummarizedPdf ? 'Formato Resumido (Activo)' : 'Formato Detallado'}
-                      </button>
+                      <span className="text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-400">Diseño Impresión:</span>
+                      <div className="flex items-center gap-1 bg-white dark:bg-zinc-950 p-0.5 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                        <button
+                          type="button"
+                          onClick={() => setPrintFormat('pdf')}
+                          className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                            printFormat === 'pdf'
+                              ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs border border-zinc-200 dark:border-zinc-700'
+                              : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 border border-transparent'
+                          }`}
+                        >
+                          PDF (A4)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPrintFormat('ticket')}
+                          className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                            printFormat === 'ticket'
+                              ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs border border-zinc-200 dark:border-zinc-700'
+                              : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 border border-transparent'
+                          }`}
+                        >
+                          Ticket (80mm)
+                        </button>
+                      </div>
                     </div>
                     
                     <div className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium">
-                      {isSummarizedPdf ? 'Agrupa items bajo "DETALLADO POR SERVICIO"' : 'Muestra el desglose de productos'}
+                      {printFormat === 'pdf' ? 'Formato de hoja A4 completa' : 'Formato de ticketera térmica'}
                     </div>
                   </div>
-                )}
+
+                  {/* Row 2: Detailed vs Summarized (Only for Boletas) */}
+                  {(selectedDoc.docType === '03' || selectedDoc.doc_type === '03') && (
+                    <div className="border-t border-zinc-200 dark:border-zinc-800/80 pt-2.5 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-400">Detalle Contenido:</span>
+                        <button
+                          type="button"
+                          onClick={() => setIsSummarizedPdf(prev => !prev)}
+                          className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
+                            isSummarizedPdf
+                              ? 'bg-[#4f46e5] text-white border-[#4f46e5] shadow-sm'
+                              : 'bg-white dark:bg-zinc-950 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800'
+                          }`}
+                        >
+                          {isSummarizedPdf ? 'Formato Resumido (Activo)' : 'Formato Detallado'}
+                        </button>
+                      </div>
+                      
+                      <div className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium">
+                        {isSummarizedPdf ? 'Agrupa items bajo "DETALLADO POR SERVICIO"' : 'Muestra desglose completo'}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* PDF receipt print format wrapper */}
                 <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 bg-zinc-100 dark:bg-zinc-900/40 print-invoice-container">
-                  <PdfViewer
-                    document={selectedDoc}
-                    companyName={company?.businessName || ''}
-                    companyRuc={company?.ruc || ''}
-                    companyAddress={company?.address || ''}
-                    isSummarized={isSummarizedPdf}
-                  />
+                  {printFormat === 'pdf' ? (
+                    <PdfViewer
+                      document={selectedDoc}
+                      companyName={company?.businessName || ''}
+                      companyRuc={company?.ruc || ''}
+                      companyAddress={company?.address || ''}
+                      isSummarized={isSummarizedPdf}
+                    />
+                  ) : (
+                    <TicketViewer
+                      document={selectedDoc}
+                      companyName={company?.businessName || ''}
+                      companyRuc={company?.ruc || ''}
+                      companyAddress={company?.address || ''}
+                      isSummarized={isSummarizedPdf}
+                    />
+                  )}
                 </div>
               </div>
             ) : null}

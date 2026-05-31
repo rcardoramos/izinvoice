@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PdfViewer } from '@/components/shared/PdfViewer';
+import { TicketViewer } from '@/components/shared/TicketViewer';
 import { BillingApiClient } from '@/services/api-client';
 
 interface EmissionResultModalProps {
@@ -45,6 +46,8 @@ export function EmissionResultModal({
   company,
 }: EmissionResultModalProps) {
   if (!isOpen) return null;
+
+  const [printFormat, setPrintFormat] = React.useState<'pdf' | 'ticket'>('pdf');
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto select-none print:bg-white print:p-0 print:block print:static print:z-auto">
@@ -140,48 +143,113 @@ export function EmissionResultModal({
 
               {/* PDF Receipt Print preview */}
               <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 space-y-4 print:border-none print:p-0">
-                <p className="font-semibold text-zinc-450 dark:text-zinc-400 uppercase text-[9px] tracking-wider flex items-center justify-between print:hidden">
-                  <span>Vista Previa del Formato Impreso</span>
+                <div className="flex items-center justify-between border-b border-zinc-150 dark:border-zinc-800/80 pb-3 print:hidden">
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-zinc-450 dark:text-zinc-400 uppercase text-[9px] tracking-wider">Vista Previa del Formato</span>
+                    
+                    {/* Format Toggle Selector */}
+                    <div className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-900 p-0.5 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                      <button
+                        type="button"
+                        onClick={() => setPrintFormat('pdf')}
+                        className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                          printFormat === 'pdf'
+                            ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs border border-zinc-200 dark:border-zinc-700'
+                            : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 border border-transparent'
+                        }`}
+                      >
+                        PDF
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPrintFormat('ticket')}
+                        className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer ${
+                          printFormat === 'ticket'
+                            ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-xs border border-zinc-200 dark:border-zinc-700'
+                            : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 border border-transparent'
+                        }`}
+                      >
+                        Ticket
+                      </button>
+                    </div>
+                  </div>
+
                   <button
                     onClick={() => window.print()}
                     className="text-[10px] text-blue-600 dark:text-blue-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <Printer className="w-3.5 h-3.5" /> Imprimir / PDF
                   </button>
-                </p>
+                </div>
+                
                 <div className="border border-zinc-200 dark:border-zinc-800 rounded-lg bg-white overflow-hidden p-2 print-invoice-container print:border-none print:p-0">
-                  <PdfViewer
-                    document={{
-                      id: emittedDoc.id,
-                      docType: docType as any,
-                      serie,
-                      correlativo: emittedDoc.correlativo,
-                      status: emittedDoc.status,
-                      total: emittedDoc.total,
-                      issueDate: emittedDoc.issueDate || new Date().toISOString().split('T')[0] as any,
-                      dailySummaryId: null,
-                      payload: {
-                        cliente: {
-                          tipoDoc: selectedClient?.docType ?? selectedClient?.doc_type,
-                          numDoc: selectedClient?.docNumber ?? selectedClient?.doc_number,
-                          razonSocial: selectedClient?.legalName ?? selectedClient?.razon_social,
-                          direccion: selectedClient?.address ?? selectedClient?.direccion,
+                  {printFormat === 'pdf' ? (
+                    <PdfViewer
+                      document={{
+                        id: emittedDoc.id,
+                        docType: docType as any,
+                        serie,
+                        correlativo: emittedDoc.correlativo,
+                        status: emittedDoc.status,
+                        total: emittedDoc.total,
+                        issueDate: emittedDoc.issueDate || new Date().toISOString().split('T')[0] as any,
+                        dailySummaryId: null,
+                        payload: {
+                          cliente: {
+                            tipoDoc: selectedClient?.docType ?? selectedClient?.doc_type,
+                            numDoc: selectedClient?.docNumber ?? selectedClient?.doc_number,
+                            razonSocial: selectedClient?.legalName ?? selectedClient?.razon_social,
+                            direccion: selectedClient?.address ?? selectedClient?.direccion,
+                          },
+                          items: lines,
+                          totals: {
+                            subtotal,
+                            igvTotal,
+                            total,
+                          },
                         },
-                        items: lines,
-                        totals: {
-                          subtotal,
-                          igvTotal,
-                          total,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        sunat: null,
+                      }}
+                      companyName={company?.businessName || ''}
+                      companyRuc={company?.ruc || ''}
+                      companyAddress={company?.address || ''}
+                    />
+                  ) : (
+                    <TicketViewer
+                      document={{
+                        id: emittedDoc.id,
+                        docType: docType as any,
+                        serie,
+                        correlativo: emittedDoc.correlativo,
+                        status: emittedDoc.status,
+                        total: emittedDoc.total,
+                        issueDate: emittedDoc.issueDate || new Date().toISOString().split('T')[0] as any,
+                        dailySummaryId: null,
+                        payload: {
+                          cliente: {
+                            tipoDoc: selectedClient?.docType ?? selectedClient?.doc_type,
+                            numDoc: selectedClient?.docNumber ?? selectedClient?.doc_number,
+                            razonSocial: selectedClient?.legalName ?? selectedClient?.razon_social,
+                            direccion: selectedClient?.address ?? selectedClient?.direccion,
+                          },
+                          items: lines,
+                          totals: {
+                            subtotal,
+                            igvTotal,
+                            total,
+                          },
                         },
-                      },
-                      createdAt: new Date().toISOString(),
-                      updatedAt: new Date().toISOString(),
-                      sunat: null,
-                    }}
-                    companyName={company?.businessName || ''}
-                    companyRuc={company?.ruc || ''}
-                    companyAddress={company?.address || ''}
-                  />
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString(),
+                        sunat: null,
+                      }}
+                      companyName={company?.businessName || ''}
+                      companyRuc={company?.ruc || ''}
+                      companyAddress={company?.address || ''}
+                    />
+                  )}
                 </div>
               </div>
             </div>
