@@ -25,6 +25,7 @@ export default function SettingsPage() {
     businessName: '',
     tradeName: '',
     address: '',
+    ubigeo: '',
     phone: '',
     email: '',
   });
@@ -46,6 +47,7 @@ export default function SettingsPage() {
         businessName: company.businessName,
         tradeName: company.tradeName || '',
         address: company.address || '',
+        ubigeo: company.ubigeo || '',
         phone: '+51 987654321',
         email: 'facturacion@invoiceflow.pe',
       });
@@ -200,15 +202,27 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="block text-[10px] uppercase font-bold text-zinc-400">Dirección Fiscal</label>
-                  <input
-                    type="text"
-                    value={profile.address}
-                    onChange={(e) => setProfile({ ...profile, address: e.target.value })}
-                    required
-                    className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900 bg-white"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-2 space-y-1">
+                    <label className="block text-[10px] uppercase font-bold text-zinc-400">Dirección Fiscal</label>
+                    <input
+                      type="text"
+                      value={profile.address}
+                      onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                      required
+                      className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900 bg-white"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-[10px] uppercase font-bold text-zinc-400">Ubigeo Fiscal</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={profile.ubigeo}
+                      onChange={(e) => setProfile({ ...profile, ubigeo: e.target.value.replace(/\D/g, '') })}
+                      className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900 bg-white font-mono"
+                    />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

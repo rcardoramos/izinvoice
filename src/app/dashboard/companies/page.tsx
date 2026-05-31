@@ -36,9 +36,15 @@ export default function CompaniesPage() {
     businessName: '',
     tradeName: '',
     address: '',
+    ubigeo: '150101',
     email: '',
     phone: '',
     planName: 'starter',
+    sunatEnvironment: 'beta',
+    solUsername: '',
+    solPassword: '',
+    adminUsername: 'admin',
+    adminFullName: 'Administrador',
     adminPassword: '',
   });
   
@@ -63,6 +69,7 @@ export default function CompaniesPage() {
   const [configForm, setConfigForm] = useState({
     tradeName: '',
     address: '',
+    ubigeo: '',
     phone: '',
     email: '',
     sunatEnvironment: 'beta',
@@ -140,7 +147,26 @@ Soporte Técnico de izInvoce`;
 
     try {
       setSubmitting(true);
-      const res = await BillingApiClient.createSaasCompany(form);
+      const payload = {
+        ruc: form.ruc,
+        businessName: form.businessName,
+        tradeName: form.tradeName,
+        address: form.address,
+        ubigeo: form.ubigeo,
+        email: form.email,
+        phone: form.phone,
+        planName: form.planName,
+        sunatEnvironment: form.sunatEnvironment,
+        solUsername: form.solUsername || `${form.ruc}MODDATOS`,
+        solPassword: form.solPassword || 'MODDATOS',
+        initialUser: {
+          username: form.adminUsername || `admin_${form.ruc}`,
+          password: form.adminPassword || 'admin123',
+          fullName: form.adminFullName || `Admin ${form.businessName}`,
+        }
+      };
+
+      const res = await BillingApiClient.createSaasCompany(payload);
       setCreatedData(res);
       setIsRegisterOpen(false);
       setIsSuccessOpen(true);
@@ -151,9 +177,15 @@ Soporte Técnico de izInvoce`;
         businessName: '',
         tradeName: '',
         address: '',
+        ubigeo: '150101',
         email: '',
         phone: '',
         planName: 'starter',
+        sunatEnvironment: 'beta',
+        solUsername: '',
+        solPassword: '',
+        adminUsername: 'admin',
+        adminFullName: 'Administrador',
         adminPassword: '',
       });
       
@@ -219,6 +251,7 @@ Soporte Técnico de izInvoce`;
         companyId: selectedConfigCompany.id,
         tradeName: configForm.tradeName,
         address: configForm.address,
+        ubigeo: configForm.ubigeo,
         phone: configForm.phone,
         email: configForm.email,
         sunatEnvironment: configForm.sunatEnvironment,
@@ -384,6 +417,7 @@ Soporte Técnico de izInvoce`;
                               setConfigForm({
                                 tradeName: c.trade_name || '',
                                 address: c.address || '',
+                                ubigeo: c.ubigeo || '',
                                 phone: c.phone || '',
                                 email: c.email || '',
                                 sunatEnvironment: c.sunat_environment || 'beta',
@@ -434,7 +468,7 @@ Soporte Técnico de izInvoce`;
       {/* MODAL 1: REGISTER NEW COMPANY */}
       {isRegisterOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             <div className="p-6 border-b border-zinc-150 dark:border-zinc-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-blue-500" />
@@ -445,7 +479,7 @@ Soporte Técnico de izInvoce`;
               </button>
             </div>
 
-            <form onSubmit={handleRegisterSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleRegisterSubmit} className="p-6 space-y-4 text-xs">
               {formError && (
                 <div className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-lg text-xs flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -453,109 +487,193 @@ Soporte Técnico de izInvoce`;
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-zinc-400">RUC (11 dígitos)</label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={11}
-                    value={form.ruc}
-                    onChange={(e) => setForm({ ...form, ruc: e.target.value.replace(/\D/g, '') })}
-                    placeholder="20123456789"
-                    className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded-xl text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono"
-                  />
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                {/* 1. Datos del Emisor */}
+                <div className="space-y-3 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-150 dark:border-zinc-850">
+                  <h4 className="text-[10px] uppercase font-bold text-[#4f46e5] tracking-wider mb-2">1. Perfil del Emisor (Empresa)</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold text-zinc-400">RUC (11 dígitos)</label>
+                      <input
+                        type="text"
+                        required
+                        maxLength={11}
+                        value={form.ruc}
+                        onChange={(e) => setForm({ ...form, ruc: e.target.value.replace(/\D/g, '') })}
+                        placeholder="20123456789"
+                        className="w-full border border-zinc-250 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono font-bold"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold text-zinc-400">Plan de Suscripción</label>
+                      <select
+                        value={form.planName}
+                        onChange={(e) => setForm({ ...form, planName: e.target.value })}
+                        className="w-full border border-zinc-250 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none text-zinc-800 dark:text-zinc-200 font-semibold"
+                      >
+                        <option value="starter">Starter Plan</option>
+                        <option value="scale">Scale Plan</option>
+                        <option value="enterprise">Enterprise Plan</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400">Razón Social</label>
+                    <input
+                      type="text"
+                      required
+                      value={form.businessName}
+                      onChange={(e) => setForm({ ...form, businessName: e.target.value })}
+                      placeholder="ACME SOLUTIONS S.A.C."
+                      className="w-full border border-zinc-250 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none font-semibold"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold text-zinc-400">Nombre Comercial</label>
+                      <input
+                        type="text"
+                        value={form.tradeName}
+                        onChange={(e) => setForm({ ...form, tradeName: e.target.value })}
+                        placeholder="Acme Tech"
+                        className="w-full border border-zinc-250 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold text-zinc-400">Ubigeo Fiscal</label>
+                      <input
+                        type="text"
+                        maxLength={6}
+                        value={form.ubigeo}
+                        onChange={(e) => setForm({ ...form, ubigeo: e.target.value.replace(/\D/g, '') })}
+                        placeholder="150101"
+                        className="w-full border border-zinc-250 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400">Dirección Fiscal</label>
+                    <input
+                      type="text"
+                      value={form.address}
+                      onChange={(e) => setForm({ ...form, address: e.target.value })}
+                      placeholder="Av. Las Flores 123, San Isidro"
+                      className="w-full border border-zinc-250 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold text-zinc-400">Correo de Contacto</label>
+                      <input
+                        type="email"
+                        required
+                        value={form.email}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        placeholder="contacto@acme.pe"
+                        className="w-full border border-zinc-250 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold text-zinc-400">Teléfono</label>
+                      <input
+                        type="text"
+                        value={form.phone}
+                        onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                        placeholder="999888777"
+                        className="w-full border border-zinc-250 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-zinc-400">Plan de Suscripción</label>
-                  <select
-                    value={form.planName}
-                    onChange={(e) => setForm({ ...form, planName: e.target.value })}
-                    className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded-xl text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                  >
-                    <option value="starter">Starter Plan</option>
-                    <option value="scale">Scale Plan</option>
-                    <option value="enterprise">Enterprise Plan</option>
-                  </select>
-                </div>
-              </div>
+                {/* 2. Configuración SUNAT */}
+                <div className="space-y-3 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-150 dark:border-zinc-850">
+                  <h4 className="text-[10px] uppercase font-bold text-[#4f46e5] tracking-wider mb-2">2. Configuración SUNAT / SOL</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold text-zinc-400">Entorno de Emisión</label>
+                      <select
+                        value={form.sunatEnvironment}
+                        onChange={(e) => setForm({ ...form, sunatEnvironment: e.target.value })}
+                        className="w-full border border-zinc-255 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none text-zinc-800 dark:text-zinc-200 font-semibold"
+                      >
+                        <option value="beta">Beta (Pruebas SUNAT)</option>
+                        <option value="production">Production (Emisión Real)</option>
+                      </select>
+                    </div>
 
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase font-bold text-zinc-400">Razón Social</label>
-                <input
-                  type="text"
-                  required
-                  value={form.businessName}
-                  onChange={(e) => setForm({ ...form, businessName: e.target.value })}
-                  placeholder="ACME SOLUTIONS S.A.C."
-                  className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded-xl text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                />
-              </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold text-zinc-400">Usuario SOL (Opcional)</label>
+                      <input
+                        type="text"
+                        value={form.solUsername}
+                        onChange={(e) => setForm({ ...form, solUsername: e.target.value })}
+                        placeholder="Def: RUC + MODDATOS"
+                        className="w-full border border-zinc-255 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono"
+                      />
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-zinc-400">Nombre Comercial (Opcional)</label>
-                  <input
-                    type="text"
-                    value={form.tradeName}
-                    onChange={(e) => setForm({ ...form, tradeName: e.target.value })}
-                    placeholder="Acme Tech"
-                    className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded-xl text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-zinc-400">Dirección Fiscal (Opcional)</label>
-                  <input
-                    type="text"
-                    value={form.address}
-                    onChange={(e) => setForm({ ...form, address: e.target.value })}
-                    placeholder="Av. Las Flores 123, San Isidro"
-                    className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded-xl text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-zinc-400">Correo de Contacto</label>
-                  <input
-                    type="email"
-                    required
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                    placeholder="contacto@acme.pe"
-                    className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded-xl text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                  />
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400">Clave SOL (Opcional)</label>
+                    <input
+                      type="password"
+                      value={form.solPassword}
+                      onChange={(e) => setForm({ ...form, solPassword: e.target.value })}
+                      placeholder="Def: MODDATOS"
+                      className="w-full border border-zinc-255 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono"
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-[10px] uppercase font-bold text-zinc-400">Teléfono (Opcional)</label>
-                  <input
-                    type="text"
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    placeholder="999888777"
-                    className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded-xl text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                  />
+                {/* 3. Usuario Administrador Inicial */}
+                <div className="space-y-3 p-4 bg-zinc-50 dark:bg-zinc-950 rounded-xl border border-zinc-150 dark:border-zinc-850">
+                  <h4 className="text-[10px] uppercase font-bold text-[#4f46e5] tracking-wider mb-2">3. Usuario Administrador Inicial</h4>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] uppercase font-bold text-zinc-400">Nombre Completo</label>
+                    <input
+                      type="text"
+                      value={form.adminFullName}
+                      onChange={(e) => setForm({ ...form, adminFullName: e.target.value })}
+                      placeholder="Administrador de la Empresa"
+                      className="w-full border border-zinc-255 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none font-semibold"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold text-zinc-400">Usuario de Acceso</label>
+                      <input
+                        type="text"
+                        value={form.adminUsername}
+                        onChange={(e) => setForm({ ...form, adminUsername: e.target.value })}
+                        placeholder="admin"
+                        className="w-full border border-zinc-255 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono font-semibold"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase font-bold text-zinc-400">Contraseña (Opcional)</label>
+                      <input
+                        type="text"
+                        value={form.adminPassword}
+                        onChange={(e) => setForm({ ...form, adminPassword: e.target.value })}
+                        placeholder="Def: admin123"
+                        className="w-full border border-zinc-255 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 rounded-lg text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none font-mono"
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase font-bold text-zinc-400">Contraseña del Administrador (Opcional)</label>
-                <input
-                  type="text"
-                  value={form.adminPassword}
-                  onChange={(e) => setForm({ ...form, adminPassword: e.target.value })}
-                  placeholder="Dejar vacío para usar clave por defecto (admin123)"
-                  className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2.5 rounded-xl text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
-                />
-              </div>
-
-              <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 text-[11px] text-blue-500 leading-relaxed">
-                <p className="font-semibold mb-1">Aprovisionamiento Automático de SUNAT y Credenciales:</p>
-                Al registrar la empresa, se crearán las series de comprobantes (F001/B001), credenciales SOL Mock para el entorno Beta, y un usuario Administrador por defecto con clave temporal.
               </div>
 
               <div className="pt-2 border-t border-zinc-150 dark:border-zinc-800 flex justify-end gap-3">
@@ -926,14 +1044,25 @@ Soporte Técnico de izInvoce`;
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-zinc-400">Dirección Fiscal</label>
+                    <label className="text-[10px] uppercase font-bold text-zinc-400">Ubigeo Fiscal</label>
                     <input
                       type="text"
-                      value={configForm.address}
-                      onChange={(e) => setConfigForm({ ...configForm, address: e.target.value })}
-                      className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2 rounded-lg"
+                      maxLength={6}
+                      value={configForm.ubigeo}
+                      onChange={(e) => setConfigForm({ ...configForm, ubigeo: e.target.value.replace(/\D/g, '') })}
+                      className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2 rounded-lg font-mono font-bold"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-bold text-zinc-400">Dirección Fiscal</label>
+                  <input
+                    type="text"
+                    value={configForm.address}
+                    onChange={(e) => setConfigForm({ ...configForm, address: e.target.value })}
+                    className="w-full border border-zinc-200 dark:border-zinc-850 bg-zinc-50 dark:bg-zinc-950 p-2 rounded-lg"
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

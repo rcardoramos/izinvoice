@@ -39,7 +39,21 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { ruc, businessName, tradeName, address, email, phone, planName, adminPassword } = body;
+    const { 
+      ruc, 
+      businessName, 
+      tradeName, 
+      address, 
+      ubigeo,
+      sunatEnvironment,
+      solUsername,
+      solPassword,
+      email, 
+      phone, 
+      planName, 
+      adminPassword,
+      initialUser
+    } = body;
 
     if (!ruc || !businessName || !email) {
       return NextResponse.json({ message: 'Faltan campos obligatorios: ruc, businessName y email.' }, { status: 400 });
@@ -61,11 +75,12 @@ export async function POST(req: NextRequest) {
       business_name: businessName,
       trade_name: tradeName || businessName,
       address: address || null,
+      ubigeo: ubigeo || '150101',
       phone: phone || null,
       email,
-      sunat_environment: 'beta',
-      sol_username: `${ruc}MODDATOS`,
-      sol_password: 'MODDATOS',
+      sunat_environment: sunatEnvironment || 'beta',
+      sol_username: solUsername || `${ruc}MODDATOS`,
+      sol_password: solPassword || 'MODDATOS',
       api_key: hexApiKey,
     });
 
@@ -96,12 +111,15 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Insert Company Admin Default User
-    const adminUsername = `admin_${ruc}`;
+    const adminUsername = initialUser?.username || body.adminUsername || `admin_${ruc}`;
+    const userPassword = initialUser?.password || adminPassword || 'admin123';
+    const userFullName = initialUser?.fullName || body.adminFullName || `Admin ${businessName}`;
+
     const newAdminUser = FileDb.insert('users', {
       company_id: companyId,
       username: adminUsername,
-      password_hash: adminPassword || 'admin123', // custom or default credentials
-      full_name: `Admin ${businessName}`,
+      password_hash: userPassword, // custom or default credentials
+      full_name: userFullName,
       email,
       role: 'admin',
       status: 'active',
@@ -113,7 +131,7 @@ export async function POST(req: NextRequest) {
       company: newCompany,
       adminUser: {
         username: adminUsername,
-        password_hash: adminPassword || 'admin123',
+        password_hash: userPassword,
       },
     }, { status: 201 });
   } catch (error: any) {
@@ -134,6 +152,7 @@ export async function PUT(req: NextRequest) {
       newPassword,
       tradeName,
       address,
+      ubigeo,
       phone,
       email,
       sunatEnvironment,
@@ -151,6 +170,7 @@ export async function PUT(req: NextRequest) {
     if (compIdx !== -1) {
       if (tradeName !== undefined) companies[compIdx].trade_name = tradeName;
       if (address !== undefined) companies[compIdx].address = address;
+      if (ubigeo !== undefined) companies[compIdx].ubigeo = ubigeo;
       if (phone !== undefined) companies[compIdx].phone = phone;
       if (email !== undefined) companies[compIdx].email = email;
       if (sunatEnvironment !== undefined) companies[compIdx].sunat_environment = sunatEnvironment;

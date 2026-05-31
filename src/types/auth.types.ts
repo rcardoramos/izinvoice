@@ -20,6 +20,7 @@ export interface CompanySession {
   businessName: string;
   tradeName: string | null;
   address: string | null;
+  ubigeo: string | null;
   sunatEnvironment: SunatEnvironment;
   apiKey: string;
 }
