@@ -83,22 +83,44 @@ export function PdfViewer({ document, companyName, companyRuc, companyAddress }:
       <div className="py-8">
         <table className="w-full text-left">
           <thead>
-            <tr className="border-b border-zinc-200 text-zinc-400 text-[9px] uppercase tracking-wider font-semibold">
-              <th className="pb-3 w-16">Código</th>
-              <th className="pb-3">Descripción</th>
-              <th className="pb-3 text-center w-12">Cant.</th>
-              <th className="pb-3 text-right w-24">P. Unit</th>
-              <th className="pb-3 text-right w-24">Importe</th>
-            </tr>
+            {isFactura ? (
+              <tr className="border-b border-zinc-200 text-zinc-400 text-[9px] uppercase tracking-wider font-semibold">
+                <th className="pb-3 w-16">Código</th>
+                <th className="pb-3">Descripción</th>
+                <th className="pb-3 text-center w-12">Cant.</th>
+                <th className="pb-3 text-right w-24">P. Unit</th>
+                <th className="pb-3 text-right w-24">Importe</th>
+              </tr>
+            ) : (
+              <tr className="border-b border-zinc-200 text-zinc-400 text-[9px] uppercase tracking-wider font-semibold">
+                <th className="pb-3 w-12">Item</th>
+                <th className="pb-3 text-center w-12">Cant.</th>
+                <th className="pb-3">Descripción</th>
+                <th className="pb-3 text-right w-24">P. Unit</th>
+                <th className="pb-3 text-right w-24">Importe</th>
+              </tr>
+            )}
           </thead>
           <tbody className="divide-y divide-zinc-100 text-zinc-700">
             {p.items?.map((item, idx) => (
               <tr key={idx} className="align-top border-b border-zinc-50 last:border-0">
-                <td className="py-4 font-mono text-[11px] text-zinc-500">{item.codigo}</td>
-                <td className="py-4 font-medium text-zinc-900 text-[12px]">{item.descripcion}</td>
-                <td className="py-4 text-center text-[12px]">{item.cantidad}</td>
-                <td className="py-4 text-right font-mono text-[12px]">{(item.precioUnitario || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                <td className="py-4 text-right font-mono font-semibold text-[12px]">{(item.cantidad * item.precioUnitario || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                {isFactura ? (
+                  <>
+                    <td className="py-4 font-mono text-[11px] text-zinc-500">{item.codigo}</td>
+                    <td className="py-4 font-medium text-zinc-900 text-[12px]">{item.descripcion}</td>
+                    <td className="py-4 text-center text-[12px]">{item.cantidad}</td>
+                    <td className="py-4 text-right font-mono text-[12px]">{(item.precioUnitario || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td className="py-4 text-right font-mono font-semibold text-[12px]">{(item.cantidad * item.precioUnitario || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  </>
+                ) : (
+                  <>
+                    <td className="py-4 font-mono text-[11px] text-zinc-500">{idx + 1}</td>
+                    <td className="py-4 text-center text-[12px]">{item.cantidad}</td>
+                    <td className="py-4 font-medium text-zinc-900 text-[12px]">{item.descripcion}</td>
+                    <td className="py-4 text-right font-mono text-[12px]">{(item.precioUnitario || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    <td className="py-4 text-right font-mono font-semibold text-[12px]">{(item.cantidad * item.precioUnitario || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  </>
+                )}
               </tr>
             ))}
           </tbody>
