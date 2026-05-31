@@ -727,7 +727,7 @@ export default function InvoicesHistoryPage() {
                     )}
 
                     {/* Emitir Nota de Crédito */}
-                    {selectedDoc.status === 'accepted' && (
+                    {selectedDoc.status === 'accepted' && ['01', '03'].includes(selectedDoc.docType || selectedDoc.doc_type) && (
                       <button
                         type="button"
                         onClick={() => setShowNoteDialog(true)}
