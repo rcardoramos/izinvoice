@@ -7,6 +7,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PdfViewer } from '@/components/shared/PdfViewer';
 import { TicketViewer } from '@/components/shared/TicketViewer';
 import { CancelBoletaModal } from '@/components/shared/CancelBoletaModal';
+import { VoidFacturaModal } from '@/components/shared/VoidFacturaModal';
 import { BillingApiClient } from '@/services/api-client';
 import { DOC_TYPE_LABELS } from '@/types/enums';
 import { useAuthStore } from '@/store/auth';
@@ -125,6 +126,10 @@ export default function InvoicesHistoryPage() {
   // Cancel boleta modal state
   const [cancelModal, setCancelModal] = useState(false);
   const [docToCancel, setDocToCancel] = useState<any>(null);
+
+  // Void factura modal state
+  const [voidModal, setVoidModal] = useState(false);
+  const [docToVoid, setDocToVoid] = useState<any>(null);
 
   // Cache customers mapping for telephone/email fallback
   const [customersMap, setCustomersMap] = useState<Record<string, any>>({});
@@ -303,23 +308,28 @@ export default function InvoicesHistoryPage() {
   };
 
   // Action: void facturas (RA)
-  const handleVoidFactura = async () => {
+  const handleVoidFacturaClick = () => {
     if (!selectedDoc) return;
-    if (!confirm(`¿Está seguro de que desea dar de baja la Factura ${selectedDoc.serie}-${selectedDoc.correlativo}?`)) return;
+    setDocToVoid(selectedDoc);
+    setVoidModal(true);
+  };
 
+  const handleVoidFactura = async (reason: string) => {
+    if (!docToVoid) return;
     try {
-      setDrawerLoading(true);
       await BillingApiClient.voidedDocuments({
-        documentIds: [selectedDoc.id],
-        motivoBaja: 'ERROR EN FACTURACION',
+        documentIds: [docToVoid.id],
+        referenceDate: (docToVoid.issueDate || docToVoid.issue_date) as any,
+        issueDate: new Date().toISOString().split('T')[0] as any,
+        motivoBaja: reason,
       });
       alert('Comunicación de baja (RA) enviada a SUNAT. Consulte su estado en el menú de resúmenes.');
+      setVoidModal(false);
+      setDocToVoid(null);
       setSelectedDocId(null);
       loadDocuments();
     } catch (err: any) {
-      alert(err.message || 'Error al procesar la baja.');
-    } finally {
-      setDrawerLoading(false);
+      throw err;
     }
   };
 
@@ -732,7 +742,7 @@ export default function InvoicesHistoryPage() {
                     {selectedDoc.status === 'accepted' && (selectedDoc.docType === '01' || selectedDoc.doc_type === '01') && (
                       <button
                         type="button"
-                        onClick={handleVoidFactura}
+                        onClick={handleVoidFacturaClick}
                         className="flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 px-2 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-rose-500/10 hover:border-rose-500/30 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-450 transition-all cursor-pointer shadow-xs hover:scale-[1.02]"
                       >
                         <Ban className="w-3.5 h-3.5 text-rose-500 shrink-0" />
@@ -865,6 +875,18 @@ export default function InvoicesHistoryPage() {
           onClose={() => {
             setCancelModal(false);
             setDocToCancel(null);
+          }}
+        />
+      )}
+
+      {/* Void Factura Modal */}
+      {voidModal && docToVoid && (
+        <VoidFacturaModal
+          doc={docToVoid}
+          onVoid={handleVoidFactura}
+          onClose={() => {
+            setVoidModal(false);
+            setDocToVoid(null);
           }}
         />
       )}
