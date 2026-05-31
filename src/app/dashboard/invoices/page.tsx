@@ -79,6 +79,7 @@ export default function InvoicesHistoryPage() {
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [drawerLoading, setDrawerLoading] = useState(false);
+  const [isSummarizedPdf, setIsSummarizedPdf] = useState(false);
   
   // Credit Note dialog state
   const [showNoteDialog, setShowNoteDialog] = useState(false);
@@ -183,6 +184,7 @@ export default function InvoicesHistoryPage() {
 
   // Fetch document details for the drawer
   useEffect(() => {
+    setIsSummarizedPdf(false); // Reset visual summary on switch
     if (!selectedDocId) {
       setSelectedDoc(null);
       return;
@@ -687,6 +689,30 @@ export default function InvoicesHistoryPage() {
                   </div>
                 )}
 
+                {/* Summarized visual option for boletas */}
+                {(selectedDoc.docType === '03' || selectedDoc.doc_type === '03') && (
+                  <div className="flex items-center justify-between gap-4 p-3 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 rounded-xl">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-400">Formato Visual:</span>
+                      <button
+                        type="button"
+                        onClick={() => setIsSummarizedPdf(prev => !prev)}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer ${
+                          isSummarizedPdf
+                            ? 'bg-[#4f46e5] text-white border-[#4f46e5] shadow-sm'
+                            : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-800'
+                        }`}
+                      >
+                        {isSummarizedPdf ? 'Formato Resumido (Activo)' : 'Formato Detallado'}
+                      </button>
+                    </div>
+                    
+                    <div className="text-[10px] text-zinc-500 dark:text-zinc-400 font-medium">
+                      {isSummarizedPdf ? 'Agrupa items bajo "DETALLADO POR SERVICIO"' : 'Muestra el desglose de productos'}
+                    </div>
+                  </div>
+                )}
+
                 {/* PDF receipt print format wrapper */}
                 <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-3 bg-zinc-100 dark:bg-zinc-900/40 print-invoice-container">
                   <PdfViewer
@@ -694,6 +720,7 @@ export default function InvoicesHistoryPage() {
                     companyName={company?.businessName || ''}
                     companyRuc={company?.ruc || ''}
                     companyAddress={company?.address || ''}
+                    isSummarized={isSummarizedPdf}
                   />
                 </div>
               </div>

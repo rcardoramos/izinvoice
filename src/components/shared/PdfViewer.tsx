@@ -10,13 +10,15 @@ interface PdfViewerProps {
   companyName: string;
   companyRuc: string;
   companyAddress?: string;
+  isSummarized?: boolean;
 }
 
-export function PdfViewer({ document, companyName, companyRuc, companyAddress }: PdfViewerProps) {
+export function PdfViewer({ document, companyName, companyRuc, companyAddress, isSummarized = false }: PdfViewerProps) {
   const p = document.payload;
   if (!p) return null;
 
   const isFactura = document.docType === '01';
+  const calculatedSubtotal = p.totals?.subtotal || p.items?.reduce((sum, item) => sum + (item.cantidad * item.precioUnitario), 0) || 0;
 
   return (
     <div className="bg-white text-zinc-950 p-10 md:p-12 rounded-xl border border-zinc-200 shadow-lg max-w-2xl mx-auto font-sans text-xs select-none">
@@ -92,15 +94,25 @@ export function PdfViewer({ document, companyName, companyRuc, companyAddress }:
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-100 text-zinc-700">
-            {p.items?.map((item, idx) => (
-              <tr key={idx} className="align-top border-b border-zinc-50 last:border-0">
-                <td className="py-4 font-mono text-[11px] text-zinc-500">{idx + 1}</td>
-                <td className="py-4 text-center text-[12px]">{item.cantidad}</td>
-                <td className="py-4 font-medium text-zinc-900 text-[12px]">{item.descripcion}</td>
-                <td className="py-4 text-right font-mono text-[12px]">{(item.precioUnitario || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                <td className="py-4 text-right font-mono font-semibold text-[12px]">{(item.cantidad * item.precioUnitario || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            {isSummarized ? (
+              <tr className="align-top border-b border-zinc-50 last:border-0">
+                <td className="py-4 font-mono text-[11px] text-zinc-500">1</td>
+                <td className="py-4 text-center text-[12px]">1</td>
+                <td className="py-4 font-medium text-zinc-900 text-[12px] uppercase">DETALLADO POR SERVICIO</td>
+                <td className="py-4 text-right font-mono text-[12px]">{calculatedSubtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td className="py-4 text-right font-mono font-semibold text-[12px]">{calculatedSubtotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
-            ))}
+            ) : (
+              p.items?.map((item, idx) => (
+                <tr key={idx} className="align-top border-b border-zinc-50 last:border-0">
+                  <td className="py-4 font-mono text-[11px] text-zinc-500">{idx + 1}</td>
+                  <td className="py-4 text-center text-[12px]">{item.cantidad}</td>
+                  <td className="py-4 font-medium text-zinc-900 text-[12px]">{item.descripcion}</td>
+                  <td className="py-4 text-right font-mono text-[12px]">{(item.precioUnitario || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  <td className="py-4 text-right font-mono font-semibold text-[12px]">{(item.cantidad * item.precioUnitario || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
