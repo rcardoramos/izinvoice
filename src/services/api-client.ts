@@ -35,10 +35,11 @@ export class BillingApiClient {
     document.cookie = `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/`;
   }
 
-  private static getHeaders(): HeadersInit {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
+  private static getHeaders(isFormData?: boolean): HeadersInit {
+    const headers: Record<string, string> = {};
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     // 1. Try reading from cookies first (per request interceptor)
     const token = this.getCookie('token');
@@ -68,10 +69,12 @@ export class BillingApiClient {
   }
 
   private static async request<T>(url: string, options: RequestInit = {}): Promise<T> {
+    const isFormData = typeof window !== 'undefined' && options.body instanceof FormData;
+    const baseHeaders = this.getHeaders(isFormData);
     const res = await fetch(`${BASE}${url}`, {
       ...options,
       headers: {
-        ...this.getHeaders(),
+        ...baseHeaders,
         ...options.headers,
       },
     });
@@ -342,6 +345,36 @@ export class BillingApiClient {
     return this.request<any>('/saas/companies', {
       method: 'PUT',
       body: JSON.stringify(body),
+    });
+  }
+
+  // Certificates
+  static async listCertificates(params: { isActive?: boolean; page?: number; limit?: number } = {}): Promise<any> {
+    const query = new URLSearchParams();
+    if (params.isActive !== undefined) query.append('isActive', String(params.isActive));
+    if (params.page) query.append('page', String(params.page));
+    if (params.limit) query.append('limit', String(params.limit));
+    const qs = query.toString();
+    return this.request<any>(`/certificates${qs ? '?' + qs : ''}`);
+  }
+
+  static async uploadCertificate(formData: FormData): Promise<any> {
+    return this.request<any>('/certificates', {
+      method: 'POST',
+      body: formData,
+    });
+  }
+
+  static async updateCertificate(id: string, body: { alias?: string; pfxPassword?: string; isActive?: boolean }): Promise<any> {
+    return this.request<any>(`/certificates/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    });
+  }
+
+  static async deleteCertificate(id: string): Promise<any> {
+    return this.request<any>(`/certificates/${id}`, {
+      method: 'DELETE',
     });
   }
 }

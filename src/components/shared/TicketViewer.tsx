@@ -20,7 +20,7 @@ export function TicketViewer({ document, companyName, companyRuc, companyAddress
   const calculatedSubtotal = p.totals?.subtotal || p.items?.reduce((sum, item) => sum + (item.cantidad * item.precioUnitario), 0) || 0;
 
   return (
-    <div className="bg-white text-zinc-900 p-5 rounded-lg border border-zinc-200 shadow-md max-w-[310px] mx-auto font-mono text-[10px] select-none print:shadow-none print:border-none print:p-0 print:max-w-full">
+    <div className="bg-white text-zinc-900 p-5 rounded-lg border border-zinc-200 shadow-md max-w-[310px] mx-auto font-mono text-[10px] select-none print-ticket-viewer">
       {/* Header Info */}
       <div className="text-center space-y-1">
         <div className="flex justify-center mb-1">

@@ -20,6 +20,7 @@ export interface DbSchema {
   sunat_submissions: any[];
   notifications: any[];
   audit_logs: any[];
+  certificates: any[];
 }
 
 const INITIAL_DB: DbSchema = {
@@ -223,6 +224,20 @@ const INITIAL_DB: DbSchema = {
       details: 'Initial database seeds deployed successfully.',
       created_at: new Date().toISOString(),
     }
+  ],
+  certificates: [
+    {
+      id: 'cert_dev_01',
+      company_id: '00000000-0000-4000-8000-000000000001',
+      alias: 'Certificado de Pruebas IzInvoce',
+      filename: 'dev-beta.pfx',
+      validFrom: '2025-05-24',
+      validTo: '2027-05-24',
+      isActive: true,
+      hasPfxContent: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
   ]
 };
 
@@ -256,6 +271,10 @@ export class FileDb {
   // Generic helpers
   static getTable<K extends keyof DbSchema>(table: K): DbSchema[K] {
     const db = this.read();
+    if (db[table] === undefined) {
+      db[table] = (INITIAL_DB[table] || []) as any;
+      this.write(db);
+    }
     return db[table];
   }
 

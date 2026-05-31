@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { useAuthStore } from '@/store/auth';
 import { useAppStore } from '@/store/app';
+import { BillingApiClient } from '@/services/api-client';
 import { 
   Building, 
   Key, 
@@ -13,7 +14,9 @@ import {
   Trash2, 
   Copy, 
   Check, 
-  AlertTriangle 
+  AlertTriangle,
+  X,
+  Edit
 } from 'lucide-react';
 
 export default function SettingsPage() {
@@ -40,6 +43,156 @@ export default function SettingsPage() {
   const [newKeyName, setNewKeyName] = useState('');
   const [showKeyModal, setShowKeyModal] = useState(false);
 
+  // Certificates CRUD state
+  const [certificates, setCertificates] = useState<any[]>([]);
+  const [certLoading, setCertLoading] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingCert, setEditingCert] = useState<any>(null);
+
+  // Upload Form state
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadPassword, setUploadPassword] = useState('');
+  const [uploadAlias, setUploadAlias] = useState('');
+  const [uploadSetActive, setUploadSetActive] = useState(true);
+  const [uploadLoading, setUploadLoading] = useState(false);
+
+  // Edit Form state
+  const [editAlias, setEditAlias] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [editIsActive, setEditIsActive] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+
+  const loadCertificates = async () => {
+    try {
+      setCertLoading(true);
+      const res = await BillingApiClient.listCertificates();
+      const list = Array.isArray(res) ? res : (res?.data ?? []);
+      setCertificates(list);
+    } catch (err) {
+      console.error('Failed to load certificates', err);
+    } finally {
+      setCertLoading(false);
+    }
+  };
+
+  const handleActivateCert = async (id: string) => {
+    try {
+      await BillingApiClient.updateCertificate(id, { isActive: true });
+      addNotification({
+        id: Math.random().toString(),
+        title: 'Certificado Activo',
+        message: 'Se ha cambiado el certificado activo para la firma XML.',
+        type: 'success',
+        created_at: new Date().toISOString(),
+      });
+      loadCertificates();
+    } catch (err: any) {
+      alert(err.message || 'Error al activar el certificado.');
+    }
+  };
+
+  const handleDeleteCert = async (id: string, alias: string) => {
+    if (!confirm(`¿Está seguro de que desea eliminar el certificado '${alias}'?`)) return;
+    try {
+      await BillingApiClient.deleteCertificate(id);
+      addNotification({
+        id: Math.random().toString(),
+        title: 'Certificado Eliminado',
+        message: `El certificado '${alias}' ha sido eliminado.`,
+        type: 'info',
+        created_at: new Date().toISOString(),
+      });
+      loadCertificates();
+    } catch (err: any) {
+      alert(err.message || 'Error al eliminar el certificado.');
+    }
+  };
+
+  const handleUploadCertSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadFile) {
+      alert('Por favor seleccione un archivo .pfx o .p12');
+      return;
+    }
+    if (!uploadPassword) {
+      alert('La contraseña del certificado es requerida.');
+      return;
+    }
+
+    try {
+      setUploadLoading(true);
+      const formData = new FormData();
+      formData.append('file', uploadFile);
+      formData.append('pfxPassword', uploadPassword);
+      formData.append('alias', uploadAlias);
+      formData.append('setActive', String(uploadSetActive));
+
+      await BillingApiClient.uploadCertificate(formData);
+
+      addNotification({
+        id: Math.random().toString(),
+        title: 'Certificado Subido',
+        message: 'El nuevo certificado digital se ha cargado con éxito.',
+        type: 'success',
+        created_at: new Date().toISOString(),
+      });
+
+      setUploadFile(null);
+      setUploadPassword('');
+      setUploadAlias('');
+      setUploadSetActive(true);
+      setShowUploadModal(false);
+      loadCertificates();
+    } catch (err: any) {
+      alert(err.message || 'Error al subir el certificado. Asegúrese de que el archivo sea .pfx/.p12 y la clave sea correcta.');
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  const handleEditCertClick = (cert: any) => {
+    setEditingCert(cert);
+    setEditAlias(cert.alias || '');
+    setEditPassword('');
+    setEditIsActive(cert.isActive);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateCertSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCert) return;
+
+    try {
+      setEditLoading(true);
+      const body: any = {
+        alias: editAlias,
+        isActive: editIsActive,
+      };
+      if (editPassword) {
+        body.pfxPassword = editPassword;
+      }
+
+      await BillingApiClient.updateCertificate(editingCert.id, body);
+
+      addNotification({
+        id: Math.random().toString(),
+        title: 'Certificado Actualizado',
+        message: 'Los datos del certificado se han actualizado con éxito.',
+        type: 'success',
+        created_at: new Date().toISOString(),
+      });
+
+      setShowEditModal(false);
+      setEditingCert(null);
+      loadCertificates();
+    } catch (err: any) {
+      alert(err.message || 'Error al actualizar el certificado.');
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
   // Load config on mount
   useEffect(() => {
     if (company) {
@@ -51,7 +204,10 @@ export default function SettingsPage() {
         phone: '+51 987654321',
         email: 'facturacion@invoiceflow.pe',
       });
-      setSolUsername(company.ruc + 'MODDATOS');
+      const comp = company as any;
+      setSolUsername(comp.solUsername || comp.sol_username || comp.ruc + 'MODDATOS');
+      setSolPassword(comp.solPassword || comp.sol_password || 'MODDATOS');
+      loadCertificates();
     }
 
     // Load API keys list from simulated storage
@@ -393,39 +549,107 @@ export default function SettingsPage() {
               </form>
             </div>
 
-            {/* Certificado Digital status display */}
+            {/* Certificado Digital management */}
             <div className="bg-white border border-zinc-200 p-6 rounded-2xl space-y-4 shadow-sm">
-              <div className="flex items-center gap-2 pb-2 border-b border-zinc-100">
-                <FileCheck className="w-4 h-4 text-[#4f46e5]" />
-                <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Certificado Digital</h3>
+              <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
+                <div className="flex items-center gap-2">
+                  <FileCheck className="w-4 h-4 text-[#4f46e5]" />
+                  <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Certificados Digitales</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowUploadModal(true)}
+                  className="flex items-center gap-1 text-[10px] bg-[#4f46e5] hover:bg-[#4338ca] text-white font-bold px-3 py-1.5 rounded-xl cursor-pointer shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Subir PFX
+                </button>
               </div>
 
-              <div className="space-y-3">
-                <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-xl space-y-2">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="font-bold text-zinc-900">dev-beta.pfx</span>
-                    <span className="text-[9px] bg-indigo-500/10 text-[#4f46e5] px-2 py-0.5 rounded-md font-bold uppercase">Activo</span>
-                  </div>
-                  <div className="text-[10px] text-zinc-500 space-y-0.5 font-mono font-semibold">
-                    <p>Emisor: SUNAT Pruebas Autorizadas</p>
-                    <p>Vence: 24 May 2027 (Válido)</p>
-                  </div>
+              {certLoading ? (
+                <div className="flex flex-col items-center justify-center py-6 space-y-2">
+                  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-[10px] text-zinc-400">Cargando certificados...</span>
                 </div>
+              ) : certificates.length === 0 ? (
+                <div className="border border-dashed border-zinc-200 p-6 rounded-xl text-center text-zinc-400">
+                  <p className="font-bold text-[10px] mb-1 text-zinc-700">Sin Certificados</p>
+                  <p className="text-[9px] mb-2 leading-snug">Suba su certificado digital (.pfx) para comenzar a firmar comprobantes.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {certificates.map((cert) => (
+                    <div 
+                      key={cert.id} 
+                      className={`p-3 border rounded-xl space-y-2 transition-all ${
+                        cert.isActive 
+                          ? 'border-[#4f46e5]/40 bg-indigo-500/[0.01]' 
+                          : 'border-zinc-200 bg-zinc-50/50'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-zinc-900 truncate text-[11px]" title={cert.alias}>
+                            {cert.alias}
+                          </p>
+                          <p className="text-[9px] text-zinc-400 font-mono truncate">
+                            {cert.filename}
+                          </p>
+                        </div>
+                        <span 
+                          className={`text-[8px] px-2 py-0.5 rounded-md font-bold uppercase shrink-0 ${
+                            cert.isActive 
+                              ? 'bg-indigo-500/10 text-[#4f46e5]' 
+                              : 'bg-zinc-200 text-zinc-500'
+                          }`}
+                        >
+                          {cert.isActive ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </div>
 
-                <div className="border border-dashed border-zinc-200 p-4 rounded-xl text-center text-zinc-400">
-                  <p className="font-bold text-[10px] mb-1 text-zinc-700">¿Actualizar Certificado?</p>
-                  <p className="text-[9px] mb-2 leading-snug">Suba su archivo .pfx para emitir comprobantes en producción.</p>
-                  <button className="px-3 py-1.5 bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-650 rounded-xl font-bold transition-colors cursor-pointer text-[10px]">
-                    Seleccionar Archivo
-                  </button>
+                      <div className="text-[9.5px] text-zinc-500 font-mono space-y-0.5">
+                        <p>Validez: {cert.validFrom} al {cert.validTo}</p>
+                      </div>
+
+                      <div className="flex justify-between items-center pt-2 border-t border-zinc-150/60 mt-1">
+                        <div className="flex gap-2">
+                          {!cert.isActive && (
+                            <button
+                              type="button"
+                              onClick={() => handleActivateCert(cert.id)}
+                              className="text-[9px] text-[#4f46e5] font-bold hover:underline cursor-pointer"
+                            >
+                              Activar
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleEditCertClick(cert)}
+                            className="p-1 hover:bg-zinc-100 rounded-lg text-zinc-450 hover:text-zinc-900 cursor-pointer"
+                            title="Editar Certificado"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteCert(cert.id, cert.alias)}
+                            className="p-1 hover:bg-rose-50 rounded-lg text-zinc-450 hover:text-rose-600 cursor-pointer"
+                            title="Eliminar Certificado"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              )}
             </div>
+          </div>
 
           </div>
         </div>
-
-      </div>
 
       {/* Generate API Key modal dialog */}
       {showKeyModal && (
@@ -461,6 +685,177 @@ export default function SettingsPage() {
                   className="px-4 py-2 bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded-xl font-bold cursor-pointer shadow-md shadow-indigo-500/10"
                 >
                   Generar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Certificate modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none">
+          <div className="w-[420px] bg-white border border-zinc-200 rounded-2xl overflow-hidden p-6 shadow-2xl space-y-4">
+            <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
+              <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">
+                Subir Certificado Digital (.pfx / .p12)
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowUploadModal(false)}
+                className="p-1 hover:bg-zinc-100 rounded-lg text-zinc-400 hover:text-zinc-700 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUploadCertSubmit} className="space-y-4 text-xs">
+              <div className="space-y-1">
+                <label className="block text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-400">Archivo del Certificado</label>
+                <input
+                  type="file"
+                  accept=".pfx,.p12"
+                  onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                  required
+                  className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-zinc-750 bg-white"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-400">Contraseña del Certificado</label>
+                <input
+                  type="password"
+                  value={uploadPassword}
+                  onChange={(e) => setUploadPassword(e.target.value)}
+                  required
+                  placeholder="Contraseña de exportación de la clave privada"
+                  className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900 bg-white font-mono"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-400">Alias / Nombre Amigable</label>
+                <input
+                  type="text"
+                  value={uploadAlias}
+                  onChange={(e) => setUploadAlias(e.target.value)}
+                  placeholder="ej. Certificado SUNAT 2026"
+                  className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900 bg-white font-sans"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 select-none cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="uploadSetActive"
+                  checked={uploadSetActive}
+                  onChange={(e) => setUploadSetActive(e.target.checked)}
+                  className="rounded border-zinc-300 text-[#4f46e5] focus:ring-[#4f46e5] cursor-pointer w-4 h-4"
+                />
+                <label htmlFor="uploadSetActive" className="text-[10px] font-semibold text-zinc-650 cursor-pointer">
+                  Activar inmediatamente para firma
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100">
+                <button
+                  type="button"
+                  onClick={() => setShowUploadModal(false)}
+                  className="px-4 py-2 border border-zinc-200 rounded-xl hover:bg-zinc-50 cursor-pointer text-zinc-500 font-semibold"
+                  disabled={uploadLoading}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploadLoading}
+                  className="px-4 py-2 bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded-xl font-bold cursor-pointer shadow-md shadow-indigo-500/10 flex items-center gap-1.5"
+                >
+                  {uploadLoading && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                  Subir Certificado
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Certificate modal */}
+      {showEditModal && editingCert && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none">
+          <div className="w-[420px] bg-white border border-zinc-200 rounded-2xl overflow-hidden p-6 shadow-2xl space-y-4">
+            <div className="flex justify-between items-center border-b border-zinc-100 pb-2">
+              <h3 className="text-sm font-bold text-zinc-900 uppercase tracking-wider">
+                Editar Certificado
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                className="p-1 hover:bg-zinc-100 rounded-lg text-zinc-400 hover:text-zinc-700 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateCertSubmit} className="space-y-4 text-xs">
+              <div className="space-y-0.5">
+                <label className="block text-[9px] uppercase font-bold text-zinc-450 dark:text-zinc-400">Archivo Original</label>
+                <p className="font-mono text-zinc-650 font-bold text-[10px]">{editingCert.filename}</p>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-400">Alias / Nombre Amigable</label>
+                <input
+                  type="text"
+                  value={editAlias}
+                  onChange={(e) => setEditAlias(e.target.value)}
+                  required
+                  placeholder="ej. Certificado SUNAT 2026"
+                  className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900 bg-white"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-400">Contraseña (Opcional)</label>
+                <input
+                  type="password"
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  placeholder="Dejar vacío si no desea cambiarla"
+                  className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-zinc-900 bg-white font-mono"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 select-none cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="editIsActive"
+                  checked={editIsActive}
+                  disabled={editingCert.isActive}
+                  onChange={(e) => setEditIsActive(e.target.checked)}
+                  className="rounded border-zinc-300 text-[#4f46e5] focus:ring-[#4f46e5] cursor-pointer w-4 h-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+                <label htmlFor="editIsActive" className="text-[10px] font-semibold text-zinc-650 cursor-pointer">
+                  Activar certificado para firma
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 border border-zinc-200 rounded-xl hover:bg-zinc-50 cursor-pointer text-zinc-500 font-semibold"
+                  disabled={editLoading}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={editLoading}
+                  className="px-4 py-2 bg-[#4f46e5] hover:bg-[#4338ca] text-white rounded-xl font-bold cursor-pointer shadow-md shadow-indigo-500/10 flex items-center gap-1.5"
+                >
+                  {editLoading && <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                  Guardar Cambios
                 </button>
               </div>
             </form>

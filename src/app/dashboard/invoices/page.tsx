@@ -10,6 +10,7 @@ import { CancelBoletaModal } from '@/components/shared/CancelBoletaModal';
 import { BillingApiClient } from '@/services/api-client';
 import { DOC_TYPE_LABELS } from '@/types/enums';
 import { useAuthStore } from '@/store/auth';
+import { CustomSelect } from '@/components/shared/CustomSelect';
 import { 
   FileText, 
   Download, 
@@ -364,132 +365,37 @@ export default function InvoicesHistoryPage() {
       key: 'status',
       label: 'Estado SUNAT',
       render: (val: any) => <StatusBadge status={val} />,
-    },
-    {
-      key: 'actions',
-      label: 'Acciones',
-      render: (_: any, row: any) => {
-        const cliente = row.cliente ?? row.payload?.cliente;
-        const clientDocNum = String(cliente?.numDoc ?? cliente?.num_doc ?? cliente?.docNumber ?? cliente?.doc_number ?? '').trim();
-        const matchingCustomer = clientDocNum ? customersMap[clientDocNum] : null;
-        
-        const phone = (
-          cliente?.telefono || 
-          cliente?.phone || 
-          matchingCustomer?.phone || 
-          matchingCustomer?.telefono || 
-          ''
-        ).replace(/\D/g, '');
-
-        const email = cliente?.correo || cliente?.email || matchingCustomer?.email || matchingCustomer?.correo || '';
-
-        const whatsappUrl = phone 
-          ? `https://wa.me/${phone.startsWith('51') ? phone : '51' + phone}?text=${encodeURIComponent(
-              `Estimado cliente, le adjuntamos su comprobante electrónico ${row.serie}-${row.correlativo} por un monto de S/ ${parseFloat(row.total || '0').toFixed(2)}. ¡Muchas gracias!`
-            )}`
-          : null;
-        
-        const mailUrl = `mailto:${email}?subject=${encodeURIComponent(
-          `Comprobante de Pago Electrónico ${row.serie}-${row.correlativo}`
-        )}&body=${encodeURIComponent(
-          `Estimado cliente,\n\nLe hacemos llegar su comprobante electrónico ${row.serie}-${row.correlativo} por un monto de S/ ${parseFloat(row.total || '0').toFixed(2)}.\n\nAtentamente,\n${company?.businessName || ''}`
-        )}`;
-
-        const handlePrint = (e: React.MouseEvent) => {
-          e.stopPropagation();
-          setSelectedDocId(row.id);
-          setTimeout(() => {
-            window.print();
-          }, 300);
-        };
-
-        const handleCancelIconClick = (e: React.MouseEvent) => {
-          e.stopPropagation();
-          setDocToCancel(row);
-          setCancelModal(true);
-        };
-
-        const handleVoidIconClick = async (e: React.MouseEvent) => {
-          e.stopPropagation();
-          if (!confirm(`¿Está seguro de que desea dar de baja la Factura ${row.serie}-${row.correlativo}?`)) return;
-          try {
-            setLoading(true);
-            await BillingApiClient.voidedDocuments({
-              documentIds: [row.id],
-              motivoBaja: 'ERROR EN FACTURACION',
-            });
-            alert('Comunicación de baja (RA) enviada a SUNAT. Consulte su estado en el menú de resúmenes.');
-            loadDocuments();
-          } catch (err: any) {
-            alert(err.message || 'Error al procesar la baja.');
-          } finally {
-            setLoading(false);
-          }
-        };
-
-        return (
-          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-            {/* WhatsApp */}
-            {whatsappUrl ? (
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="p-1 rounded hover:bg-emerald-500/10 text-emerald-500 cursor-pointer"
-                title="WhatsApp"
-              >
-                <WhatsAppIcon className="w-3.5 h-3.5" />
-              </a>
-            ) : (
-              <span className="p-1 text-zinc-300 dark:text-zinc-700 cursor-not-allowed text-zinc-400" title="Sin teléfono">
-                <WhatsAppIcon className="w-3.5 h-3.5" />
-              </span>
-            )}
-
-            {/* Email */}
-            <a
-              href={mailUrl}
-              className="p-1 rounded hover:bg-blue-500/10 text-blue-500 cursor-pointer"
-              title="Correo"
-            >
-              <Mail className="w-3.5 h-3.5" />
-            </a>
-
-            {/* Print */}
-            <button
-              onClick={handlePrint}
-              className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 cursor-pointer"
-              title="Imprimir / PDF"
-            >
-              <Printer className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Cancel (Signed Boleta) */}
-            {row.status === 'signed' && (row.docType === '03' || row.doc_type === '03') && (
-              <button
-                onClick={handleCancelIconClick}
-                className="p-1 rounded hover:bg-rose-500/10 text-rose-500 cursor-pointer"
-                title="Cancelar Boleta"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            )}
-
-            {/* Void (Accepted Factura) */}
-            {row.status === 'accepted' && (row.docType === '01' || row.doc_type === '01') && (
-              <button
-                onClick={handleVoidIconClick}
-                className="p-1 rounded hover:bg-rose-500/10 text-rose-500 cursor-pointer"
-                title="Anular Factura"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        );
-      }
     }
   ];
+
+  // Calculate client contact details for selected doc
+  const cliente = selectedDoc?.cliente ?? selectedDoc?.payload?.cliente;
+  const clientDocNum = String(cliente?.numDoc ?? cliente?.num_doc ?? cliente?.docNumber ?? cliente?.doc_number ?? '').trim();
+  const matchingCustomer = clientDocNum ? customersMap[clientDocNum] : null;
+  
+  const phone = (
+    cliente?.telefono || 
+    cliente?.phone || 
+    matchingCustomer?.phone || 
+    matchingCustomer?.telefono || 
+    ''
+  ).replace(/\D/g, '');
+
+  const email = cliente?.correo || cliente?.email || matchingCustomer?.email || matchingCustomer?.correo || '';
+
+  const whatsappUrl = phone 
+    ? `https://wa.me/${phone.startsWith('51') ? phone : '51' + phone}?text=${encodeURIComponent(
+        `Estimado cliente, le adjuntamos su comprobante electrónico ${selectedDoc?.serie}-${selectedDoc?.correlativo} por un monto de S/ ${parseFloat(selectedDoc?.total || '0').toFixed(2)}. ¡Muchas gracias!`
+      )}`
+    : null;
+  
+  const mailUrl = email
+    ? `mailto:${email}?subject=${encodeURIComponent(
+        `Comprobante de Pago Electrónico ${selectedDoc?.serie}-${selectedDoc?.correlativo}`
+      )}&body=${encodeURIComponent(
+        `Estimado cliente,\n\nLe hacemos llegar su comprobante electrónico ${selectedDoc?.serie}-${selectedDoc?.correlativo} por un monto de S/ ${parseFloat(selectedDoc?.total || '0').toFixed(2)}.\n\nAtentamente,\n${company?.businessName || ''}`
+      )}`
+    : null;
 
   return (
     <div className="flex-1 flex overflow-hidden">
@@ -521,33 +427,33 @@ export default function InvoicesHistoryPage() {
               {/* Type Filter */}
               <div>
                 <label className="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Tipo Documento</label>
-                <select
+                <CustomSelect
                   value={filters.docType}
-                  onChange={(e) => handleFilterChange('docType', e.target.value)}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-2.5 text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="">Todos</option>
-                  <option value="01">Factura</option>
-                  <option value="03">Boleta</option>
-                  <option value="07">Nota de Crédito</option>
-                  <option value="08">Nota de Débito</option>
-                </select>
+                  onChange={(val) => handleFilterChange('docType', val)}
+                  options={[
+                    { value: '', label: 'Todos' },
+                    { value: '01', label: 'Factura' },
+                    { value: '03', label: 'Boleta' },
+                    { value: '07', label: 'Nota de Crédito' },
+                    { value: '08', label: 'Nota de Débito' },
+                  ]}
+                />
               </div>
 
               {/* Status Filter */}
               <div>
                 <label className="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Estado SUNAT</label>
-                <select
+                <CustomSelect
                   value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                  className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-2.5 text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                >
-                  <option value="">Todos</option>
-                  <option value="signed">Firmado (Local)</option>
-                  <option value="accepted">Aceptado</option>
-                  <option value="rejected">Rechazado</option>
-                  <option value="voided">De Baja</option>
-                </select>
+                  onChange={(val) => handleFilterChange('status', val)}
+                  options={[
+                    { value: '', label: 'Todos' },
+                    { value: 'signed', label: 'Firmado (Local)' },
+                    { value: 'accepted', label: 'Aceptado' },
+                    { value: 'rejected', label: 'Rechazado' },
+                    { value: 'voided', label: 'De Baja' },
+                  ]}
+                />
               </div>
 
               {/* Serie Filter */}
@@ -673,17 +579,104 @@ export default function InvoicesHistoryPage() {
                   </div>
                 </div>
 
-                {/* Specific actions based on status - compact inline row */}
-                {selectedDoc.status === 'accepted' && (
-                  <div className="flex items-center gap-2">
+                {/* Unified actions bar inside details drawer */}
+                <div className="space-y-2">
+                  <h4 className="text-[10px] uppercase font-bold text-zinc-400 dark:text-zinc-500 tracking-wider">Acciones del Comprobante</h4>
+                  <div className="flex items-center gap-1.5 w-full">
+                    {/* Imprimir / PDF */}
                     <button
-                      onClick={() => setShowNoteDialog(true)}
-                      className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-850 rounded-lg text-[10px] font-bold text-zinc-700 dark:text-zinc-350 transition-colors cursor-pointer"
+                      type="button"
+                      onClick={() => window.print()}
+                      className="flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 px-2 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-lg text-[10px] font-bold text-zinc-700 dark:text-zinc-300 transition-all cursor-pointer shadow-xs hover:scale-[1.02]"
                     >
-                      <PlusCircle className="w-3.5 h-3.5 text-blue-500" /> Emitir Nota de Crédito
+                      <Printer className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                      <span className="truncate">Imprimir</span>
                     </button>
+
+                    {/* WhatsApp */}
+                    {whatsappUrl ? (
+                      <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 px-2 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-emerald-500/10 hover:border-emerald-500/30 rounded-lg text-[10px] font-bold text-zinc-700 dark:text-zinc-300 transition-all cursor-pointer shadow-xs hover:scale-[1.02]"
+                      >
+                        <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        <span className="truncate">WhatsApp</span>
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 px-2 border border-zinc-100 dark:border-zinc-900/50 bg-zinc-50/50 dark:bg-zinc-900/40 rounded-lg text-[10px] font-bold text-zinc-400 dark:text-zinc-650 cursor-not-allowed shadow-none"
+                        title="Sin teléfono registrado"
+                      >
+                        <WhatsAppIcon className="w-3.5 h-3.5 opacity-50 shrink-0" />
+                        <span className="truncate">WhatsApp</span>
+                      </button>
+                    )}
+
+                    {/* Enviar Correo */}
+                    {mailUrl ? (
+                      <a
+                        href={mailUrl}
+                        className="flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 px-2 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-blue-500/10 hover:border-blue-500/30 rounded-lg text-[10px] font-bold text-zinc-700 dark:text-zinc-300 transition-all cursor-pointer shadow-xs hover:scale-[1.02]"
+                      >
+                        <Mail className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                        <span className="truncate">Correo</span>
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled
+                        className="flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 px-2 border border-zinc-100 dark:border-zinc-900/50 bg-zinc-50/50 dark:bg-zinc-900/40 rounded-lg text-[10px] font-bold text-zinc-400 dark:text-zinc-655 cursor-not-allowed shadow-none"
+                        title="Sin correo registrado"
+                      >
+                        <Mail className="w-3.5 h-3.5 opacity-50 shrink-0" />
+                        <span className="truncate">Correo</span>
+                      </button>
+                    )}
+
+                    {/* Emitir Nota de Crédito */}
+                    {selectedDoc.status === 'accepted' && (
+                      <button
+                        type="button"
+                        onClick={() => setShowNoteDialog(true)}
+                        className="flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 px-2 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-amber-500/10 hover:border-amber-500/30 rounded-lg text-[10px] font-bold text-zinc-700 dark:text-zinc-300 transition-all cursor-pointer shadow-xs hover:scale-[1.02]"
+                      >
+                        <PlusCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <span className="truncate">Nota Crédito</span>
+                      </button>
+                    )}
+
+                    {/* Anular Factura */}
+                    {selectedDoc.status === 'accepted' && (selectedDoc.docType === '01' || selectedDoc.doc_type === '01') && (
+                      <button
+                        type="button"
+                        onClick={handleVoidFactura}
+                        className="flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 px-2 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-rose-500/10 hover:border-rose-500/30 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-450 transition-all cursor-pointer shadow-xs hover:scale-[1.02]"
+                      >
+                        <Ban className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                        <span className="truncate">Anular</span>
+                      </button>
+                    )}
+
+                    {/* Cancelar Boleta */}
+                    {selectedDoc.status === 'signed' && (selectedDoc.docType === '03' || selectedDoc.doc_type === '03') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDocToCancel(selectedDoc);
+                          setCancelModal(true);
+                        }}
+                        className="flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 px-2 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-rose-500/10 hover:border-rose-500/30 rounded-lg text-[10px] font-bold text-rose-600 dark:text-rose-450 transition-all cursor-pointer shadow-xs hover:scale-[1.02]"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                        <span className="truncate">Cancelar</span>
+                      </button>
+                    )}
                   </div>
-                )}
+                </div>
 
                 {selectedDoc.status === 'signed' && selectedDoc.docType === '03' && (
                   <div className="p-2.5 bg-amber-500/5 border border-amber-500/10 rounded-xl flex items-center gap-2 text-[10px] text-amber-700 dark:text-amber-400 font-medium">

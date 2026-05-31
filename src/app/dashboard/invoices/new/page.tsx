@@ -28,6 +28,8 @@ import { AddClientModal } from './components/AddClientModal';
 import { EmissionResultModal } from './components/EmissionResultModal';
 import { DOCUMENT_TYPES, getDocTypeConfigByCode } from '@/utils/document-types';
 import { AlertModal } from '@/components/shared/AlertModal';
+import { ProductSearchSelect } from '@/components/shared/ProductSearchSelect';
+import { CustomSelect } from '@/components/shared/CustomSelect';
 
 export default function NewInvoicePage() {
   const router = useRouter();
@@ -383,53 +385,49 @@ export default function NewInvoicePage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1 tracking-wide">Tipo de Doc</label>
-                  <select
+                  <CustomSelect
                     value={docType}
-                    onChange={(e: any) => setDocType(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1.5 px-2.5 text-xs text-zinc-900 dark:text-zinc-300"
-                  >
-                    <option value="01">Factura</option>
-                    <option value="03">Boleta</option>
-                  </select>
+                    onChange={(val) => setDocType(val as '01' | '03')}
+                    options={[
+                      { value: '01', label: 'Factura' },
+                      { value: '03', label: 'Boleta' },
+                    ]}
+                  />
                 </div>
 
                 <div>
                   <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1 tracking-wide">Serie</label>
-                  <select
+                  <CustomSelect
                     value={serie}
-                    onChange={(e: any) => setSerie(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1.5 px-2.5 text-xs text-zinc-900 dark:text-zinc-300"
-                  >
-                    {availableSeries
+                    onChange={setSerie}
+                    options={availableSeries
                       .filter((s) => s.docType === docType)
-                      .map((s) => (
-                        <option key={s.serie} value={s.serie}>{s.serie}</option>
-                      ))}
-                  </select>
+                      .map((s) => ({ value: s.serie, label: s.serie }))}
+                  />
                 </div>
 
                 <div>
                   <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1 tracking-wide">Moneda</label>
-                  <select
+                  <CustomSelect
                     value={moneda}
-                    onChange={(e: any) => setMoneda(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1.5 px-2.5 text-xs text-zinc-900 dark:text-zinc-300"
-                  >
-                    <option value="PEN">Soles (PEN)</option>
-                    <option value="USD">Dólares (USD)</option>
-                  </select>
+                    onChange={setMoneda}
+                    options={[
+                      { value: 'PEN', label: 'Soles (PEN)' },
+                      { value: 'USD', label: 'Dólares (USD)' },
+                    ]}
+                  />
                 </div>
 
                 <div>
                   <label className="block text-[10px] uppercase font-semibold text-zinc-400 mb-1 tracking-wide">Pago</label>
-                  <select
+                  <CustomSelect
                     value={formaPago}
-                    onChange={(e: any) => setFormaPago(e.target.value)}
-                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1.5 px-2.5 text-xs text-zinc-900 dark:text-zinc-300"
-                  >
-                    <option value="Contado">Contado</option>
-                    <option value="Credito">Crédito</option>
-                  </select>
+                    onChange={setFormaPago}
+                    options={[
+                      { value: 'Contado', label: 'Contado' },
+                      { value: 'Credito', label: 'Crédito' },
+                    ]}
+                  />
                 </div>
               </div>
             </div>
@@ -442,18 +440,12 @@ export default function NewInvoicePage() {
 
               {/* Add product to lines selector */}
               <div className="flex flex-col sm:flex-row gap-2">
-                <select
+                <ProductSearchSelect
                   value={selectedProductId}
-                  onChange={(e) => setSelectedProductId(e.target.value)}
-                  className="flex-1 bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg py-1.5 px-2.5 text-xs text-zinc-900 dark:text-zinc-300 min-w-0"
-                >
-                  <option value="">-- Seleccionar producto del catálogo --</option>
-                  {productsList.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      [{p.code ?? p.codigo}] {p.description ?? p.nombre} - S/ {(p.unitPrice ?? p.precio ?? 0).toFixed(2)}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setSelectedProductId}
+                  initialProducts={productsList}
+                  disabled={loadingConfig}
+                />
                 <button
                   onClick={handleAddItemLine}
                   disabled={!selectedProductId}

@@ -21,7 +21,7 @@ export function PdfViewer({ document, companyName, companyRuc, companyAddress, i
   const calculatedSubtotal = p.totals?.subtotal || p.items?.reduce((sum, item) => sum + (item.cantidad * item.precioUnitario), 0) || 0;
 
   return (
-    <div className="bg-white text-zinc-950 p-10 md:p-12 rounded-xl border border-zinc-200 shadow-lg max-w-2xl mx-auto font-sans text-xs select-none">
+    <div className="bg-white text-zinc-950 p-10 md:p-12 rounded-xl border border-zinc-200 shadow-lg max-w-2xl mx-auto font-sans text-xs select-none print-pdf-viewer">
       {/* Invoice Receipt Header */}
       <div className="flex justify-between items-start gap-4 pb-8 border-b border-zinc-200">
         <div>
