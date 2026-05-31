@@ -153,6 +153,20 @@ export class BillingApiClient {
     });
   }
 
+  static async previewDailySummaryVoid(body: {
+    documentIds?: string[];
+    referenceDate?: string;
+    issueDate?: string;
+    page?: number;
+    limit?: number;
+    includeXml?: boolean;
+  } = {}): Promise<any> {
+    return this.request<any>('/daily-summaries/void/preview', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
   static async closeDailySummary(body: CloseDailySummaryRequest = {}): Promise<DailySummarySubmitResponse> {
     return this.request<DailySummarySubmitResponse>('/daily-summaries', {
       method: 'POST',

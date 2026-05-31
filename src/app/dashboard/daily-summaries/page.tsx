@@ -192,6 +192,55 @@ export default function DailySummariesPage() {
   const [submitResult, setSubmitResult] = useState<any>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // RC Void / Bajas state
+  const [summaryMode, setSummaryMode] = useState<'altas' | 'bajas'>('altas');
+  const [acceptedBoletas, setAcceptedBoletas] = useState<any[]>([]);
+  const [acceptedBoletasLoading, setAcceptedBoletasLoading] = useState(false);
+  const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);
+
+  const loadAcceptedBoletas = useCallback(async (refDate: string) => {
+    if (!refDate) return;
+    setAcceptedBoletasLoading(true);
+    try {
+      const docs = await BillingApiClient.listDocuments({
+        docType: '03',
+        status: 'accepted',
+      });
+      const filtered = docs.filter((doc: any) => {
+        const issueDateDoc = doc.issueDate || doc.issue_date;
+        const dailySummaryId = doc.dailySummaryId || doc.daily_summary_id;
+        const isAlreadyVoided = doc.payload?._rcVoid;
+        return issueDateDoc === refDate && dailySummaryId && !isAlreadyVoided;
+      });
+      setAcceptedBoletas(filtered);
+      setSelectedDocIds([]);
+    } catch (err) {
+      console.error('Error fetching accepted boletas', err);
+    } finally {
+      setAcceptedBoletasLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (summaryMode === 'bajas') {
+      loadAcceptedBoletas(referenceDate);
+    }
+  }, [summaryMode, referenceDate, loadAcceptedBoletas]);
+
+  const handleToggleDoc = (docId: string) => {
+    setSelectedDocIds(prev => 
+      prev.includes(docId) ? prev.filter(id => id !== docId) : [...prev, docId]
+    );
+  };
+
+  const handleSelectAllDocs = () => {
+    if (selectedDocIds.length === acceptedBoletas.length) {
+      setSelectedDocIds([]);
+    } else {
+      setSelectedDocIds(acceptedBoletas.map(b => b.id));
+    }
+  };
+
   const fetchSummariesList = useCallback(async () => {
     setSummariesLoading(true);
     try {
@@ -264,6 +313,9 @@ export default function DailySummariesPage() {
     setSubmitResult(null);
     setSubmitError(null);
     setPreviewPage(1);
+    setSummaryMode('altas');
+    setAcceptedBoletas([]);
+    setSelectedDocIds([]);
     setStep('configure');
   };
 
@@ -279,9 +331,23 @@ export default function DailySummariesPage() {
     setPreviewData(null);
     setPreviewPage(1);
     try {
-      const res = await BillingApiClient.previewDailySummary({
-        referenceDate, issueDate, page: 1, limit: PREVIEW_LIMIT,
-      });
+      let res;
+      if (summaryMode === 'bajas') {
+        res = await BillingApiClient.previewDailySummaryVoid({
+          documentIds: selectedDocIds,
+          referenceDate,
+          issueDate,
+          page: 1,
+          limit: PREVIEW_LIMIT,
+        });
+      } else {
+        res = await BillingApiClient.previewDailySummary({
+          referenceDate,
+          issueDate,
+          page: 1,
+          limit: PREVIEW_LIMIT,
+        });
+      }
       setPreviewData(res);
       setStep('preview');
     } catch (err: any) {
@@ -296,9 +362,23 @@ export default function DailySummariesPage() {
   const handlePreviewPage = async (newPage: number) => {
     setPreviewLoading(true);
     try {
-      const res = await BillingApiClient.previewDailySummary({
-        referenceDate, issueDate, page: newPage, limit: PREVIEW_LIMIT,
-      });
+      let res;
+      if (summaryMode === 'bajas') {
+        res = await BillingApiClient.previewDailySummaryVoid({
+          documentIds: selectedDocIds,
+          referenceDate,
+          issueDate,
+          page: newPage,
+          limit: PREVIEW_LIMIT,
+        });
+      } else {
+        res = await BillingApiClient.previewDailySummary({
+          referenceDate,
+          issueDate,
+          page: newPage,
+          limit: PREVIEW_LIMIT,
+        });
+      }
       setPreviewData(res);
       setPreviewPage(newPage);
     } catch { /* keep current */ }
@@ -311,10 +391,19 @@ export default function DailySummariesPage() {
     setSubmitError(null);
     setSubmitResult(null);
     try {
-      const res = await BillingApiClient.closeDailySummary({
-        referenceDate: referenceDate as any,
-        issueDate: issueDate as any,
-      });
+      let res;
+      if (summaryMode === 'bajas') {
+        res = await BillingApiClient.voidDailySummary({
+          documentIds: selectedDocIds,
+          referenceDate: referenceDate as any,
+          issueDate: issueDate as any,
+        });
+      } else {
+        res = await BillingApiClient.closeDailySummary({
+          referenceDate: referenceDate as any,
+          issueDate: issueDate as any,
+        });
+      }
       setSubmitResult(res);
       setStep('result');
 
@@ -326,7 +415,7 @@ export default function DailySummariesPage() {
         issueDate: res.issueDate ?? issueDate,
         status: res.status,
         ticket: res.ticket ?? null,
-        documentCount: res.sunat?.documentCount,
+        documentCount: res.sunat?.documentCount ?? selectedDocIds.length,
         createdAt: nowPE(),
       };
       const updated = upsertRecord(loadHistory(), record);
@@ -337,7 +426,7 @@ export default function DailySummariesPage() {
 
       addNotification({
         id: Math.random().toString(),
-        title: 'RC Enviado',
+        title: summaryMode === 'bajas' ? 'Baja de Boleta Enviada' : 'RC Enviado',
         message: `Resumen ${res.summaryCode} enviado. Ticket: ${res.ticket ?? 'pendiente'}.`,
         type: 'success',
         created_at: nowPE(),
@@ -704,7 +793,9 @@ export default function DailySummariesPage() {
                   <div className="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center">
                     <Layers className="w-4 h-4 text-indigo-600" />
                   </div>
-                  <h3 className="text-sm font-bold text-zinc-900">Nuevo Resumen Diario (RC)</h3>
+                  <h3 className="text-sm font-bold text-zinc-900">
+                    {summaryMode === 'bajas' ? 'Nuevo Resumen de Anulación (RC Void)' : 'Nuevo Resumen Diario (RC)'}
+                  </h3>
                 </div>
                 <StepBreadcrumb step={step} />
               </div>
@@ -720,11 +811,43 @@ export default function DailySummariesPage() {
             {/* ── STEP 1: Configure ── */}
             {step === 'configure' && (
               <form onSubmit={handlePreview} className="p-6 space-y-5">
-                <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex gap-3 text-xs">
-                  <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-amber-700 leading-relaxed">
-                    Solo se incluirán Boletas, Notas de Crédito y Notas de Débito en estado <b>signed</b> cuya
-                    {' '}<b>fecha de emisión</b> coincida con la <b>Fecha de Referencia</b> seleccionada.
+                {/* Selector de Tipo de Resumen */}
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] uppercase font-semibold text-zinc-400 tracking-wider">
+                    Tipo de Resumen a Generar
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 p-1 bg-zinc-50 dark:bg-zinc-950/60 rounded-xl border border-zinc-150 dark:border-zinc-800/80">
+                    <button
+                      type="button"
+                      onClick={() => setSummaryMode('altas')}
+                      className={`py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                        summaryMode === 'altas'
+                          ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200/50 dark:border-zinc-700/55'
+                          : 'text-zinc-400 hover:text-zinc-500'
+                      }`}
+                    >
+                      Altas (Enviar Boletas/Notas)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSummaryMode('bajas')}
+                      className={`py-1.5 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                        summaryMode === 'bajas'
+                          ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm border border-zinc-200/50 dark:border-zinc-700/55'
+                          : 'text-zinc-400 hover:text-zinc-500'
+                      }`}
+                    >
+                      Bajas (Anular Boletas Aceptadas)
+                    </button>
+                  </div>
+                </div>
+
+                <div className="bg-indigo-50/70 border border-indigo-100 rounded-xl p-4 flex gap-3 text-xs">
+                  <Info className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                  <p className="text-indigo-700 leading-relaxed">
+                    {summaryMode === 'altas'
+                      ? 'Solo se incluirán Boletas, Notas de Crédito y Notas de Débito en estado signed cuya fecha de emisión coincida con la Fecha de Referencia.'
+                      : 'Permite reportar la anulación (baja) de boletas en estado Aceptado que no hayan sido entregadas al cliente comercialmente.'}
                   </p>
                 </div>
 
@@ -767,6 +890,76 @@ export default function DailySummariesPage() {
                   </div>
                 </div>
 
+                {/* Checklist of accepted boletas when mode is Bajas */}
+                {summaryMode === 'bajas' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[10px] uppercase font-semibold text-zinc-500 tracking-wider">
+                        Seleccione Boletas a Anular <span className="text-rose-400">*</span>
+                      </label>
+                      {acceptedBoletas.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleSelectAllDocs}
+                          className="text-[10px] text-indigo-600 font-semibold hover:underline"
+                        >
+                          {selectedDocIds.length === acceptedBoletas.length
+                            ? 'Deseleccionar Todos'
+                            : 'Seleccionar Todos'}
+                        </button>
+                      )}
+                    </div>
+
+                    {acceptedBoletasLoading ? (
+                      <div className="flex items-center justify-center gap-2 p-6 border border-dashed border-zinc-200 rounded-xl text-xs text-zinc-400 bg-zinc-50/50">
+                        <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
+                        <span>Buscando boletas aceptadas...</span>
+                      </div>
+                    ) : acceptedBoletas.length === 0 ? (
+                      <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex gap-2 text-xs text-amber-700">
+                        <TriangleAlert className="w-4 h-4 shrink-0 mt-0.5" />
+                        <span>No se encontraron boletas en estado 'Aceptado' para la Fecha de Referencia seleccionada.</span>
+                      </div>
+                    ) : (
+                      <div className="border border-zinc-200 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-zinc-50 border-b border-zinc-200 text-[9px] text-zinc-400 uppercase font-semibold">
+                              <th className="px-3 py-2 w-10 text-center">Seleccionar</th>
+                              <th className="px-3 py-2">Comprobante</th>
+                              <th className="px-3 py-2">Cliente</th>
+                              <th className="px-3 py-2 text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-zinc-100">
+                            {acceptedBoletas.map(doc => (
+                              <tr key={doc.id} className="hover:bg-zinc-50/50">
+                                <td className="px-3 py-2 text-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedDocIds.includes(doc.id)}
+                                    onChange={() => handleToggleDoc(doc.id)}
+                                    className="rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer w-3.5 h-3.5"
+                                  />
+                                </td>
+                                <td className="px-3 py-2 font-mono font-bold text-zinc-900">
+                                  {doc.serie}-{String(doc.correlativo || doc.correlativo_numero || '').padStart(8, '0')}
+                                </td>
+                                <td className="px-3 py-2 text-zinc-500 max-w-[150px] truncate">
+                                  {doc.payload?.cliente?.razonSocial || doc.cliente?.razonSocial || 'VARIOS'}
+                                </td>
+                                <td className="px-3 py-2 text-right font-mono font-semibold text-zinc-800">
+                                  {formatCurrency(doc.total)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {previewError && (
                   <div className="bg-rose-50 border border-rose-100 rounded-xl p-3 flex gap-2 text-xs text-rose-700">
                     <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -781,7 +974,7 @@ export default function DailySummariesPage() {
                   </button>
                   <button
                     type="submit"
-                    disabled={previewLoading || !referenceDate}
+                    disabled={previewLoading || !referenceDate || (summaryMode === 'bajas' && selectedDocIds.length === 0)}
                     className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-semibold disabled:opacity-50 cursor-pointer transition-colors"
                   >
                     {previewLoading
@@ -939,8 +1132,10 @@ export default function DailySummariesPage() {
                     <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex gap-3 text-xs">
                       <ShieldCheck className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
                       <p className="text-indigo-700 leading-relaxed">
-                        Al confirmar se enviará el RC a SUNAT con los <b>{previewData.documentCount} comprobante(s)</b> listados.
-                        SUNAT responderá con un <b>ticket</b> que podrás consultar desde el historial.
+                        {summaryMode === 'bajas'
+                          ? `Al confirmar se enviará el resumen de bajas (RC Void) a SUNAT para anular los ${previewData.documentCount} comprobante(s) listados. SUNAT responderá con un ticket que podrás consultar desde el historial.`
+                          : `Al confirmar se enviará el RC a SUNAT con los ${previewData.documentCount} comprobante(s) listados. SUNAT responderá con un ticket que podrás consultar desde el historial.`
+                        }
                       </p>
                     </div>
                   </>
@@ -958,7 +1153,7 @@ export default function DailySummariesPage() {
                   >
                     {step === 'submitting'
                       ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Enviando a SUNAT...</>
-                      : <><Send className="w-3.5 h-3.5" /> Confirmar y Enviar RC</>
+                      : <><Send className="w-3.5 h-3.5" /> {summaryMode === 'bajas' ? 'Confirmar y Anular Boletas' : 'Confirmar y Enviar RC'}</>
                     }
                   </button>
                 </div>
