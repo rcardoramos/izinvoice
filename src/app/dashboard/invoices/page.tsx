@@ -350,7 +350,18 @@ export default function InvoicesHistoryPage() {
     {
       key: 'issueDate',
       label: 'Fecha',
-      render: (val: any) => val,
+      render: (_: any, row: any) => {
+        const dateStr = row.issueDate ?? row.issue_date ?? '';
+        const timeStr = row.created_at || row.createdAt
+          ? new Date(row.created_at || row.createdAt).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false })
+          : '';
+        return (
+          <div className="space-y-0.5">
+            <p className="font-semibold">{dateStr}</p>
+            {timeStr && <p className="text-[10px] text-zinc-400 font-mono">{timeStr}</p>}
+          </div>
+        );
+      },
     },
     {
       key: 'total',
@@ -755,6 +766,8 @@ export default function InvoicesHistoryPage() {
                       companyName={company?.businessName || ''}
                       companyRuc={company?.ruc || ''}
                       companyAddress={company?.address || ''}
+                      companyPhone={company?.phone || ''}
+                      companyEmail={company?.email || ''}
                       isSummarized={isSummarizedPdf}
                     />
                   ) : (
@@ -763,6 +776,8 @@ export default function InvoicesHistoryPage() {
                       companyName={company?.businessName || ''}
                       companyRuc={company?.ruc || ''}
                       companyAddress={company?.address || ''}
+                      companyPhone={company?.phone || ''}
+                      companyEmail={company?.email || ''}
                       isSummarized={isSummarizedPdf}
                     />
                   )}

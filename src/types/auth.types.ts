@@ -21,6 +21,8 @@ export interface CompanySession {
   tradeName: string | null;
   address: string | null;
   ubigeo: string | null;
+  phone: string | null;
+  email: string | null;
   sunatEnvironment: SunatEnvironment;
   apiKey: string;
 }

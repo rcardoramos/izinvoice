@@ -215,6 +215,8 @@ export function EmissionResultModal({
                       companyName={company?.businessName || ''}
                       companyRuc={company?.ruc || ''}
                       companyAddress={company?.address || ''}
+                      companyPhone={company?.phone || ''}
+                      companyEmail={company?.email || ''}
                     />
                   ) : (
                     <TicketViewer
@@ -248,6 +250,8 @@ export function EmissionResultModal({
                       companyName={company?.businessName || ''}
                       companyRuc={company?.ruc || ''}
                       companyAddress={company?.address || ''}
+                      companyPhone={company?.phone || ''}
+                      companyEmail={company?.email || ''}
                     />
                   )}
                 </div>

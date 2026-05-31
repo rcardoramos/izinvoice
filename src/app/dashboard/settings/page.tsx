@@ -195,20 +195,41 @@ export default function SettingsPage() {
 
   // Load config on mount
   useEffect(() => {
-    if (company) {
-      setProfile({
-        businessName: company.businessName,
-        tradeName: company.tradeName || '',
-        address: company.address || '',
-        ubigeo: company.ubigeo || '',
-        phone: '+51 987654321',
-        email: 'facturacion@invoiceflow.pe',
-      });
-      const comp = company as any;
-      setSolUsername(comp.solUsername || comp.sol_username || comp.ruc + 'MODDATOS');
-      setSolPassword(comp.solPassword || comp.sol_password || 'MODDATOS');
-      loadCertificates();
-    }
+    const fetchCompanyProfile = async () => {
+      const activeCompanyId = company?.id || '00000000-0000-4000-8000-000000000001';
+      try {
+        const comp = await BillingApiClient.getCompanyProfile(activeCompanyId);
+        setProfile({
+          businessName: comp.businessName || '',
+          tradeName: comp.tradeName || '',
+          address: comp.address || '',
+          ubigeo: comp.ubigeo || '',
+          phone: comp.phone || '',
+          email: comp.email || '',
+        });
+        setSolUsername(comp.solUsername || `${comp.ruc}MODDATOS`);
+        setSolPassword(comp.solPassword || 'MODDATOS');
+      } catch (err) {
+        console.error('Failed to load company profile from API', err);
+        // Fallback to store company if API fails
+        if (company) {
+          setProfile({
+            businessName: company.businessName,
+            tradeName: company.tradeName || '',
+            address: company.address || '',
+            ubigeo: company.ubigeo || '',
+            phone: company.phone || '',
+            email: company.email || '',
+          });
+          const compAny = company as any;
+          setSolUsername(compAny.solUsername || compAny.sol_username || compAny.ruc + 'MODDATOS');
+          setSolPassword(compAny.solPassword || compAny.sol_password || 'MODDATOS');
+        }
+      }
+    };
+
+    fetchCompanyProfile();
+    loadCertificates();
 
     // Load API keys list from simulated storage
     const loadApiKeys = () => {
@@ -236,29 +257,53 @@ export default function SettingsPage() {
   }, [company]);
 
   // Update profile handler
-  const handleUpdateProfile = (e: React.FormEvent) => {
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    addNotification({
-      id: Math.random().toString(),
-      title: 'Configuración Actualizada',
-      message: 'Los datos de la empresa se han actualizado correctamente.',
-      type: 'success',
-      created_at: new Date().toISOString(),
-    });
-    alert('Información guardada con éxito.');
+    const activeCompanyId = company?.id || '00000000-0000-4000-8000-000000000001';
+    try {
+      await BillingApiClient.updateCompanyProfile(activeCompanyId, {
+        businessName: profile.businessName,
+        tradeName: profile.tradeName,
+        address: profile.address,
+        ubigeo: profile.ubigeo,
+        phone: profile.phone,
+        email: profile.email,
+      });
+
+      addNotification({
+        id: Math.random().toString(),
+        title: 'Configuración Actualizada',
+        message: 'Los datos de la empresa se han actualizado correctamente.',
+        type: 'success',
+        created_at: new Date().toISOString(),
+      });
+      alert('Información guardada con éxito.');
+    } catch (err: any) {
+      alert(err.message || 'Error al actualizar el perfil.');
+    }
   };
 
   // Update SOL SOAP credentials
-  const handleUpdateSol = (e: React.FormEvent) => {
+  const handleUpdateSol = async (e: React.FormEvent) => {
     e.preventDefault();
-    addNotification({
-      id: Math.random().toString(),
-      title: 'Credenciales SUNAT Guardadas',
-      message: 'Las credenciales del usuario SOL se han actualizado con éxito.',
-      type: 'success',
-      created_at: new Date().toISOString(),
-    });
-    alert('Credenciales SOL guardadas con éxito. Conexión verificada en entorno beta.');
+    const activeCompanyId = company?.id || '00000000-0000-4000-8000-000000000001';
+    try {
+      await BillingApiClient.updateCompanyProfile(activeCompanyId, {
+        solUsername,
+        solPassword,
+      });
+
+      addNotification({
+        id: Math.random().toString(),
+        title: 'Credenciales SUNAT Guardadas',
+        message: 'Las credenciales del usuario SOL se han actualizado con éxito.',
+        type: 'success',
+        created_at: new Date().toISOString(),
+      });
+      alert('Credenciales SOL guardadas con éxito. Conexión verificada en entorno beta.');
+    } catch (err: any) {
+      alert(err.message || 'Error al actualizar las credenciales.');
+    }
   };
 
   // Generate new API Key

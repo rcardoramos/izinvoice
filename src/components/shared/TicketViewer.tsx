@@ -10,10 +10,28 @@ interface TicketViewerProps {
   companyName: string;
   companyRuc: string;
   companyAddress?: string;
+  companyPhone?: string;
+  companyEmail?: string;
   isSummarized?: boolean;
 }
 
-export function TicketViewer({ document, companyName, companyRuc, companyAddress, isSummarized = false }: TicketViewerProps) {
+const formatTime = (isoString?: string) => {
+  if (!isoString) return '';
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleTimeString('es-PE', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  } catch (e) {
+    return '';
+  }
+};
+
+export function TicketViewer({ document, companyName, companyRuc, companyAddress, companyPhone, companyEmail, isSummarized = false }: TicketViewerProps) {
   const p = document.payload;
   if (!p) return null;
 
@@ -31,8 +49,8 @@ export function TicketViewer({ document, companyName, companyRuc, companyAddress
         <p className="font-bold text-xs uppercase tracking-tight text-zinc-950">{companyName}</p>
         <p className="text-zinc-600">R.U.C. {companyRuc}</p>
         {companyAddress && <p className="text-zinc-500 leading-tight text-[9px]">{companyAddress}</p>}
-        <p className="text-zinc-500 text-[9px]">Telf: +51 987654321</p>
-        <p className="text-zinc-500 text-[9px] lowercase">facturacion@invoiceflow.pe</p>
+        {companyPhone && <p className="text-zinc-500 text-[9px]">Telf: {companyPhone}</p>}
+        {companyEmail && <p className="text-zinc-500 text-[9px] lowercase">{companyEmail}</p>}
       </div>
 
       {/* Dashed Separator */}
@@ -54,8 +72,12 @@ export function TicketViewer({ document, companyName, companyRuc, companyAddress
       {/* Meta details */}
       <div className="space-y-1 text-zinc-700">
         <p className="flex justify-between">
-          <span className="text-zinc-400 font-semibold uppercase text-[8px] tracking-wider">Fecha Emisión:</span>
+          <span className="text-zinc-400 font-semibold uppercase text-[8px] tracking-wider">F.Emisión:</span>
           <span>{document.issueDate}</span>
+        </p>
+        <p className="flex justify-between">
+          <span className="text-zinc-400 font-semibold uppercase text-[8px] tracking-wider">Hora Emisión:</span>
+          <span>{formatTime(document.createdAt)}</span>
         </p>
         <p className="flex justify-between">
           <span className="text-zinc-400 font-semibold uppercase text-[8px] tracking-wider">Moneda:</span>

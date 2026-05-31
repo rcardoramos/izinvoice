@@ -60,6 +60,8 @@ Crea tenant: empresa + series por defecto (`F001`, `B001`, `FC01`, `BC01`, `FD01
   "businessName": "NUEVA EMPRESA SAC",
   "tradeName": "Nueva Empresa",
   "address": "Av. Principal 100",
+  "email": "contacto@nuevaempresa.test",
+  "phone": "+51987654321",
   "ubigeo": "150101",
   "sunatEnvironment": "beta",
   "solUsername": "20123456789MODDATOS",
@@ -76,6 +78,8 @@ Crea tenant: empresa + series por defecto (`F001`, `B001`, `FC01`, `BC01`, `FD01
 |-------|-------------|-------|
 | `ruc` | Sí | 11 dígitos, único |
 | `businessName` | Sí | |
+| `email` | No | Correo de contacto |
+| `phone` | No | Teléfono de contacto |
 | `initialUser` | No | Primer usuario para login (`POST /auth/login`) |
 | `sunatEnvironment` | No | Default `beta` |
 
@@ -93,6 +97,96 @@ Crea tenant: empresa + series por defecto (`F001`, `B001`, `FC01`, `BC01`, `FD01
 Guardar **`apiKey`** del response: es la clave tenant (distinta de `ADMIN_API_KEY`). Hoy el login usa `ruc` + usuario + password; el `apiKey` queda para integraciones futuras.
 
 **Errores:** `401` clave admin inválida; `409` RUC duplicado.
+
+---
+
+## Empresa (tenant)
+
+Rutas protegidas con **JWT**. Solo puedes consultar **tu propia** empresa (`id` del JWT debe coincidir con `:id`).
+
+### `GET /v1/companies/:id` — Detalle empresa
+
+**Headers:** `Authorization: Bearer <JWT>`.
+
+**Params:** `id` — UUID de la empresa (mismo que en login / `GET /auth/me`).
+
+**Response `200`:**
+
+```json
+{
+  "id": "00000000-0000-4000-8000-000000000001",
+  "ruc": "20000000001",
+  "businessName": "EMPRESA DEV SAC",
+  "tradeName": "Empresa Dev",
+  "address": "Av. Dev 123, Lima",
+  "email": "facturacion@empresa-dev.test",
+  "phone": "+51999999999",
+  "ubigeo": "150101",
+  "sunatEnvironment": "beta",
+  "solUsername": "20000000001MODDATOS",
+  "hasSolPassword": true,
+  "isActive": true,
+  "createdAt": "2026-05-24T12:00:00.000Z",
+  "updatedAt": "2026-05-24T12:00:00.000Z"
+}
+```
+
+| Campo | Notas |
+|-------|-------|
+| `hasSolPassword` | Indica si hay clave SOL guardada; **no** devuelve la contraseña |
+| `solUsername` | Usuario SOL para SUNAT |
+
+**Errores:** `401` JWT inválido; `404` si `id` no es tu empresa o no existe.
+
+```typescript
+const companyId = loginResponse.company.id;
+
+const res = await fetch(`/v1/companies/${companyId}`, {
+  headers: { Authorization: `Bearer ${token}` },
+});
+const company = await res.json();
+```
+
+**Diferencia con `GET /auth/me` y login:** los tres devuelven el mismo objeto `company` (`CompanyResponse`). `/auth/me` incluye además el `user`; `/companies/:id` es útil para refrescar solo la empresa sin re-login.
+
+### `PATCH /v1/companies/:id` — Actualizar empresa
+
+**Headers:** `Authorization: Bearer <JWT>`.
+
+Solo puedes actualizar **tu propia** empresa (`id` = JWT). No se puede cambiar `ruc` ni `apiKey`.
+
+**Body (campos opcionales, parcial):**
+
+```json
+{
+  "businessName": "EMPRESA DEV SAC",
+  "tradeName": "Empresa Dev",
+  "address": "Av. Dev 123, Lima",
+  "email": "facturacion@empresa-dev.test",
+  "phone": "+51999999999",
+  "ubigeo": "150101",
+  "sunatEnvironment": "beta",
+  "solUsername": "20000000001MODDATOS",
+  "solPassword": "MODDATOS"
+}
+```
+
+| Campo | Notas |
+|-------|-------|
+| `email`, `phone`, `address`, … | Enviar `null` para limpiar el valor |
+| `solPassword` | Se guarda en BD; la respuesta sigue usando `hasSolPassword` |
+| `sunatEnvironment` | `beta` \| `homologacion` \| `production` |
+
+**Response `200`:** mismo shape que `GET /companies/:id`.
+
+```bash
+curl -X PATCH http://localhost:3000/v1/companies/$COMPANY_ID \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"contacto@miempresa.test","phone":"+51987654321"}'
+```
+
+**Errores:** `401` JWT inválido; `404` si `id` no es tu empresa; `400` validación (email inválido, ubigeo ≠ 6 dígitos).
 
 ---
 
@@ -141,6 +235,8 @@ Catálogo 06: `1` DNI, `6` RUC, etc.
 | ------ | ----------------------------- | ------------------------------------------ |
 | POST   | `/auth/login`                 | Obtener JWT                                |
 | POST   | `/admin/companies`            | Alta empresa (header `X-Admin-Api-Key`)  |
+| GET    | `/companies/:id`              | Detalle empresa (JWT, solo la propia)    |
+| PATCH  | `/companies/:id`              | Actualizar empresa (JWT, solo la propia)   |
 | GET    | `/auth/me`                    | Usuario y empresa actual                   |
 | POST   | `/invoices`                   | Emitir factura + envío SUNAT               |
 | POST   | `/boletas`                    | Emitir boleta (firmada, pendiente RC)      |
@@ -204,8 +300,18 @@ Catálogo 06: `1` DNI, `6` RUC, etc.
   "company": {
     "id": "00000000-0000-4000-8000-000000000001",
     "ruc": "20000000001",
-    "businessName": "...",
-    "sunatEnvironment": "beta"
+    "businessName": "EMPRESA DEV SAC",
+    "tradeName": "Empresa Dev",
+    "address": "Av. Dev 123, Lima",
+    "email": "facturacion@empresa-dev.test",
+    "phone": "+51999999999",
+    "ubigeo": "150101",
+    "sunatEnvironment": "beta",
+    "solUsername": "20000000001MODDATOS",
+    "hasSolPassword": true,
+    "isActive": true,
+    "createdAt": "2026-05-24T12:00:00.000Z",
+    "updatedAt": "2026-05-24T12:00:00.000Z"
   }
 }
 ```
@@ -239,9 +345,18 @@ const { accessToken } = await res.json();
   "company": {
     "id": "...",
     "ruc": "20000000001",
-    "businessName": "...",
-    "tradeName": null,
-    "sunatEnvironment": "beta"
+    "businessName": "EMPRESA DEV SAC",
+    "tradeName": "Empresa Dev",
+    "address": "Av. Dev 123, Lima",
+    "email": "facturacion@empresa-dev.test",
+    "phone": "+51999999999",
+    "ubigeo": "150101",
+    "sunatEnvironment": "beta",
+    "solUsername": "20000000001MODDATOS",
+    "hasSolPassword": true,
+    "isActive": true,
+    "createdAt": "...",
+    "updatedAt": "..."
   }
 }
 ```
@@ -477,7 +592,38 @@ Incluye automáticamente boletas/notas `signed` sin RC del `referenceDate`.
 
 Default de ambas fechas: **hoy**.
 
-**Response `200`:**
+#### Qué hace el endpoint (orden)
+
+1. **Transacción local:** crea fila en `daily_summaries` (`draft`, XML firmado). Los documentos **no** reciben `daily_summary_id` todavía.
+2. **`sendSummary`** → SUNAT devuelve **ticket** (número de cola).
+3. **Tras ticket:** vincula documentos (`daily_summary_id = rc.id`); siguen en `signed`.
+4. **`getStatus`** (poll automático, hasta 5× cada 2 s).
+5. **Resultado:** actualiza RC y documentos según CDR (`accepted`, `processing`, `rejected`, etc.).
+
+#### Estados del RC (`daily_summaries.status`)
+
+| Estado | Significado |
+|--------|-------------|
+| `draft` | RC creado en TX; aún no enviado o enviando |
+| `submitted` | Marcando envío a SUNAT |
+| `processing` | Ticket recibido; SUNAT procesando o poll pendiente |
+| `accepted` | CDR OK → documentos del RC → `accepted` |
+| `rejected` | SUNAT rechazó → documentos liberados (`daily_summary_id=null`), `signed` |
+| `failed` | Error técnico **con ticket** (timeout en poll, etc.) |
+| `cancelled` | Envío falló **sin ticket**; documentos **nunca** se vincularon |
+
+#### Persistencia en BD (RC altas)
+
+| Momento | `daily_summaries` | `documents` |
+|---------|-------------------|-------------|
+| TX local OK | `draft`, sin `ticket` | `signed`, **`daily_summary_id=null`** |
+| Ticket recibido | `processing`, `ticket` | `signed`, **`daily_summary_id=rc.id`** |
+| SUNAT acepta | `accepted`, `cdr_xml` | **`accepted`** |
+| SUNAT rechaza | `rejected` | `signed`, **`daily_summary_id=null`** |
+| Falla **sin ticket** | **`cancelled`** | `signed`, **`daily_summary_id=null`** (sin cambio) |
+| Falla **con ticket** | `failed` | `signed`, ligados al RC → usar `/status` |
+
+**Response `200` (aceptado):**
 
 ```json
 {
@@ -492,9 +638,63 @@ Default de ambas fechas: **hoy**.
 }
 ```
 
+**Response `200` (aún procesando):**
+
+```json
+{
+  "id": "uuid-rc",
+  "status": "processing",
+  "ticket": "2026123456789",
+  "sunat": {
+    "statusCode": "98",
+    "description": "En proceso",
+    "processing": true
+  }
+}
+```
+
 Estados intermedios: `processing`, `submitted` → usar `/status` para poll.
 
-**Error con ticket (beta común):** body incluye `dailySummaryId`, `ticket`, `hint` → **no reenviar RC**, solo poll `/status`.
+#### Errores y reintento (RC altas)
+
+| Respuesta error | `ticket` | `status` RC | Documentos | Acción UI |
+|-----------------|----------|-------------|------------|-----------|
+| Fallo al enviar / sin ticket | `null` | `cancelled` | Siguen `signed`, sin ligar | **Reenviar** `POST /daily-summaries` |
+| Fallo en poll / beta | presente | `failed` | Ligados al RC | **`POST /daily-summaries/:id/status`** |
+| RC pendiente con ticket | presente | `processing` | Ligados | **`POST /.../status`** (no RC nuevo) |
+| SUNAT rechazó CDR | presente | `rejected` | Liberados | Corregir y **nuevo** `POST /daily-summaries` |
+
+**Error sin ticket (puede reenviar RC):**
+
+```json
+{
+  "statusCode": 400,
+  "message": {
+    "message": "SUNAT HTTP 500 ...",
+    "dailySummaryId": "uuid-rc",
+    "ticket": null,
+    "status": "cancelled",
+    "hint": "SUNAT did not return a ticket. Boletas were not linked; you may POST /v1/daily-summaries again."
+  }
+}
+```
+
+**Error con ticket (beta común — no reenviar RC):**
+
+```json
+{
+  "statusCode": 400,
+  "message": {
+    "message": "SUNAT HTTP 401 ...",
+    "dailySummaryId": "uuid-rc",
+    "ticket": "2026123456789",
+    "status": "failed",
+    "hint": "RC was submitted; poll status with POST /v1/daily-summaries/:id/status"
+  }
+}
+```
+
+**Regla UI:** si hay `ticket` → **Consultar estado** (`/status`). Si `ticket` es `null` y `status` es `cancelled` → **Reenviar RC**.
 
 ---
 
@@ -575,7 +775,9 @@ Solo facturas `01` en `accepted`.
 
 ### `POST /v1/daily-summaries/:id/status` — Polling
 
-Sin body. Reconsulta ticket SUNAT. Usar para RC **y** RA.
+Sin body. Reconsulta ticket SUNAT con el mismo poll interno (hasta 5× cada 2 s). Usar para RC **y** RA cuando el RC/RA quedó en `processing` o `failed` **con ticket**.
+
+Requiere que el resumen tenga `ticket` (si el envío falló sin ticket, el RC altas queda `cancelled` y los documentos no están ligados — reenviar con `POST /daily-summaries`).
 
 ```typescript
 async function pollUntilDone(summaryId: string, token: string) {
@@ -1020,7 +1222,9 @@ POST /boletas
   → guardar id, status=signed
 GET  /documents?issueDate=hoy&pendingRc=true   (opcional: verificar)
 POST /daily-summaries { referenceDate: hoy }
-  → si processing: POST /daily-summaries/:id/status (poll)
+  → docs se vinculan al RC solo si SUNAT devuelve ticket
+  → si status=processing o failed con ticket: POST /daily-summaries/:id/status
+  → si status=cancelled (sin ticket): POST /daily-summaries de nuevo
 GET  /documents/:id                            → status=accepted
 ```
 
@@ -1077,6 +1281,8 @@ POST /daily-summaries/:id/status               → id del RA en respuesta
 
 ### Negocio / SUNAT (`400` con objeto)
 
+**RC pendiente con ticket (consultar, no reenviar):**
+
 ```json
 {
   "statusCode": 400,
@@ -1090,7 +1296,28 @@ POST /daily-summaries/:id/status               → id del RA en respuesta
 }
 ```
 
-**Regla UI:** si hay `ticket` en error → botón **Consultar estado**, no reenviar RC/RA.
+**RC altas fallido sin ticket (reenviar RC):**
+
+```json
+{
+  "statusCode": 400,
+  "message": {
+    "message": "SUNAT HTTP 500 ...",
+    "dailySummaryId": "uuid-rc",
+    "ticket": null,
+    "status": "cancelled",
+    "hint": "SUNAT did not return a ticket. Boletas were not linked; you may POST /v1/daily-summaries again."
+  }
+}
+```
+
+**Regla UI:**
+
+| Condición | Botón |
+|-----------|--------|
+| `ticket` presente | **Consultar estado** → `POST /daily-summaries/:id/status` |
+| `ticket` null y `status=cancelled` | **Reenviar RC** → `POST /daily-summaries` |
+| `status=rejected` (SUNAT rechazó CDR) | Mostrar error → corregir → **nuevo** `POST /daily-summaries` |
 
 ### No autorizado (`401`) / No encontrado (`404`)
 

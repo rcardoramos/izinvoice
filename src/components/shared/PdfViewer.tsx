@@ -10,10 +10,28 @@ interface PdfViewerProps {
   companyName: string;
   companyRuc: string;
   companyAddress?: string;
+  companyPhone?: string;
+  companyEmail?: string;
   isSummarized?: boolean;
 }
 
-export function PdfViewer({ document, companyName, companyRuc, companyAddress, isSummarized = false }: PdfViewerProps) {
+const formatTime = (isoString?: string) => {
+  if (!isoString) return '';
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleTimeString('es-PE', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  } catch (e) {
+    return '';
+  }
+};
+
+export function PdfViewer({ document, companyName, companyRuc, companyAddress, companyPhone, companyEmail, isSummarized = false }: PdfViewerProps) {
   const p = document.payload;
   if (!p) return null;
 
@@ -32,10 +50,12 @@ export function PdfViewer({ document, companyName, companyRuc, companyAddress, i
             <span className="font-bold text-base tracking-tight text-zinc-900">{companyName}</span>
           </div>
           {companyAddress && <p className="text-[11px] text-zinc-550 leading-relaxed">{companyAddress}</p>}
-          <div className="flex items-center gap-5 text-[11px] text-zinc-500 mt-3">
-            <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> +51 987654321</span>
-            <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> facturacion@invoiceflow.pe</span>
-          </div>
+          {(companyPhone || companyEmail) && (
+            <div className="flex items-center gap-5 text-[11px] text-zinc-500 mt-3">
+              {companyPhone && <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> {companyPhone}</span>}
+              {companyEmail && <span className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> {companyEmail}</span>}
+            </div>
+          )}
         </div>
 
         {/* RUC and Serial Number block */}
@@ -69,7 +89,10 @@ export function PdfViewer({ document, companyName, companyRuc, companyAddress, i
         <div className="space-y-3">
           <p className="font-semibold text-zinc-400 uppercase text-[9px] tracking-wider">Detalles Emisión</p>
           <div className="space-y-1.5 text-zinc-800">
-            <p className="flex items-center gap-2 text-[11px]"><Calendar className="w-4 h-4 text-zinc-400" /> <b>Fecha Emisión:</b> {document.issueDate}</p>
+            <p className="flex items-center gap-2 text-[11px]">
+              <Calendar className="w-4 h-4 text-zinc-400" /> 
+              <b>F.Emisión:</b> {document.issueDate} {formatTime(document.createdAt)}
+            </p>
             <p className="flex items-center gap-2 text-[11px]"><FileSpreadsheet className="w-4 h-4 text-zinc-400" /> <b>Moneda:</b> {p.moneda || 'PEN'}</p>
             {p.formaPago && <p className="text-[11px]"><b>Forma de Pago:</b> {['CON', 'Contado'].includes(p.formaPago) ? 'Contado' : 'Crédito'}</p>}
             {p.documentoAfectado && (

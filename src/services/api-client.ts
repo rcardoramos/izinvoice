@@ -49,18 +49,19 @@ export class BillingApiClient {
     }
 
     // 2. Fallback to localStorage state if cookies aren't set
-    if (!token) {
-      if (typeof window !== 'undefined') {
-        const authData = localStorage.getItem('invoiceflow-auth');
-        if (authData) {
-          try {
-            const state = JSON.parse(authData).state;
-            if (!headers['Authorization'] && state?.accessToken) {
-              headers['Authorization'] = `Bearer ${state.accessToken}`;
-            }
-          } catch (e) {
-            console.error('Error reading auth headers from localStorage', e);
+    if (typeof window !== 'undefined') {
+      const authData = localStorage.getItem('invoiceflow-auth');
+      if (authData) {
+        try {
+          const state = JSON.parse(authData).state;
+          if (!headers['Authorization'] && state?.accessToken) {
+            headers['Authorization'] = `Bearer ${state.accessToken}`;
           }
+          if (state?.company?.apiKey) {
+            headers['X-Api-Key'] = state.company.apiKey;
+          }
+        } catch (e) {
+          console.error('Error reading auth headers from localStorage', e);
         }
       }
     }
@@ -375,6 +376,18 @@ export class BillingApiClient {
   static async deleteCertificate(id: string): Promise<any> {
     return this.request<any>(`/certificates/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  // Company Profile (Client)
+  static async getCompanyProfile(id: string): Promise<any> {
+    return this.request<any>(`/companies/${id}`);
+  }
+
+  static async updateCompanyProfile(id: string, body: any): Promise<any> {
+    return this.request<any>(`/companies/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
     });
   }
 }
