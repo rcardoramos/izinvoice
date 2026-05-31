@@ -5,6 +5,33 @@ import { VoidDailySummaryRequest, DailySummarySubmitResponse } from '@/types/doc
 import { SunatMockService } from '@/utils/sunat-mock';
 import { todayPE } from '@/utils/date-pe';
 
+interface DbDocument {
+  id: string;
+  company_id: string;
+  doc_type: string;
+  serie: string;
+  correlativo: number;
+  status: string;
+  issue_date: string;
+  total: number;
+  daily_summary_id: string | null;
+  payload?: {
+    cliente?: { razonSocial?: string; numDoc?: string; tipoDoc?: string };
+    documentoAfectado?: {
+      docType: string;
+      serie: string;
+      correlativo: number;
+    };
+    _rcVoid?: unknown;
+  };
+}
+
+interface DbSummary {
+  company_id: string;
+  summary_type: string;
+  issue_date: string;
+}
+
 export async function POST(req: NextRequest) {
   const ctx = getAuthContext(req);
   if (!ctx) return unauthorizedResponse();
@@ -21,9 +48,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Retrieve documents and validate void conditions
-    const allDocs = FileDb.getTable('documents');
+    const allDocs = FileDb.getTable('documents') as DbDocument[];
     const matchedDocs = allDocs.filter(
-      (doc: any) =>
+      (doc) =>
         doc.company_id === ctx.company.id &&
         documentIds.includes(doc.id)
     );
@@ -39,9 +66,10 @@ export async function POST(req: NextRequest) {
     const refDate = referenceDate || matchedDocs[0].issue_date;
 
     for (const doc of matchedDocs) {
-      if (doc.doc_type !== '03') {
+      const docType = doc.doc_type;
+      if (docType !== '03' && docType !== '07' && docType !== '08') {
         return NextResponse.json(
-          { statusCode: 400, message: `El documento ${doc.serie}-${doc.correlativo} no es una Boleta. Utilice resúmenes de bajas (RA) para Facturas.` },
+          { statusCode: 400, message: `El documento ${doc.serie}-${doc.correlativo} de tipo ${docType} no se puede anular vía resúmenes. Solo se pueden anular boletas (03), notas de crédito (07) y notas de débito (08) asociadas a boletas. Utilice resúmenes de bajas (RA) para Facturas.` },
           { status: 400 }
         );
       }
@@ -75,9 +103,9 @@ export async function POST(req: NextRequest) {
     const finalIssueDate = issueDate || todayStr;
 
     // Determine the next correlativo for RC summaries on the finalIssueDate
-    const allSummaries = FileDb.getTable('daily_summaries');
+    const allSummaries = FileDb.getTable('daily_summaries') as DbSummary[];
     const todaySummaries = allSummaries.filter(
-      (s: any) =>
+      (s) =>
         s.company_id === ctx.company.id &&
         s.summary_type === 'RC' &&
         s.issue_date === finalIssueDate
@@ -109,8 +137,8 @@ export async function POST(req: NextRequest) {
     FileDb.insert('daily_summaries', summaryRecord);
 
     // Update documents to flag _rcVoid and associate them with the new summary ID
-    const updatedDocs = allDocs.map((doc: any) => {
-      const match = matchedDocs.find((m: any) => m.id === doc.id);
+    const updatedDocs = allDocs.map((doc) => {
+      const match = matchedDocs.find((m) => m.id === doc.id);
       if (match) {
         return {
           ...doc,
@@ -131,8 +159,8 @@ export async function POST(req: NextRequest) {
     // Logs & notifications
     FileDb.insert('notifications', {
       company_id: ctx.company.id,
-      title: 'Baja de Boleta Enviada',
-      message: `Anulación de boletas ${summaryCode} enviada a SUNAT. Ticket generado: ${ticket}.`,
+      title: 'Baja de Comprobantes Enviada',
+      message: `Anulación de comprobantes ${summaryCode} enviada a SUNAT. Ticket generado: ${ticket}.`,
       type: 'info',
       read: false,
     });
@@ -140,9 +168,9 @@ export async function POST(req: NextRequest) {
     logAudit(
       ctx.company.id,
       ctx.user.id,
-      'VOID_BOLETAS_RC',
+      'VOID_DOCUMENTS_RC',
       'SUMMARIES',
-      `Sent daily summary RC void ${summaryCode} for ${matchedDocs.length} boletas. Ticket: ${ticket}`,
+      `Sent daily summary RC void ${summaryCode} for ${matchedDocs.length} documents. Ticket: ${ticket}`,
       'success'
     );
 
@@ -150,8 +178,8 @@ export async function POST(req: NextRequest) {
       id: summaryId,
       summaryType: 'RC',
       summaryCode,
-      referenceDate: refDate as any,
-      issueDate: finalIssueDate as any,
+      referenceDate: refDate as unknown as DailySummarySubmitResponse['referenceDate'],
+      issueDate: finalIssueDate as unknown as DailySummarySubmitResponse['issueDate'],
       correlativo: nextCorrelativo,
       status: 'processing',
       ticket,
@@ -165,9 +193,10 @@ export async function POST(req: NextRequest) {
     };
 
     return NextResponse.json(response);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errMessage = error instanceof Error ? error.message : 'Error desconocido';
     return NextResponse.json(
-      { statusCode: 500, message: 'Error interno de servidor', error: error.message },
+      { statusCode: 500, message: 'Error interno de servidor', error: errMessage },
       { status: 500 }
     );
   }

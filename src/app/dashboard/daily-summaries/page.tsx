@@ -203,20 +203,21 @@ export default function DailySummariesPage() {
     setAcceptedBoletasLoading(true);
     try {
       const docs = await BillingApiClient.listDocuments({
-        docType: '03',
         status: 'accepted',
       });
       const docsList = Array.isArray(docs) ? docs : (docs?.data ?? []);
       const filtered = docsList.filter((doc: any) => {
+        const type = doc.docType || doc.doc_type;
         const issueDateDoc = doc.issueDate || doc.issue_date;
         const dailySummaryId = doc.dailySummaryId || doc.daily_summary_id;
         const isAlreadyVoided = doc.payload?._rcVoid;
-        return issueDateDoc === refDate && dailySummaryId && !isAlreadyVoided;
+        const isTargetType = type === '03' || type === '07' || type === '08';
+        return isTargetType && issueDateDoc === refDate && dailySummaryId && !isAlreadyVoided;
       });
       setAcceptedBoletas(filtered);
       setSelectedDocIds([]);
     } catch (err) {
-      console.error('Error fetching accepted boletas', err);
+      console.error('Error fetching accepted documents', err);
     } finally {
       setAcceptedBoletasLoading(false);
     }
@@ -891,12 +892,12 @@ export default function DailySummariesPage() {
                   </div>
                 </div>
 
-                {/* Checklist of accepted boletas when mode is Bajas */}
+                {/* Checklist of accepted documents when mode is Bajas */}
                 {summaryMode === 'bajas' && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="block text-[10px] uppercase font-semibold text-zinc-500 tracking-wider">
-                        Seleccione Boletas a Anular <span className="text-rose-400">*</span>
+                        Seleccione Comprobantes a Anular <span className="text-rose-400">*</span>
                       </label>
                       {acceptedBoletas.length > 0 && (
                         <button
@@ -914,12 +915,12 @@ export default function DailySummariesPage() {
                     {acceptedBoletasLoading ? (
                       <div className="flex items-center justify-center gap-2 p-6 border border-dashed border-zinc-200 rounded-xl text-xs text-zinc-400 bg-zinc-50/50">
                         <Loader2 className="w-4 h-4 animate-spin text-zinc-400" />
-                        <span>Buscando boletas aceptadas...</span>
+                        <span>Buscando comprobantes aceptados...</span>
                       </div>
                     ) : acceptedBoletas.length === 0 ? (
                       <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex gap-2 text-xs text-amber-700">
                         <TriangleAlert className="w-4 h-4 shrink-0 mt-0.5" />
-                        <span>No se encontraron boletas en estado 'Aceptado' para la Fecha de Referencia seleccionada.</span>
+                        <span>No se encontraron boletas, notas de crédito o notas de débito en estado &quot;Aceptado&quot; para la Fecha de Referencia seleccionada.</span>
                       </div>
                     ) : (
                       <div className="border border-zinc-200 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
@@ -927,6 +928,7 @@ export default function DailySummariesPage() {
                           <thead>
                             <tr className="bg-zinc-50 border-b border-zinc-200 text-[9px] text-zinc-400 uppercase font-semibold">
                               <th className="px-3 py-2 w-10 text-center">Seleccionar</th>
+                              <th className="px-3 py-2">Tipo</th>
                               <th className="px-3 py-2">Comprobante</th>
                               <th className="px-3 py-2">Cliente</th>
                               <th className="px-3 py-2 text-right">Total</th>
@@ -942,6 +944,11 @@ export default function DailySummariesPage() {
                                     onChange={() => handleToggleDoc(doc.id)}
                                     className="rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer w-3.5 h-3.5"
                                   />
+                                </td>
+                                <td className="px-3 py-2">
+                                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${getDocTypeColor(doc.docType || doc.doc_type)}`}>
+                                    {DOC_TYPE_LABELS[(doc.docType || doc.doc_type) as keyof typeof DOC_TYPE_LABELS] ?? (doc.docType || doc.doc_type)}
+                                  </span>
                                 </td>
                                 <td className="px-3 py-2 font-mono font-bold text-zinc-900">
                                   {doc.serie}-{String(doc.correlativo || doc.correlativo_numero || '').padStart(8, '0')}
@@ -1214,10 +1221,10 @@ export default function DailySummariesPage() {
                     <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 text-left">
                       <p className="text-xs text-rose-700 leading-relaxed">{submitError}</p>
                     </div>
-                    <p className="text-xs text-zinc-500">
+                     <p className="text-xs text-zinc-500">
                       Si SUNAT no devolvió ticket (estado <code className="bg-zinc-100 px-1 rounded">cancelled</code>), puedes
                       reintentar. Si hay ticket y el estado es <code className="bg-zinc-100 px-1 rounded">failed</code>, usa
-                      {' '}<b>"Consultar ticket"</b> desde el historial.
+                      {' '}<b>&quot;Consultar ticket&quot;</b> desde el historial.
                     </p>
                   </div>
                 )}
