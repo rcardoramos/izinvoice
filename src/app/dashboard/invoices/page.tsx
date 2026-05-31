@@ -11,6 +11,7 @@ import { BillingApiClient } from '@/services/api-client';
 import { DOC_TYPE_LABELS } from '@/types/enums';
 import { useAuthStore } from '@/store/auth';
 import { CustomSelect } from '@/components/shared/CustomSelect';
+import { formatTimePE } from '@/utils/date-pe';
 import { 
   FileText, 
   Download, 
@@ -353,7 +354,7 @@ export default function InvoicesHistoryPage() {
       render: (_: any, row: any) => {
         const dateStr = row.issueDate ?? row.issue_date ?? '';
         const timeStr = row.created_at || row.createdAt
-          ? new Date(row.created_at || row.createdAt).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', hour12: false })
+          ? formatTimePE(row.created_at || row.createdAt)
           : '';
         return (
           <div className="space-y-0.5">

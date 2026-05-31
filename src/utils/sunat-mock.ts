@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { todayPE } from './date-pe';
 
 const DOCS_DIR = path.join(process.cwd(), 'data', 'documents');
 
@@ -31,7 +32,7 @@ export class SunatMockService {
   <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
   <cbc:CustomizationID>2.0</cbc:CustomizationID>
   <cbc:ID>${serie}-${correlativo}</cbc:ID>
-  <cbc:IssueDate>${payload.issueDate || new Date().toISOString().split('T')[0]}</cbc:IssueDate>
+  <cbc:IssueDate>${payload.issueDate || todayPE()}</cbc:IssueDate>
   <cbc:InvoiceTypeCode>${docType}</cbc:InvoiceTypeCode>
   <cbc:DocumentCurrencyCode>${payload.moneda || 'PEN'}</cbc:DocumentCurrencyCode>
   <cac:Signature>
@@ -78,7 +79,7 @@ export class SunatMockService {
                      xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
                      xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
   <cbc:ID>CDR-${serie}-${correlativo}</cbc:ID>
-  <cbc:IssueDate>${new Date().toISOString().split('T')[0]}</cbc:IssueDate>
+  <cbc:IssueDate>${todayPE()}</cbc:IssueDate>
   <cac:DocumentResponse>
     <cac:Response>
       <cbc:ResponseCode>${isAccepted ? '0' : '9999'}</cbc:ResponseCode>

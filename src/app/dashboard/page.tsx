@@ -18,6 +18,7 @@ import {
   Zap
 } from 'lucide-react';
 import Link from 'next/link';
+import { todayPE, formatDateOnlyPE, formatMonthPE, formatIssueDatePE, formatDateTimePE } from '@/utils/date-pe';
 
 export default function DashboardPage() {
   const { company, user } = useAuthStore();
@@ -106,7 +107,7 @@ export default function DashboardPage() {
           const days = Array.from({ length: 7 }).map((_, idx) => {
             const d = new Date();
             d.setDate(d.getDate() - idx);
-            return d.toISOString().split('T')[0];
+            return formatDateOnlyPE(d);
           }).reverse();
 
           const formattedDaily = days.map((dateStr) => {
@@ -114,7 +115,7 @@ export default function DashboardPage() {
               .filter((d: any) => ['accepted', 'signed', 'submitted'].includes(d.status) && (d.issueDate ?? d.issue_date) === dateStr)
               .reduce((sum: number, d: any) => sum + parseFloat(d.total || '0'), 0);
             
-            const label = new Date(dateStr + 'T00:00:00').toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric' });
+            const label = formatIssueDatePE(dateStr, { weekday: 'short', day: 'numeric' });
             return { name: label, total: daySales };
           });
           setDailySalesData(formattedDaily);
@@ -143,7 +144,7 @@ export default function DashboardPage() {
           const customersTotal: number = docsRes?.meta?.total ?? (Array.isArray(customersRes) ? customersRes.length : (customersRes?.meta?.total ?? 0));
           const audits: any[] = Array.isArray(auditsRes) ? auditsRes : ((auditsRes as any)?.data ?? []);
 
-          const todayStr = new Date().toISOString().split('T')[0];
+          const todayStr = todayPE();
           const currentMonthStr = todayStr.substring(0, 7); // YYYY-MM
 
           // Calculate basic KPIs — external API uses camelCase (issueDate, docType)
@@ -177,7 +178,7 @@ export default function DashboardPage() {
           const days = Array.from({ length: 7 }).map((_, idx) => {
             const d = new Date();
             d.setDate(d.getDate() - idx);
-            return d.toISOString().split('T')[0];
+            return formatDateOnlyPE(d);
           }).reverse();
 
           const formattedDaily = days.map((dateStr) => {
@@ -185,7 +186,7 @@ export default function DashboardPage() {
               .filter((d: any) => (d.issueDate ?? d.issue_date) === dateStr)
               .reduce((sum: number, d: any) => sum + parseFloat(d.total || '0'), 0);
             
-            const label = new Date(dateStr + 'T00:00:00').toLocaleDateString('es-PE', { weekday: 'short', day: 'numeric' });
+            const label = formatIssueDatePE(dateStr, { weekday: 'short', day: 'numeric' });
             return { name: label, total: daySales };
           });
           setDailySalesData(formattedDaily);
@@ -194,7 +195,7 @@ export default function DashboardPage() {
           const months = Array.from({ length: 6 }).map((_, idx) => {
             const d = new Date();
             d.setMonth(d.getMonth() - idx);
-            return d.toISOString().substring(0, 7);
+            return formatMonthPE(d);
           }).reverse();
 
           const formattedMonthly = months.map((monthStr) => {
@@ -202,7 +203,7 @@ export default function DashboardPage() {
               .filter((d: any) => (d.issueDate ?? d.issue_date ?? '').startsWith(monthStr))
               .reduce((sum: number, d: any) => sum + parseFloat(d.total || '0'), 0);
             
-            const label = new Date(monthStr + '-02T00:00:00').toLocaleDateString('es-PE', { month: 'short' });
+            const label = formatIssueDatePE(monthStr + '-02', { month: 'short' });
             return { name: label, total: monthSales };
           });
           setMonthlySalesData(formattedMonthly);
@@ -348,7 +349,7 @@ export default function DashboardPage() {
                           {log.user_name} ({log.ip_address})
                         </span>
                         <span className="text-right text-[10px] text-zinc-400 font-mono self-center">
-                          {new Date(log.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                          {formatDateTimePE(log.created_at)}
                         </span>
                       </div>
                     </div>
@@ -481,7 +482,7 @@ export default function DashboardPage() {
                     <span className="text-zinc-500">{log.details}</span>
                     <span className="text-[10px] font-mono text-zinc-400">{log.user_name} ({log.ip_address})</span>
                     <span className="text-right text-[10px] text-zinc-400 font-mono animate-none">
-                      {new Date(log.created_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                      {formatDateTimePE(log.created_at)}
                     </span>
                   </div>
                 </div>

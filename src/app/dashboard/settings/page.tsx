@@ -18,6 +18,7 @@ import {
   X,
   Edit
 } from 'lucide-react';
+import { formatDatePE, nowPE } from '@/utils/date-pe';
 
 export default function SettingsPage() {
   const { user, company } = useAuthStore();
@@ -84,7 +85,7 @@ export default function SettingsPage() {
         title: 'Certificado Activo',
         message: 'Se ha cambiado el certificado activo para la firma XML.',
         type: 'success',
-        created_at: new Date().toISOString(),
+        created_at: nowPE(),
       });
       loadCertificates();
     } catch (err: any) {
@@ -101,7 +102,7 @@ export default function SettingsPage() {
         title: 'Certificado Eliminado',
         message: `El certificado '${alias}' ha sido eliminado.`,
         type: 'info',
-        created_at: new Date().toISOString(),
+        created_at: nowPE(),
       });
       loadCertificates();
     } catch (err: any) {
@@ -135,7 +136,7 @@ export default function SettingsPage() {
         title: 'Certificado Subido',
         message: 'El nuevo certificado digital se ha cargado con éxito.',
         type: 'success',
-        created_at: new Date().toISOString(),
+        created_at: nowPE(),
       });
 
       setUploadFile(null);
@@ -180,7 +181,7 @@ export default function SettingsPage() {
         title: 'Certificado Actualizado',
         message: 'Los datos del certificado se han actualizado con éxito.',
         type: 'success',
-        created_at: new Date().toISOString(),
+        created_at: nowPE(),
       });
 
       setShowEditModal(false);
@@ -275,7 +276,7 @@ export default function SettingsPage() {
         title: 'Configuración Actualizada',
         message: 'Los datos de la empresa se han actualizado correctamente.',
         type: 'success',
-        created_at: new Date().toISOString(),
+        created_at: nowPE(),
       });
       alert('Información guardada con éxito.');
     } catch (err: any) {
@@ -298,7 +299,7 @@ export default function SettingsPage() {
         title: 'Credenciales SUNAT Guardadas',
         message: 'Las credenciales del usuario SOL se han actualizado con éxito.',
         type: 'success',
-        created_at: new Date().toISOString(),
+        created_at: nowPE(),
       });
       alert('Credenciales SOL guardadas con éxito. Conexión verificada en entorno beta.');
     } catch (err: any) {
@@ -318,7 +319,7 @@ export default function SettingsPage() {
       key_value: `if_live_${hex}`,
       status: 'active',
       last_used_at: null,
-      created_at: new Date().toISOString(),
+      created_at: nowPE(),
     };
 
     setApiKeys((prev) => [newKey, ...prev]);
@@ -330,7 +331,7 @@ export default function SettingsPage() {
       title: 'API Key Generada',
       message: `Nueva clave '${newKey.name}' creada para integraciones REST.`,
       type: 'success',
-      created_at: new Date().toISOString(),
+      created_at: nowPE(),
     });
   };
 
@@ -347,7 +348,7 @@ export default function SettingsPage() {
       title: 'API Key Revocada',
       message: `La clave '${name}' ha sido revocada de forma permanente.`,
       type: 'info',
-      created_at: new Date().toISOString(),
+      created_at: nowPE(),
     });
   };
 
@@ -518,7 +519,7 @@ export default function SettingsPage() {
                             </td>
                             <td className="p-3 font-mono text-[10px] text-zinc-400 font-semibold">
                               {key.last_used_at
-                                ? new Date(key.last_used_at).toLocaleDateString([], { dateStyle: 'short' })
+                                ? formatDatePE(key.last_used_at, { dateStyle: 'short' })
                                 : 'Nunca'}
                             </td>
                             <td className="p-3">

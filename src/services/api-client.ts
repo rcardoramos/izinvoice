@@ -140,6 +140,19 @@ export class BillingApiClient {
   }
 
   // Daily Summaries
+  static async previewDailySummary(body: {
+    referenceDate?: string;
+    issueDate?: string;
+    page?: number;
+    limit?: number;
+    includeXml?: boolean;
+  } = {}): Promise<any> {
+    return this.request<any>('/daily-summaries/preview', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
   static async closeDailySummary(body: CloseDailySummaryRequest = {}): Promise<DailySummarySubmitResponse> {
     return this.request<DailySummarySubmitResponse>('/daily-summaries', {
       method: 'POST',
@@ -169,11 +182,6 @@ export class BillingApiClient {
     return this.request<DailySummarySubmitResponse>(`/daily-summaries/${id}/status`, {
       method: 'POST',
     });
-  }
-
-  static async listDailySummaries(summaryType?: 'RC' | 'RA'): Promise<any> {
-    const query = summaryType ? `?summaryType=${summaryType}` : '';
-    return this.request<any>(`/daily-summaries${query}`);
   }
 
   // Documents

@@ -55,6 +55,8 @@ export function getAuthContext(req: NextRequest): AuthenticatedContext | null {
       tradeName: company.trade_name,
       address: company.address,
       ubigeo: company.ubigeo || null,
+      phone: company.phone || null,
+      email: company.email || null,
       sunatEnvironment: company.sunat_environment,
       apiKey: company.api_key,
     },

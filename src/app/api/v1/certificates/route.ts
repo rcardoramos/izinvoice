@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthContext, unauthorizedResponse, logAudit } from '@/lib/auth-middleware';
 import { FileDb } from '@/lib/db';
+import { formatDateOnlyPE } from '@/utils/date-pe';
 
 export async function GET(req: NextRequest) {
   const ctx = getAuthContext(req);
@@ -94,10 +95,13 @@ export async function POST(req: NextRequest) {
       FileDb.saveTable('certificates', certs);
     }
 
-    // Calculate simulated validity dates: from today to 2 years in the future
+    // Calculate simulated validity dates: from today to 2 years in the future in Peru timezone
     const now = new Date();
-    const validFrom = now.toISOString().split('T')[0];
-    const validTo = new Date(now.setFullYear(now.getFullYear() + 2)).toISOString().split('T')[0];
+    const validFrom = formatDateOnlyPE(now);
+    
+    const futureDate = new Date();
+    futureDate.setFullYear(futureDate.getFullYear() + 2);
+    const validTo = formatDateOnlyPE(futureDate);
 
     const newCert = FileDb.insert('certificates', {
       company_id: ctx.company.id,

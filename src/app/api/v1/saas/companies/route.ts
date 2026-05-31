@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthContext, unauthorizedResponse, logAudit } from '@/lib/auth-middleware';
 import { FileDb } from '@/lib/db';
+import { todayPE } from '@/utils/date-pe';
 
 // Verify that user is platform owner
 function checkPlatformAdmin(ctx: any) {
@@ -90,7 +91,7 @@ export async function POST(req: NextRequest) {
       company_id: companyId,
       plan_name: planName || 'starter',
       status: 'active',
-      start_date: new Date().toISOString().split('T')[0],
+      start_date: todayPE(),
     });
 
     // 3. Insert default document series (Seeds F001, B001, credit/debit notes)

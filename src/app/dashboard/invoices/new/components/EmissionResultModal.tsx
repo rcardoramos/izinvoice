@@ -13,6 +13,7 @@ import { StatusBadge } from '@/components/shared/StatusBadge';
 import { PdfViewer } from '@/components/shared/PdfViewer';
 import { TicketViewer } from '@/components/shared/TicketViewer';
 import { BillingApiClient } from '@/services/api-client';
+import { todayPE, nowPE } from '@/utils/date-pe';
 
 interface EmissionResultModalProps {
   isOpen: boolean;
@@ -192,7 +193,7 @@ export function EmissionResultModal({
                         correlativo: emittedDoc.correlativo,
                         status: emittedDoc.status,
                         total: emittedDoc.total,
-                        issueDate: emittedDoc.issueDate || new Date().toISOString().split('T')[0] as any,
+                        issueDate: emittedDoc.issueDate || todayPE() as any,
                         dailySummaryId: null,
                         payload: {
                           cliente: {
@@ -208,8 +209,8 @@ export function EmissionResultModal({
                             total,
                           },
                         },
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString(),
+                        createdAt: nowPE(),
+                        updatedAt: nowPE(),
                         sunat: null,
                       }}
                       companyName={company?.businessName || ''}
@@ -227,7 +228,7 @@ export function EmissionResultModal({
                         correlativo: emittedDoc.correlativo,
                         status: emittedDoc.status,
                         total: emittedDoc.total,
-                        issueDate: emittedDoc.issueDate || new Date().toISOString().split('T')[0] as any,
+                        issueDate: emittedDoc.issueDate || todayPE() as any,
                         dailySummaryId: null,
                         payload: {
                           cliente: {
@@ -243,8 +244,8 @@ export function EmissionResultModal({
                             total,
                           },
                         },
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString(),
+                        createdAt: nowPE(),
+                        updatedAt: nowPE(),
                         sunat: null,
                       }}
                       companyName={company?.businessName || ''}

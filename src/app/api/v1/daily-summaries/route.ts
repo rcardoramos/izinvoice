@@ -3,6 +3,7 @@ import { getAuthContext, unauthorizedResponse, logAudit } from '@/lib/auth-middl
 import { FileDb } from '@/lib/db';
 import { CloseDailySummaryRequest, DailySummarySubmitResponse } from '@/types/document.types';
 import { SunatMockService } from '@/utils/sunat-mock';
+import { todayPE } from '@/utils/date-pe';
 
 export async function GET(req: NextRequest) {
   const ctx = getAuthContext(req);
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
       // Empty body is fine, defaults will apply
     }
     
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = todayPE();
     const referenceDate = body.referenceDate || todayStr;
     const issueDate = body.issueDate || todayStr;
 

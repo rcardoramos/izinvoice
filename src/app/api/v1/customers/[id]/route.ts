@@ -33,8 +33,11 @@ export async function GET(
 
     let lastPurchaseDate = null;
     if (customerDocs.length > 0) {
-      const dates = customerDocs.map((d: any) => new Date(d.issue_date).getTime());
-      lastPurchaseDate = new Date(Math.max(...dates)).toISOString().split('T')[0];
+      const dates = customerDocs.map((d: any) => d.issue_date || d.issueDate).filter(Boolean);
+      if (dates.length > 0) {
+        dates.sort();
+        lastPurchaseDate = dates[dates.length - 1];
+      }
     }
 
     // Purchase frequency calculation

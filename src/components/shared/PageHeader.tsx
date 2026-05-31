@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAppStore } from '@/store/app';
 import { BillingApiClient } from '@/services/api-client';
 import { Bell, Search, Command, Check, AlertCircle, Menu } from 'lucide-react';
+import { TZ } from '@/utils/date-pe';
 
 interface PageHeaderProps {
   title: string;
@@ -115,7 +116,7 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
                           <p className="font-semibold text-zinc-900">{notif.title}</p>
                           <p className="text-zinc-500 mt-0.5 leading-snug">{notif.message}</p>
                           <p className="text-[9px] text-zinc-400 font-mono mt-1">
-                            {new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(notif.created_at).toLocaleTimeString('es-PE', { timeZone: TZ, hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
                       </div>

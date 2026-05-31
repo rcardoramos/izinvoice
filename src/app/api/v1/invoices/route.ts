@@ -3,6 +3,7 @@ import { getAuthContext, unauthorizedResponse, logAudit } from '@/lib/auth-middl
 import { FileDb } from '@/lib/db';
 import { CreateInvoiceRequest, InvoiceCreatedResponse } from '@/types/document.types';
 import { SunatMockService } from '@/utils/sunat-mock';
+import { todayPE } from '@/utils/date-pe';
 
 export async function POST(req: NextRequest) {
   const ctx = getAuthContext(req);
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
       serie,
       correlativo: nextCorrelativo,
       status: 'submitted',
-      issue_date: new Date().toISOString().split('T')[0],
+      issue_date: todayPE(),
       total: parseFloat(docTotalString),
       daily_summary_id: null,
       user_id: ctx.user.id,

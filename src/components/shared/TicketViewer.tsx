@@ -4,6 +4,7 @@ import React from 'react';
 import { DocumentDetail } from '@/types/document.types';
 import { DOC_TYPE_LABELS } from '@/types/enums';
 import { QrCode } from 'lucide-react';
+import { TZ } from '@/utils/date-pe';
 
 interface TicketViewerProps {
   document: DocumentDetail;
@@ -21,6 +22,7 @@ const formatTime = (isoString?: string) => {
     const date = new Date(isoString);
     if (isNaN(date.getTime())) return '';
     return date.toLocaleTimeString('es-PE', {
+      timeZone: TZ,
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
