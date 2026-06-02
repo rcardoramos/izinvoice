@@ -18,15 +18,30 @@ export default function DashboardLayout({
   const { isAuthenticated, user, company, setSession, accessToken, clearSession } = useAuthStore();
   const { theme } = useAppStore();
   const [loading, setLoading] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Monitor hydration status of Zustand store
+  useEffect(() => {
+    if (useAuthStore.persist.hasHydrated()) {
+      setIsHydrated(true);
+    } else {
+      const unsub = useAuthStore.persist.onFinishHydration(() => {
+        setIsHydrated(true);
+      });
+      return () => unsub();
+    }
+  }, []);
 
   useEffect(() => {
+    if (!isHydrated) return;
+
     // Force light mode on load
     const root = window.document.documentElement;
     root.classList.remove('dark');
     root.classList.add('light');
 
     if (!isAuthenticated) {
-      router.push('/');
+      router.push('/login');
       return;
     }
 
@@ -46,11 +61,11 @@ export default function DashboardLayout({
           setSession(accessToken!, normalizedUser, me.company ?? company!);
         }
       } catch (err: any) {
-        // Clear session and redirect to landing page on 401 Unauthorized
+        // Clear session and redirect to login page on 401 Unauthorized
         if (err?.statusCode === 401 || err?.message === 'Unauthorized') {
           console.warn('Session expired or unauthorized. Logging out.');
           clearSession();
-          router.push('/');
+          router.push('/login');
           return;
         }
         // Silently ignore other errors (e.g. temporary network downtime) — keep existing cached session
@@ -69,7 +84,8 @@ export default function DashboardLayout({
     };
 
     refreshSession();
-  }, [isAuthenticated, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHydrated, isAuthenticated, router, pathname]);
 
   if (loading) {
     return (
