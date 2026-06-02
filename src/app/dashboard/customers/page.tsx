@@ -306,7 +306,7 @@ export default function CustomersCrudPage() {
           subtitle="Directorio unificado de RUC y DNI para autocompletado"
         />
 
-        <div className="p-8 max-w-7xl w-full mx-auto pb-16">
+        <div className="p-6 max-w-7xl w-full mx-auto pb-12">
           <DataTable
             columns={columns}
             data={customers}

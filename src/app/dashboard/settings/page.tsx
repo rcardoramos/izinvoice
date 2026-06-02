@@ -93,6 +93,8 @@ export default function SettingsPage() {
     }
   };
 
+  // Delete certificate handler disabled per request
+  /*
   const handleDeleteCert = async (id: string, alias: string) => {
     if (!confirm(`¿Está seguro de que desea eliminar el certificado '${alias}'?`)) return;
     try {
@@ -109,6 +111,7 @@ export default function SettingsPage() {
       alert(err.message || 'Error al eliminar el certificado.');
     }
   };
+  */
 
   const handleUploadCertSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -368,7 +371,7 @@ export default function SettingsPage() {
         subtitle="Gestione el emisor, credenciales SOL, certificado y API Keys"
       />
 
-      <div className="p-8 space-y-8 max-w-5xl w-full mx-auto pb-16 select-none text-xs">
+      <div className="p-6 space-y-6 max-w-5xl w-full mx-auto pb-12 select-none text-xs">
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Company details and SUNAT creds form */}
@@ -656,37 +659,23 @@ export default function SettingsPage() {
                         <p>Validez: {cert.validFrom} al {cert.validTo}</p>
                       </div>
 
-                      <div className="flex justify-between items-center pt-2 border-t border-zinc-150/60 mt-1">
-                        <div className="flex gap-2">
-                          {!cert.isActive && (
+                      {cert.isActive && (
+                        <div className="flex justify-between items-center pt-2 border-t border-zinc-150/60 mt-1">
+                          <div className="flex gap-2">
+                            {/* Inactive certs are filtered out, so active ones need no Activar button */}
+                          </div>
+                          <div className="flex gap-1.5">
                             <button
                               type="button"
-                              onClick={() => handleActivateCert(cert.id)}
-                              className="text-[9px] text-[#4f46e5] font-bold hover:underline cursor-pointer"
+                              onClick={() => handleEditCertClick(cert)}
+                              className="p-1 hover:bg-zinc-100 rounded-lg text-zinc-450 hover:text-zinc-900 cursor-pointer"
+                              title="Editar Certificado"
                             >
-                              Activar
+                              <Edit className="w-3.5 h-3.5" />
                             </button>
-                          )}
+                          </div>
                         </div>
-                        <div className="flex gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleEditCertClick(cert)}
-                            className="p-1 hover:bg-zinc-100 rounded-lg text-zinc-450 hover:text-zinc-900 cursor-pointer"
-                            title="Editar Certificado"
-                          >
-                            <Edit className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteCert(cert.id, cert.alias)}
-                            className="p-1 hover:bg-rose-50 rounded-lg text-zinc-450 hover:text-rose-600 cursor-pointer"
-                            title="Eliminar Certificado"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   ))}
                 </div>

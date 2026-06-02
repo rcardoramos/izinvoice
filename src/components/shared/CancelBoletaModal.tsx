@@ -50,7 +50,7 @@ export function CancelBoletaModal({ doc, onCancel, onClose }: CancelBoletaModalP
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl border border-zinc-200 max-w-md w-full overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl border border-zinc-200 max-w-xl w-full overflow-hidden">
 
         {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-zinc-100">

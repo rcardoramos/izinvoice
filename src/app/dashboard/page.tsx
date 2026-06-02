@@ -229,7 +229,7 @@ export default function DashboardPage() {
           subtitle="Supervisión global de empresas clientes y facturación de Izinvoce"
         />
 
-        <div className="p-8 space-y-8 max-w-7xl w-full mx-auto">
+        <div className="p-6 space-y-6 max-w-7xl w-full mx-auto">
           {/* SaaS KPI Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-5 rounded-2xl shadow-sm flex items-center justify-between">
@@ -371,7 +371,7 @@ export default function DashboardPage() {
         subtitle="Métricas globales de facturación y estado del sistema"
       />
 
-      <div className="p-8 space-y-8 max-w-7xl w-full mx-auto">
+      <div className="p-6 space-y-6 max-w-7xl w-full mx-auto">
         {/* KPI Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Card 1 */}

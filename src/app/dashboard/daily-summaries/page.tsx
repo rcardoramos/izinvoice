@@ -583,7 +583,7 @@ export default function DailySummariesPage() {
         subtitle="Gestión de envíos de Boletas y Notas de Venta a SUNAT mediante Resumen Diario"
       />
 
-      <div className="p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto pb-16">
+      <div className="p-5 lg:p-6 space-y-5 max-w-7xl w-full mx-auto pb-12">
 
         {/* Info banner */}
         <div className="bg-indigo-50 border border-indigo-100 p-4 rounded-2xl flex gap-4 items-start">
@@ -861,7 +861,9 @@ export default function DailySummariesPage() {
       {step !== null && (
         <div className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-start justify-center p-4 z-50 overflow-y-auto">
           <div className={`relative bg-white rounded-2xl shadow-2xl border border-zinc-200 w-full my-8 transition-all ${
-            step === 'preview' || step === 'submitting' ? 'max-w-3xl' : 'max-w-lg'
+            step === 'preview' || step === 'submitting'
+              ? 'max-w-5xl'
+              : 'max-w-3xl'
           }`}>
 
             {/* Modal Header */}
@@ -1319,7 +1321,7 @@ export default function DailySummariesPage() {
       {/* ─── Detail Modal ────────────────────────────────────────────────── */}
       {detailModalOpen && (
         <div className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <div className="relative bg-white rounded-2xl shadow-2xl border border-zinc-200 w-full max-w-3xl my-8 transition-all overflow-hidden">
+          <div className="relative bg-white rounded-2xl shadow-2xl border border-zinc-200 w-full max-w-5xl my-8 transition-all overflow-hidden">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-100">
               <div className="flex items-center gap-2.5">

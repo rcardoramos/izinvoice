@@ -296,7 +296,7 @@ Soporte Técnico de izInvoce`;
         subtitle="Administra los clientes de IZINVOCE, asigna planes, suspende servicios y visualiza credenciales."
       />
 
-      <div className="p-8 space-y-6 max-w-7xl w-full mx-auto">
+      <div className="p-6 space-y-5 max-w-7xl w-full mx-auto">
         {/* Actions bar */}
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="relative w-full sm:max-w-md">

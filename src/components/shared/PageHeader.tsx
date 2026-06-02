@@ -16,7 +16,8 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
   const { toggleCommandPalette, notifications, setNotifications, unreadCount, toggleMobileSidebar } = useAppStore();
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // Fetch notifications periodically
+  // Fetch notifications periodically (DISABLED TEMPORARILY)
+  /*
   useEffect(() => {
     const fetchNotifs = async () => {
       try {
@@ -36,6 +37,7 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
       setNotifications(list);
     } catch (e) {}
   };
+  */
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-zinc-200 h-16 flex items-center justify-between px-4 sm:px-8 select-none">
@@ -68,11 +70,12 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
           </span>
         </button>
 
-        {/* Notifications Panel */}
+        {/* Notifications Panel (DISABLED TEMPORARILY) */}
+        {/* 
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="p-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors relative cursor-pointer text-zinc-600"
+            className="p-2 rounded-xl border border-zinc-200 bg-white hover:bg-zinc-50 transition-colors relative cursor-pointer text-zinc-650"
           >
             <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
@@ -115,7 +118,7 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
                         <div className="flex-1">
                           <p className="font-semibold text-zinc-900">{notif.title}</p>
                           <p className="text-zinc-500 mt-0.5 leading-snug">{notif.message}</p>
-                          <p className="text-[9px] text-zinc-400 font-mono mt-1">
+                          <p className="text-[9px] text-zinc-450 font-mono mt-1">
                             {new Date(notif.created_at).toLocaleTimeString('es-PE', { timeZone: TZ, hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
@@ -127,6 +130,7 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
             </div>
           )}
         </div>
+        */}
 
         {/* Children layout insertion */}
         {children}

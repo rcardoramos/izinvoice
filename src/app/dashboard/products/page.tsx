@@ -267,7 +267,7 @@ export default function ProductsCrudPage() {
         subtitle="Artículos y servicios registrados con especificación impositiva SUNAT"
       />
 
-      <div className="p-8 max-w-7xl w-full mx-auto pb-16">
+      <div className="p-6 max-w-7xl w-full mx-auto pb-12">
         <DataTable
           columns={columns}
           data={products}

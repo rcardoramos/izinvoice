@@ -8,6 +8,7 @@ import { PdfViewer } from '@/components/shared/PdfViewer';
 import { TicketViewer } from '@/components/shared/TicketViewer';
 import { CancelBoletaModal } from '@/components/shared/CancelBoletaModal';
 import { VoidFacturaModal } from '@/components/shared/VoidFacturaModal';
+import { AlertModal } from '@/components/shared/AlertModal';
 import { BillingApiClient } from '@/services/api-client';
 import { DOC_TYPE_LABELS } from '@/types/enums';
 import { useAuthStore } from '@/store/auth';
@@ -54,6 +55,12 @@ const CATALOG_09_REASONS = [
   { value: '10', label: 'Otros conceptos', isTotal: false },
 ];
 
+const CATALOG_10_REASONS = [
+  { value: '01', label: 'Interés por mora' },
+  { value: '02', label: 'Aumento en el valor' },
+  { value: '03', label: 'Penalidades/otros conceptos' },
+];
+
 export default function InvoicesHistoryPage() {
   const { company } = useAuthStore();
   const [documents, setDocuments] = useState<any[]>([]);
@@ -85,7 +92,7 @@ export default function InvoicesHistoryPage() {
 
     return () => clearTimeout(timer);
   }, [searchQuery]);
-  const [limit] = useState(8); // match DataTable itemsPerPage default
+  const [limit] = useState(10); // match DataTable itemsPerPage default
   const [meta, setMeta] = useState({
     total: 0,
     totalPages: 1,
@@ -108,6 +115,33 @@ export default function InvoicesHistoryPage() {
   const [creditAmount, setCreditAmount] = useState<string>('');
   const [noteEmitting, setNoteEmitting] = useState(false);
 
+  // Debit Note dialog state
+  const [showDebitNoteDialog, setShowDebitNoteDialog] = useState(false);
+  const [debitNoteForm, setDebitNoteForm] = useState({
+    serie: '',
+    motivoCodigo: '01',
+    motivoDescripcion: 'INTERÉS POR MORA',
+  });
+  const [debitAmount, setDebitAmount] = useState<string>('');
+  const [debitNoteEmitting, setDebitNoteEmitting] = useState(false);
+
+  // Custom Alert Modal State
+  const [alertConfig, setAlertConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'warning',
+  });
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'warning') => {
+    setAlertConfig({ isOpen: true, title, message, type });
+  };
+
   const handleReasonChange = (code: string) => {
     const reason = CATALOG_09_REASONS.find(r => r.value === code);
     if (!reason) return;
@@ -121,6 +155,17 @@ export default function InvoicesHistoryPage() {
     if (reason.isTotal && selectedDoc) {
       setCreditAmount(parseFloat(selectedDoc.total || '0').toFixed(2));
     }
+  };
+
+  const handleDebitReasonChange = (code: string) => {
+    const reason = CATALOG_10_REASONS.find(r => r.value === code);
+    if (!reason) return;
+    
+    setDebitNoteForm(prev => ({
+      ...prev,
+      motivoCodigo: code,
+      motivoDescripcion: reason.label.toUpperCase()
+    }));
   };
 
   // Cancel boleta modal state
@@ -242,6 +287,15 @@ export default function InvoicesHistoryPage() {
           motivoDescripcion: 'ANULACIÓN DE LA OPERACIÓN',
         });
         setCreditAmount(parseFloat(detail.total || '0').toFixed(2));
+
+        // Preset default ND series based on affected document type
+        const debitPrefix = detail.docType === '01' ? 'FD01' : 'BD01';
+        setDebitNoteForm({
+          serie: debitPrefix,
+          motivoCodigo: '01',
+          motivoDescripcion: 'INTERÉS POR MORA',
+        });
+        setDebitAmount('');
       } catch (err) {
         console.error(err);
       } finally {
@@ -259,12 +313,12 @@ export default function InvoicesHistoryPage() {
     const amountVal = isTotalReason ? parseFloat(selectedDoc.total || '0') : parseFloat(creditAmount);
     
     if (isNaN(amountVal) || amountVal <= 0) {
-      alert('Por favor ingrese un importe válido mayor a 0.');
+      showAlert('Importe Inválido', 'Por favor ingrese un importe válido mayor a 0.', 'warning');
       return;
     }
     const maxVal = parseFloat(selectedDoc.total || '0');
     if (amountVal > maxVal) {
-      alert('El importe a creditar no puede ser mayor al total del documento afectado.');
+      showAlert('Importe Inválido', 'El importe a creditar no puede ser mayor al total del documento afectado.', 'warning');
       return;
     }
 
@@ -294,16 +348,64 @@ export default function InvoicesHistoryPage() {
 
       const result = await BillingApiClient.createCreditNote(payload);
       
-      alert(`Nota de Crédito ${result.serie}-${result.correlativo} emitida con éxito.`);
+      showAlert('Nota Emitida', `Nota de Crédito ${result.serie}-${result.correlativo} emitida con éxito.`, 'success');
       setShowNoteDialog(false);
       setSelectedDocId(null);
       
       // Reload list
       loadDocuments();
     } catch (err: any) {
-      alert(err.message || 'Error al emitir la Nota de Crédito.');
+      showAlert('Error de Emisión', err.message || 'Error al emitir la Nota de Crédito.', 'error');
     } finally {
       setNoteEmitting(false);
+    }
+  };
+
+  const handleEmitDebitNote = async () => {
+    if (!selectedDoc) return;
+    
+    const amountVal = parseFloat(debitAmount);
+    
+    if (isNaN(amountVal) || amountVal <= 0) {
+      showAlert('Importe Inválido', 'Por favor ingrese un importe válido mayor a 0.', 'warning');
+      return;
+    }
+
+    try {
+      setDebitNoteEmitting(true);
+      
+      const IGV_FACTOR = 1.18;
+      const precioUnitario = Math.round((amountVal / IGV_FACTOR) * 100) / 100;
+
+      const payload = {
+        serie: debitNoteForm.serie,
+        moneda: selectedDoc.payload?.moneda || selectedDoc.moneda || 'PEN',
+        documentoAfectadoId: selectedDoc.id,
+        cliente: selectedDoc.payload?.cliente || selectedDoc.cliente,
+        items: [
+          {
+            codigo: 'AJUSTE',
+            descripcion: debitNoteForm.motivoDescripcion,
+            cantidad: 1,
+            precioUnitario,
+          },
+        ],
+        motivoCodigo: debitNoteForm.motivoCodigo,
+        motivoDescripcion: debitNoteForm.motivoDescripcion,
+      };
+
+      const result = await BillingApiClient.createDebitNote(payload);
+      
+      showAlert('Nota Emitida', `Nota de Débito ${result.serie}-${result.correlativo} emitida con éxito.`, 'success');
+      setShowDebitNoteDialog(false);
+      setSelectedDocId(null);
+      
+      // Reload list
+      loadDocuments();
+    } catch (err: any) {
+      showAlert('Error de Emisión', err.message || 'Error al emitir la Nota de Débito.', 'error');
+    } finally {
+      setDebitNoteEmitting(false);
     }
   };
 
@@ -323,7 +425,7 @@ export default function InvoicesHistoryPage() {
         issueDate: new Date().toISOString().split('T')[0] as any,
         motivoBaja: reason,
       });
-      alert('Comunicación de baja (RA) enviada a SUNAT. Consulte su estado en el menú de resúmenes.');
+      showAlert('Baja Enviada', 'Comunicación de baja (RA) enviada a SUNAT. Consulte su estado en el menú de resúmenes.', 'success');
       setVoidModal(false);
       setDocToVoid(null);
       setSelectedDocId(null);
@@ -486,6 +588,13 @@ export default function InvoicesHistoryPage() {
   const igvVal = Math.round((totalVal - baseVal) * 100) / 100;
   const isAmountInvalid = !isTotalReason && (isNaN(amountNum) || amountNum <= 0 || amountNum > totalDoc);
 
+  // Calculate debit breakdown
+  const debitAmountNum = parseFloat(debitAmount) || 0;
+  const debitTotalVal = debitAmountNum;
+  const debitBaseVal = Math.round((debitTotalVal / IGV_FACTOR) * 100) / 100;
+  const debitIgvVal = Math.round((debitTotalVal - debitBaseVal) * 100) / 100;
+  const isDebitAmountInvalid = isNaN(debitAmountNum) || debitAmountNum <= 0;
+
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* List layout */}
@@ -495,7 +604,7 @@ export default function InvoicesHistoryPage() {
           subtitle="Catálogo histórico de comprobantes y resúmenes SUNAT"
         />
 
-        <div className="p-8 max-w-7xl w-full mx-auto pb-16 space-y-6">
+        <div className="p-6 max-w-7xl w-full mx-auto pb-12 space-y-5">
           
           {/* Filters Panel Card */}
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 shadow-sm space-y-4">
@@ -606,6 +715,7 @@ export default function InvoicesHistoryPage() {
             onPageChange={(p) => setPage(p)}
             searchValue={searchQuery}
             onSearchChange={(q) => setSearchQuery(q)}
+            itemsPerPage={limit}
           />
         </div>
       </div>
@@ -671,7 +781,7 @@ export default function InvoicesHistoryPage() {
                 {/* Unified actions bar inside details drawer */}
                 <div className="space-y-2">
                   <h4 className="text-[10px] uppercase font-bold text-zinc-400 dark:text-zinc-500 tracking-wider">Acciones del Comprobante</h4>
-                  <div className="flex items-center gap-1.5 w-full">
+                  <div className="flex flex-wrap items-center gap-1.5 w-full">
                     {/* Imprimir / PDF */}
                     <button
                       type="button"
@@ -697,7 +807,7 @@ export default function InvoicesHistoryPage() {
                       <button
                         type="button"
                         disabled
-                        className="flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 px-2 border border-zinc-100 dark:border-zinc-900/50 bg-zinc-50/50 dark:bg-zinc-900/40 rounded-lg text-[10px] font-bold text-zinc-400 dark:text-zinc-650 cursor-not-allowed shadow-none"
+                        className="flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 px-2 border border-zinc-100 dark:border-zinc-900/50 bg-zinc-50/50 dark:bg-zinc-900/40 rounded-lg text-[10px] font-bold text-zinc-400 dark:text-zinc-655 cursor-not-allowed shadow-none"
                         title="Sin teléfono registrado"
                       >
                         <WhatsAppIcon className="w-3.5 h-3.5 opacity-50 shrink-0" />
@@ -735,6 +845,18 @@ export default function InvoicesHistoryPage() {
                       >
                         <PlusCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                         <span className="truncate">Nota Crédito</span>
+                      </button>
+                    )}
+
+                    {/* Emitir Nota de Débito */}
+                    {selectedDoc.status === 'accepted' && ['01', '03'].includes(selectedDoc.docType || selectedDoc.doc_type) && (
+                      <button
+                        type="button"
+                        onClick={() => setShowDebitNoteDialog(true)}
+                        className="flex-1 min-w-0 flex items-center justify-center gap-1 py-1.5 px-2 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-rose-500/10 hover:border-rose-500/30 rounded-lg text-[10px] font-bold text-zinc-700 dark:text-zinc-300 transition-all cursor-pointer shadow-xs hover:scale-[1.02]"
+                      >
+                        <PlusCircle className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                        <span className="truncate">Nota Débito</span>
                       </button>
                     )}
 
@@ -913,7 +1035,7 @@ export default function InvoicesHistoryPage() {
       {/* Credit Note prompt Dialog */}
       {showNoteDialog && selectedDoc && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none">
-          <div className="w-[500px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden p-6 shadow-2xl space-y-4">
+          <div className="w-[680px] max-w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden p-6 shadow-2xl space-y-4">
             <h3 className="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider border-b border-zinc-150 dark:border-zinc-800/80 pb-2.5">
               Emitir Nota de Crédito
             </h3>
@@ -1033,6 +1155,136 @@ export default function InvoicesHistoryPage() {
           </div>
         </div>
       )}
+
+      {/* Debit Note prompt Dialog */}
+      {showDebitNoteDialog && selectedDoc && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 select-none">
+          <div className="w-[680px] max-w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl overflow-hidden p-6 shadow-2xl space-y-4">
+            <h3 className="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider border-b border-zinc-150 dark:border-zinc-800/80 pb-2.5">
+              Emitir Nota de Débito
+            </h3>
+            
+            {/* Info Box */}
+            <div className="bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 p-3 rounded-xl space-y-1 text-[11px] text-zinc-650 dark:text-zinc-400">
+              <div className="flex justify-between">
+                <span>Documento afectado:</span>
+                <span className="font-bold text-zinc-900 dark:text-white font-mono">{selectedDoc.serie}-{String(selectedDoc.correlativo).padStart(8, '0')}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Total documento:</span>
+                <span className="font-bold text-zinc-900 dark:text-white font-mono">{selectedDoc.payload?.moneda || selectedDoc.moneda || 'PEN'} {parseFloat(selectedDoc.total || '0').toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between truncate">
+                <span>Cliente:</span>
+                <span className="font-semibold text-zinc-900 dark:text-white max-w-[280px] truncate">
+                  {selectedDoc.payload?.cliente?.razonSocial || selectedDoc.cliente?.razonSocial || 'VARIOS'}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-500 mb-1">Serie de la Nota</label>
+                <CustomSelect
+                  value={debitNoteForm.serie}
+                  onChange={(val) => setDebitNoteForm({ ...debitNoteForm, serie: val })}
+                  options={selectedDoc.docType === '01' ? [
+                    { value: 'FD01', label: 'FD01 (Nota de Débito para Factura)' }
+                  ] : [
+                    { value: 'BD01', label: 'BD01 (Nota de Débito para Boleta)' }
+                  ]}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-500 mb-1">Motivo de Emisión (SUNAT)</label>
+                <CustomSelect
+                  value={debitNoteForm.motivoCodigo}
+                  onChange={handleDebitReasonChange}
+                  options={CATALOG_10_REASONS}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-500 mb-1">Sustento / Descripción</label>
+                  <input
+                    type="text"
+                    value={debitNoteForm.motivoDescripcion}
+                    onChange={(e) => setDebitNoteForm({ ...debitNoteForm, motivoDescripcion: e.target.value.toUpperCase() })}
+                    required
+                    placeholder="Sustento de emisión..."
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl p-2.5 text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-zinc-450 dark:text-zinc-500 mb-1">
+                    Importe a Debitar ({selectedDoc.payload?.moneda || selectedDoc.moneda || 'PEN'})
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={debitAmount}
+                    onChange={(e) => setDebitAmount(e.target.value)}
+                    placeholder="0.00"
+                    className={`w-full bg-zinc-50 dark:bg-zinc-950 border rounded-xl p-2.5 text-xs text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono ${
+                      isDebitAmountInvalid ? 'border-rose-500 focus:ring-rose-500' : 'border-zinc-200 dark:border-zinc-800'
+                    }`}
+                  />
+                  {isDebitAmountInvalid && (
+                    <span className="text-[10px] text-rose-500 mt-1 block">
+                      Debe ser mayor a 0
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Live Calculations Box */}
+              <div className="bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 p-3.5 rounded-xl space-y-1.5 font-mono text-[11px] text-zinc-650 dark:text-zinc-400">
+                <div className="flex justify-between">
+                  <span>Base Imponible (sin IGV):</span>
+                  <span className="font-semibold text-zinc-900 dark:text-white">{selectedDoc.payload?.moneda || selectedDoc.moneda || 'PEN'} {debitBaseVal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>IGV (18%):</span>
+                  <span className="font-semibold text-zinc-900 dark:text-white">{selectedDoc.payload?.moneda || selectedDoc.moneda || 'PEN'} {debitIgvVal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between border-t border-zinc-200 dark:border-zinc-800 pt-1.5 text-xs font-bold text-zinc-900 dark:text-white">
+                  <span>Total Nota de Débito:</span>
+                  <span>{selectedDoc.payload?.moneda || selectedDoc.moneda || 'PEN'} {debitTotalVal.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                <button
+                  type="button"
+                  onClick={() => setShowDebitNoteDialog(false)}
+                  disabled={debitNoteEmitting}
+                  className="px-4 py-2 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer text-zinc-500 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleEmitDebitNote}
+                  disabled={debitNoteEmitting || !debitNoteForm.motivoDescripcion || isDebitAmountInvalid}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {debitNoteEmitting ? 'Emitiendo...' : 'Emitir Nota de Débito'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Alert modal fallback */}
+      <AlertModal
+        isOpen={alertConfig.isOpen}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onClose={() => setAlertConfig((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 }

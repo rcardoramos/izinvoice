@@ -397,7 +397,7 @@ export default function NewBoletaPage() {
         subtitle="Emisión de facturas y boletas electrónicas SUNAT"
       />
 
-      <div className="p-8 space-y-6 max-w-7xl w-full mx-auto pb-16">
+      <div className="p-6 space-y-5 max-w-7xl w-full mx-auto pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Setup / Document configurations panel */}
