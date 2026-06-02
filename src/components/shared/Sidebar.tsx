@@ -19,7 +19,6 @@ import {
   Sun,
   ShieldCheck,
   Building2,
-  Terminal,
   Receipt,
   X
 } from 'lucide-react';
@@ -27,7 +26,7 @@ import {
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, company, clearSession, updateCompanyEnv } = useAuthStore();
+  const { user, company, clearSession } = useAuthStore();
   const { theme, toggleTheme, mobileSidebarOpen, setMobileSidebarOpen } = useAppStore();
 
   React.useEffect(() => {
@@ -37,18 +36,6 @@ export function Sidebar() {
   const handleLogout = () => {
     clearSession();
     router.push('/');
-  };
-
-  const changeEnv = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const env = e.target.value as any;
-    updateCompanyEnv(env);
-    
-    // Attempt updating in background mock if needed, but Zustand updates state immediately
-    if (company) {
-      try {
-        await BillingApiClient.updateProduct(company.id, { sunatEnvironment: env });
-      } catch (err) {}
-    }
   };
 
   const rawLinks = [
@@ -116,26 +103,12 @@ export function Sidebar() {
         </div>
       ) : company ? (
         <div className="p-4 mx-4 my-3 rounded-xl bg-zinc-50 border border-zinc-150">
-          <div className="flex items-center gap-2.5 mb-2.5">
+          <div className="flex items-center gap-2.5">
             <Building2 className="w-4 h-4 text-zinc-500" />
             <div className="min-w-0">
               <p className="text-xs font-semibold text-zinc-900 truncate">{company.businessName}</p>
               <p className="text-[10px] text-zinc-500 font-mono">RUC: {company.ruc}</p>
             </div>
-          </div>
-
-          {/* Environment Switcher */}
-          <div className="flex items-center gap-1.5 bg-white p-1.5 rounded-lg border border-zinc-200">
-            <Terminal className="w-3.5 h-3.5 text-[#4f46e5]" />
-            <select
-              value={company.sunatEnvironment}
-              onChange={changeEnv}
-              className="w-full bg-transparent border-0 text-[10px] font-mono text-zinc-600 focus:ring-0 cursor-pointer p-0"
-            >
-              <option value="beta" className="bg-white text-zinc-700">SUNAT Beta (Pruebas)</option>
-              <option value="homologacion" className="bg-white text-zinc-700">SUNAT Homologación</option>
-              <option value="production" className="bg-white text-red-500 font-semibold">SUNAT Producción</option>
-            </select>
           </div>
         </div>
       ) : null}

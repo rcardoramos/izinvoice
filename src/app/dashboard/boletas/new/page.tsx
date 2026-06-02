@@ -266,9 +266,9 @@ export default function NewBoletaPage() {
   };
 
   // Totals
-  const subtotal = lines.reduce((sum, line) => sum + line.cantidad * line.precioUnitario, 0);
-  const igvTotal = subtotal * 0.18;
-  const total = subtotal + igvTotal;
+  const total = lines.reduce((sum, line) => sum + line.cantidad * line.precioUnitario, 0);
+  const subtotal = parseFloat((total / 1.18).toFixed(2));
+  const igvTotal = parseFloat((total - subtotal).toFixed(2));
 
   // Submit boleta to real API
   const handleEmitBoleta = async () => {

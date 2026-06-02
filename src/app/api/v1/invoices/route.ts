@@ -33,19 +33,19 @@ export async function POST(req: NextRequest) {
     FileDb.saveTable('document_series', seriesList);
 
     // Calculate Totals
-    let subtotal = 0;
-    let igvTotal = 0;
+    let total = 0;
     const computedItems = items.map((item) => {
       const lineTotal = item.cantidad * item.precioUnitario;
-      const lineIgv = lineTotal * 0.18; // 18% standard IGV
-      subtotal += lineTotal;
-      igvTotal += lineIgv;
+      const lineSubtotal = parseFloat((lineTotal / 1.18).toFixed(2));
+      const lineIgv = parseFloat((lineTotal - lineSubtotal).toFixed(2));
+      total += lineTotal;
       return {
         ...item,
-        igv: parseFloat(lineIgv.toFixed(2)),
+        igv: lineIgv,
       };
     });
-    const total = subtotal + igvTotal;
+    const subtotal = parseFloat((total / 1.18).toFixed(2));
+    const igvTotal = parseFloat((total - subtotal).toFixed(2));
 
     const docTotalString = total.toFixed(2);
 

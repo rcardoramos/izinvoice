@@ -325,9 +325,7 @@ export default function InvoicesHistoryPage() {
     try {
       setNoteEmitting(true);
       
-      const IGV_FACTOR = 1.18;
-      // Convert amountVal (with IGV) to precioUnitario (without IGV)
-      const precioUnitario = Math.round((amountVal / IGV_FACTOR) * 100) / 100;
+      const precioUnitario = amountVal;
 
       const payload = {
         serie: noteForm.serie,
@@ -374,8 +372,7 @@ export default function InvoicesHistoryPage() {
     try {
       setDebitNoteEmitting(true);
       
-      const IGV_FACTOR = 1.18;
-      const precioUnitario = Math.round((amountVal / IGV_FACTOR) * 100) / 100;
+      const precioUnitario = amountVal;
 
       const payload = {
         serie: debitNoteForm.serie,
