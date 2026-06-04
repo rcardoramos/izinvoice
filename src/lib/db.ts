@@ -229,7 +229,7 @@ const INITIAL_DB: DbSchema = {
     {
       id: 'cert_dev_01',
       company_id: '00000000-0000-4000-8000-000000000001',
-      alias: 'Certificado de Pruebas IzInvoce',
+      alias: 'Certificado de Pruebas IzInvoice',
       filename: 'dev-beta.pfx',
       validFrom: '2025-05-24',
       validTo: '2027-05-24',

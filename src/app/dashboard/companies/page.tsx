@@ -82,7 +82,7 @@ export default function CompaniesPage() {
   const handleSendEmailSimulated = (data: { email: string; ruc: string; businessName: string; username: string; password_hash: string }) => {
     const body = `Estimado cliente,
 
-Tus credenciales de acceso para la plataforma izInvoce han sido creadas con éxito.
+Tus credenciales de acceso para la plataforma izInvoice han sido creadas con éxito.
 
 Empresa: ${data.businessName}
 RUC: ${data.ruc}
@@ -94,12 +94,12 @@ Credenciales de Administrador:
 Puedes iniciar sesión ingresando a la dirección de tu panel de facturación.
 
 Atentamente,
-Soporte Técnico de izInvoce`;
+Soporte Técnico de izInvoice`;
 
     setMailDetails({
-      from: 'no-reply@izinvoce.pe',
+      from: 'no-reply@izinvoice.pe',
       to: data.email,
-      subject: '¡Tus credenciales de izInvoce han sido creadas!',
+      subject: '¡Tus credenciales de izInvoice han sido creadas!',
       body,
     });
     setIsMailModalOpen(true);
@@ -293,7 +293,7 @@ Soporte Técnico de izInvoce`;
     <div className="flex-1 flex flex-col overflow-y-auto">
       <PageHeader 
         title="Directorio de Empresas Clientes" 
-        subtitle="Administra los clientes de IZINVOCE, asigna planes, suspende servicios y visualiza credenciales."
+        subtitle="Administra los clientes de IZINVOICE, asigna planes, suspende servicios y visualiza credenciales."
       />
 
       <div className="p-6 space-y-5 max-w-7xl w-full mx-auto">

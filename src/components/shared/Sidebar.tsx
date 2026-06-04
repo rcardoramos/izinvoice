@@ -73,13 +73,10 @@ export function Sidebar() {
         {/* Brand Logo */}
         <div className="p-6 border-b border-zinc-100 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#4f46e5] flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
-              IZ
+            <div className="bg-[#4f46e5]/5 px-2 py-1 rounded-lg flex items-center justify-center">
+              <img src="/log.png" alt="Logo" className="h-6 w-auto object-contain" />
             </div>
-            <div>
-              <h1 className="font-semibold text-zinc-900 tracking-tight text-sm">IZINVOCE</h1>
-              <p className="text-[10px] text-zinc-400 font-sans font-semibold">MindDev</p>
-            </div>
+            <span className="text-[9px] text-zinc-400 font-sans font-bold self-end mb-0.5 tracking-wider">MindDev</span>
           </div>
           {/* Mobile close button */}
           <button
@@ -96,7 +93,7 @@ export function Sidebar() {
           <div className="flex items-center gap-2.5">
             <ShieldCheck className="w-4 h-4 text-[#4f46e5] shrink-0" />
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-zinc-900 truncate">IZINVOCE HQ</p>
+              <p className="text-xs font-semibold text-zinc-900 truncate">IZINVOICE HQ</p>
               <p className="text-[10px] text-zinc-500">Control Global</p>
             </div>
           </div>

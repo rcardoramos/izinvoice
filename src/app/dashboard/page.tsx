@@ -226,7 +226,7 @@ export default function DashboardPage() {
       <div className="flex-1 flex flex-col overflow-y-auto">
         <PageHeader 
           title="Consola de Administración SaaS" 
-          subtitle="Supervisión global de empresas clientes y facturación de Izinvoce"
+          subtitle="Supervisión global de empresas clientes y facturación de Izinvoice"
         />
 
         <div className="p-6 space-y-6 max-w-7xl w-full mx-auto">

@@ -20,6 +20,27 @@
   --radius-lg: 12px;
   --radius-md: 8px;
   --radius-sm: 4px;
+
+  --animate-marquee-left: marquee-left 35s linear infinite;
+  --animate-marquee-right: marquee-right 35s linear infinite;
+
+  @keyframes marquee-left {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  @keyframes marquee-right {
+    from {
+      transform: translateX(-50%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
 }
 
 :root {
@@ -217,4 +238,18 @@ input:focus, select:focus, textarea:focus {
     background: white !important;
   }
 }
+
+/* Custom utility to pause animations on hover in Tailwind v4 */
+@utility pause-hover {
+  &:hover {
+    animation-play-state: paused !important;
+  }
+}
+
+/* Infinite scrolling marquee hover behavior fallback */
+.animate-marquee-left:hover,
+.animate-marquee-right:hover {
+  animation-play-state: paused !important;
+}
+
 

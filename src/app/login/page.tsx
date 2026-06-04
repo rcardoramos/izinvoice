@@ -81,14 +81,11 @@ export default function LoginPage() {
 
       <div className="w-full max-w-[440px] bg-white border border-zinc-200 rounded-2xl p-8 shadow-xl relative z-10">
         {/* Brand */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-9 h-9 rounded-xl bg-[#4f46e5] flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20 text-sm">
-            IZ
+        <div className="flex flex-col items-start gap-1.5 mb-8">
+          <div className="bg-[#4f46e5]/5 px-3 py-2 rounded-xl flex items-center justify-center">
+            <img src="/log.png" alt="Logo" className="h-8 w-auto object-contain" />
           </div>
-          <div>
-            <h1 className="font-bold tracking-tight text-zinc-900 text-base">IZINVOCE</h1>
-            <p className="text-[10px] text-zinc-400 font-semibold uppercase">Fintech Billing SaaS</p>
-          </div>
+          <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider pl-1">Fintech Billing SaaS</p>
         </div>
 
         <div className="space-y-1 mb-6">

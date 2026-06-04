@@ -91,7 +91,7 @@ export default function DashboardLayout({
     return (
       <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center text-zinc-800">
         <div className="w-8 h-8 border-4 border-[#4f46e5] border-t-transparent rounded-full animate-spin mb-4" />
-        <span className="text-xs text-zinc-500 font-sans font-semibold">Iniciando Izinvoce...</span>
+        <span className="text-xs text-zinc-500 font-sans font-semibold">Iniciando Izinvoice...</span>
       </div>
     );
   }

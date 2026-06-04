@@ -31,7 +31,7 @@ import { CustomSelect } from '@/components/shared/CustomSelect';
 // We persist submitted RCs in localStorage and refresh each one individually
 // via GET /daily-summaries/:id when the user polls for status.
 
-const STORAGE_KEY = 'izinvoce_rc_history';
+const STORAGE_KEY = 'izinvoice_rc_history';
 
 interface RcRecord {
   id: string;
