@@ -73,10 +73,9 @@ export function Sidebar() {
         {/* Brand Logo */}
         <div className="p-6 border-b border-zinc-100 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="bg-[#4f46e5]/5 px-2 py-1 rounded-lg flex items-center justify-center">
-              <img src="/log.png" alt="Logo" className="h-6 w-auto object-contain" />
+            <div className="bg-[#4f46e5] p-2.5 rounded-[12px] flex items-center justify-center shadow-md shadow-indigo-500/20">
+              <img src="/log.png" alt="Logo" className="h-6 w-auto object-contain brightness-0 invert" />
             </div>
-            <span className="text-[9px] text-zinc-400 font-sans font-bold self-end mb-0.5 tracking-wider">MindDev</span>
           </div>
           {/* Mobile close button */}
           <button
