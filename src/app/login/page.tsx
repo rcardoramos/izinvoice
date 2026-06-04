@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
 import { BillingApiClient } from '@/services/api-client';
@@ -121,11 +122,11 @@ export default function LoginPage() {
           </div>
 
           <div className="relative z-10">
-            <div className="flex items-center mb-8">
+            <Link href="/" className="flex items-center mb-8 w-fit hover:scale-105 transition-transform duration-200 cursor-pointer">
               <div className="bg-[#4f46e5] p-4 rounded-[20px] flex items-center justify-center shadow-xl shadow-indigo-500/30">
                 <img src="/log.png" alt="Logo" className="h-12 w-auto object-contain brightness-0 invert" />
               </div>
-            </div>
+            </Link>
             <h1 className="text-5xl xl:text-6xl font-black text-[#1e1b4b] tracking-tighter leading-[1.1] max-w-md mb-6">
               Plataforma 100% segura y homologada
             </h1>
@@ -157,11 +158,11 @@ export default function LoginPage() {
             className="w-full max-w-[460px] bg-white/80 backdrop-blur-xl border border-white/60 rounded-[32px] p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] relative"
           >
             {/* Mobile Logo */}
-            <div className="lg:hidden flex items-center mb-8">
+            <Link href="/" className="lg:hidden flex items-center mb-8 w-fit hover:scale-105 transition-transform duration-200 cursor-pointer">
               <div className="bg-[#4f46e5] p-3 rounded-[14px] flex items-center justify-center shadow-lg shadow-indigo-500/20">
                 <img src="/log.png" alt="Logo" className="h-7 w-auto object-contain brightness-0 invert" />
               </div>
-            </div>
+            </Link>
 
             <div className="mb-8">
               <h2 className="text-2xl font-black tracking-tight text-zinc-900 mb-6">Iniciar Sesión</h2>
