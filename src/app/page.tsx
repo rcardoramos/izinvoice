@@ -8,7 +8,7 @@ import {
   Check, ChevronDown, MessageSquare, Zap, BarChart3, Globe, Cloud, 
   Lock, Smartphone, LayoutDashboard, ShoppingBag, Users, Package, 
   ShoppingCart, Landmark, Settings, ClipboardList, RefreshCw, Star,
-  Menu, X, HelpCircle, Building, Bell
+  Menu, X, HelpCircle, Building, Bell, QrCode
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -1002,31 +1002,117 @@ export default function LandingPage() {
                 </p>
               </div>
 
-              {/* Mockup Ticket */}
-              <div className="bg-white text-zinc-800 rounded-2xl p-4 my-6 shadow-xl relative space-y-3 border border-indigo-100 flex flex-col justify-between shrink-0">
-                <div className="border-b border-dashed border-zinc-200 pb-2 text-center">
-                  <h5 className="text-[8px] font-black text-zinc-900 tracking-tight">IZINVOICE BOLETA</h5>
-                  <span className="text-[6px] text-zinc-400 font-mono">B001-00083920</span>
-                </div>
-                
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[7px] font-semibold text-zinc-500">
-                    <span>1x Papel Térmico 80mm</span>
-                    <span className="font-bold text-zinc-800">S/ 12.00</span>
+              {/* Mockup Ticket - Rediseñado para coincidir con el TicketViewer oficial */}
+              <div className="bg-white text-zinc-900 rounded-2xl p-4 my-5 shadow-2xl relative border border-zinc-200 font-mono text-[8px] select-none text-left leading-normal flex flex-col justify-between shrink-0">
+                {/* Header Info */}
+                <div className="text-center space-y-0.5">
+                  <div className="flex justify-center mb-1">
+                    <div className="w-6 h-6 rounded-full bg-[#4f46e5] flex items-center justify-center font-bold text-white text-[9px]">
+                      IZ
+                    </div>
                   </div>
-                  <div className="flex justify-between text-[7px] font-semibold text-zinc-500">
-                    <span>2x Lector Código Barras</span>
-                    <span className="font-bold text-zinc-800">S/ 180.00</span>
+                  <p className="font-extrabold text-[9px] uppercase tracking-tight text-zinc-950">MI EMPRESA S.A.C.</p>
+                  <p className="text-zinc-500 font-semibold">R.U.C. 20601482921</p>
+                  <p className="text-zinc-400 text-[7px] leading-none">Av. Javier Prado Este 1024, Lima</p>
+                </div>
+
+                {/* Dashed Separator */}
+                <div className="border-t border-dashed border-zinc-200 my-1.5" />
+
+                {/* Doc Title & Number */}
+                <div className="text-center space-y-0.5">
+                  <p className="font-extrabold text-zinc-800 uppercase text-[8px]">
+                    BOLETA DE VENTA ELECTRÓNICA
+                  </p>
+                  <p className="font-black text-zinc-950 text-[9px] tracking-wider">
+                    B001-00083920
+                  </p>
+                </div>
+
+                {/* Dashed Separator */}
+                <div className="border-t border-dashed border-zinc-200 my-1.5" />
+
+                {/* Meta details */}
+                <div className="space-y-0.5 text-zinc-600 font-medium">
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400 font-bold uppercase text-[6.5px]">F.Emisión:</span>
+                    <span>2026-06-03</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400 font-bold uppercase text-[6.5px]">Moneda:</span>
+                    <span>PEN</span>
+                  </div>
+                  <div className="border-t border-zinc-100/60 pt-1 mt-1 space-y-0.5">
+                    <p className="font-bold text-zinc-900 text-[7.5px] truncate">
+                      Juan Pérez Quispe
+                    </p>
+                    <p className="text-zinc-500 text-[7px]">
+                      D.N.I. 47382910
+                    </p>
                   </div>
                 </div>
 
-                <div className="border-t border-dashed border-zinc-200 pt-2 flex justify-between items-baseline">
-                  <span className="text-[7px] font-black text-zinc-500">TOTAL</span>
-                  <span className="text-xs font-black text-[#4f46e5]">S/ 192.00</span>
+                {/* Dashed Separator */}
+                <div className="border-t border-dashed border-zinc-200 my-1.5" />
+
+                {/* Items List */}
+                <table className="w-full text-[7.5px]">
+                  <thead>
+                    <tr className="text-zinc-400 border-b border-zinc-100 pb-0.5 text-[6.5px] uppercase tracking-wider text-left">
+                      <th className="text-center font-bold w-4">Cant</th>
+                      <th className="font-bold">Desc.</th>
+                      <th className="text-right font-bold w-8">P.U.</th>
+                      <th className="text-right font-bold w-10">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 text-zinc-800 font-medium">
+                    <tr className="align-top">
+                      <td className="text-center py-0.5">1</td>
+                      <td className="py-0.5 truncate max-w-[80px]">Papel Térmico 80mm</td>
+                      <td className="text-right py-0.5">12.00</td>
+                      <td className="text-right font-bold py-0.5 text-zinc-950">12.00</td>
+                    </tr>
+                    <tr className="align-top">
+                      <td className="text-center py-0.5">2</td>
+                      <td className="py-0.5 truncate max-w-[80px]">Lector Código Barras</td>
+                      <td className="text-right py-0.5">90.00</td>
+                      <td className="text-right font-bold py-0.5 text-zinc-950">180.00</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                {/* Dashed Separator */}
+                <div className="border-t border-dashed border-zinc-200 my-1.5" />
+
+                {/* Calculations */}
+                <div className="space-y-0.5 text-zinc-700 text-[7.5px] font-medium">
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400 font-bold uppercase text-[6.5px]">Op. Gravada:</span>
+                    <span>PEN 162.71</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400 font-bold uppercase text-[6.5px]">I.G.V. (18%):</span>
+                    <span>PEN 29.29</span>
+                  </div>
+                  <div className="flex justify-between text-[8.5px] font-black text-zinc-950 pt-0.5 border-t border-zinc-100">
+                    <span>TOTAL:</span>
+                    <span>PEN 192.00</span>
+                  </div>
                 </div>
 
-                <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-1 text-center text-[6px] text-emerald-700 font-bold flex items-center justify-center gap-1">
-                  <span>✓ FIRMADO SUNAT</span>
+                {/* Dashed Separator */}
+                <div className="border-t border-dashed border-zinc-200 my-2" />
+
+                {/* QR Code and Printed Representation */}
+                <div className="text-center space-y-1">
+                  <div className="flex justify-center">
+                    <QrCode className="w-8 h-8 text-zinc-800" />
+                  </div>
+                  <div className="text-[6px] text-zinc-400 leading-tight space-y-0.5 font-bold">
+                    <p className="text-zinc-600">Representación impresa</p>
+                    <p>Hash: E8B9F2A1</p>
+                    <p className="text-emerald-600 uppercase font-black">SUNAT: ACEPTADO</p>
+                  </div>
                 </div>
               </div>
 
