@@ -13,7 +13,7 @@ import { BillingApiClient } from '@/services/api-client';
 import { DOC_TYPE_LABELS } from '@/types/enums';
 import { useAuthStore } from '@/store/auth';
 import { CustomSelect } from '@/components/shared/CustomSelect';
-import { formatTimePE } from '@/utils/date-pe';
+import { formatTimePE, todayPE } from '@/utils/date-pe';
 import { 
   FileText, 
   Download, 
@@ -419,7 +419,7 @@ export default function InvoicesHistoryPage() {
       await BillingApiClient.voidedDocuments({
         documentIds: [docToVoid.id],
         referenceDate: (docToVoid.issueDate || docToVoid.issue_date) as any,
-        issueDate: new Date().toISOString().split('T')[0] as any,
+        issueDate: todayPE() as any,
         motivoBaja: reason,
       });
       showAlert('Baja Enviada', 'Comunicación de baja (RA) enviada a SUNAT. Consulte su estado en el menú de resúmenes.', 'success');
